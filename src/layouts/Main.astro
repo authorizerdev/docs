@@ -17,18 +17,37 @@ const githubEditUrl = `https://github.com/USER/REPO/blob/main/${currentFile}`
 
 // Full Astro Component Syntax:
 // https://docs.astro.build/core-concepts/astro-components/
+const description = "Open Source Authentication and Authorization solution for your business. Easy to integrate and quick to implement with available SDKs"
+const title = `Authorizer Docs | ${content.title}`
 ---
 <html lang={ content.lang || 'en' }>
   <head>
-    <title>{content.title}</title>
+    <title>{title}</title>
     
     <link rel="stylesheet" href="/index.css" />
     <link rel="stylesheet" href="/theme.css" />
     <link rel="stylesheet" href="/code.css" />
     <script src="/theme.js" />
-    <link rel="icon" 
-          type="image/svg+xml" 
-          href="/favicon.svg">
+    <meta charset="UTF-8" />
+		<meta name="description" content="Open Source Authentication and Authorization solution for your business. Easy to integrate and quick to implement with available SDKs" />
+		<meta name="viewport" content="initial-scale=1.0, width=device-width" />
+		<meta name="keywords" content="auth,auth0,authorizer,security,authorization,open-source,heroku" />
+		<meta property="og:image" content="/images/logo.png" />
+		<meta property="og:description" content={description} />
+		<meta property="og:title" content={title} />
+		<meta property="og:type" content={'website'} />
+		<meta property="og:url" content={`/`} />
+		<meta property="twitter:card" content="summary" />
+		<meta property="twitter:creator" content="authorizer.dev" />
+		<meta property="twitter:title" content={title} />
+		<meta property="twitter:description" content={description}/>
+		<link rel="apple-touch-icon" sizes="180x180" href="/favicon_io/apple-touch-icon.png">
+		<link rel="icon" type="image/png" sizes="32x32" href="/favicon_io/favicon-32x32.png">
+		<link rel="icon" type="image/png" sizes="16x16" href="/favicon_io/favicon-16x16.png">
+		<link rel="manifest" href="/site.webmanifest">
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link href="https://fonts.googleapis.com/css2?family=Major+Mono+Display&display=swap" rel="stylesheet">
 
     <style>
       body {
@@ -69,6 +88,7 @@ const githubEditUrl = `https://github.com/USER/REPO/blob/main/${currentFile}`
       }
 
       #site-title {
+        font-family: 'Major Mono Display', monospace;
         display: flex;
         align-items: center;
         gap: 0.25em;
@@ -204,10 +224,8 @@ const githubEditUrl = `https://github.com/USER/REPO/blob/main/${currentFile}`
               </svg>
             </button>
             <a id="site-title" href="/">
-              <svg width="1em" height="1em" viewBox="0 0 340 340" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M320 170C320 170 296.88 171.746 267.428 188.75C237.975 205.754 205.754 237.975 188.75 267.428C171.746 296.88 170 320 170 320C170 320 168.254 296.88 151.25 267.428C134.246 237.975 102.025 205.754 72.5721 188.75C43.1197 171.746 20 170 20 170C20 170 43.1197 168.254 72.5721 151.25C102.025 134.246 134.246 102.025 151.25 72.5721C168.254 43.1197 170 20 170 20C170 20 171.746 43.1197 188.75 72.5721C205.754 102.025 237.975 134.246 267.428 151.25C296.88 168.254 320 170 320 170Z" fill="currentColor"/>
-              </svg>
-              <h1>Astroid</h1>
+              <img src="/images/logo.png" alt="logo" style="height:1.5em"/>
+              Authorizer
             </a>
           </div>
 
