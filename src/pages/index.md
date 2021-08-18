@@ -9,72 +9,56 @@ layout: ../layouts/Main.astro
 
 <img src="/images/authorizer-architecture.png" style="height:20em"/>
 
+#### We offer the following functionality
+
+- ✅ Sign-in / Sign-up with email ID and password
+- ✅ Forgot password flow using email
+- ✅ Secure session management
+- ✅ Email verification
+- ✅ Social logins (Google, Github and more)
+
 ## Project Status
 
 ⚠️ **Authorizer is still an early beta, missing features and bugs are to be expected!** If you can stomach it, then bring authentication and authorization to your site today!
 
-## Features
-
-### Flexible and easy to use
-
-- Designed to work with any OAuth service, it supports OAuth 1.0, 1.0A and 2.0
-- Built-in support for many popular sign-in services
-- Supports email / passwordless authentication
-- Supports stateless authentication with any backend (Active Directory, LDAP, etc)
-- Supports both JSON Web Tokens and database sessions
-- Easy to deploy with docker, heroku, kubernetes, and VMs
-- SDKs for popular languages
-- Quick frontend page library for (react, vue, svelete, vanilla)
-
-### Own your own data
-
-- An open source solution that allows you to keep control of your data
-- Supports Bring Your Own Database (BYOD) and can be used with any SQL database
-- Persist user session using Redis
-
-### Secure by default
-
-- Designed to be secure by default and encourage best practice for safeguarding user data
-- Uses Cross Site Request Forgery Tokens on POST routes (sign in, sign out)
-- Default cookie policy aims for the most restrictive policy appropriate for each cookie
-- When JSON Web Tokens are enabled, they are signed by default (JWS) with HS512
-- Use JWT encryption (JWE) by setting the option encryption: true (defaults to A256GCM)
-- Auto-generates symmetric signing and encryption keys for developer convenience
-- Attempts to implement the latest guidance published by Open Web Application Security Project
-- Advanced options allow you to define your own routines to handle controlling what accounts are allowed to sign in, for encoding and decoding JSON Web Tokens and to set custom cookie security policies and session properties, so you can control who is able to sign in and how often sessions have to be re-validated.
-- Promotes the use of passwordless sign in mechanisms
-
 ## Roadmap
 
-- Coming soon..
+- Password less login with email
+- Role based access management system
+- Support more JWT encryption algorithms (Currently supporting HS256)
+- 2 Factor authentication
+- Back office (Admin dashboard to manage user)
+- Support more database
+- VueJS SDK
+- Svelete SDK
+- React Native SDK
+- Flutter SDK
+- Android Native SDK
+- iOS native SDK
+- Golang SDK
+- Python SDK
+- PHP SDK
+- Wordpress plugin
+- Kubernetes Helm Chart
+- [Local Stack](https://github.com/localstack/localstack)
+- AMI
+- Digital Ocean Droplet
+- Azure
+- Render
+- Edge Deployment using Fly.io
+- Password less login with mobile number and OTP SMS
 
-## Quick Start
+## Supported Tech Stacks
 
-Authorizer is built using [Go](), [GraphQL](), [Redis]()(Optional). Binary of authorizer can be downloaded from releases and deployed any where.
+Authorizer is built using [Golang](https://golang.org/) and exposes [GraphQL](https://graphql.org/) API for all the functionalities.
+It comes with login page if you don't want to build one and want to use the authorizer URL.
 
-One can also deploy using [heroku]() and quickly play with authorizer in 30seconds
-<br/><br/>
-[![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/authorizerdev/authorizer-heroku)
+### Backend SDKs
 
-### Things to consider
+- [NodeJS](https://github.com/authorizerdev/authorizer-js)
+- Golang (in development)
 
-- For social logins you will need respective social platform key and secret
-- For having verified users you will need smtp server with email address using which system can send emails. System will send verify email link to email address and once verified then only user will be able to access it. _(Note: One can always disable to email verification to allow open sign up)_
-- For persisting user sessions you will need Redis username and password. Else user session will be only persisted till the server is on, which not recommended for production.
+### Frontend SDKs
 
-### Local Setup
-
-#### Prerequisites
-
-- OS: Linux or macOS or windows
-- Go: (Golang)(https://golang.org/dl/) >= v1.15
-
-#### Setup
-
-- Fork the [authorizer](https://github.com/authorizerdev/authorizer) repository (**Skip this step if you have access to repo**)
-- `git clone https://github.com/authorizerdev/authorizer.git`
-- `cd authorizer`
-- `cp .env.sample .env` Check all the supported env [here](TODO)
-- Build the code `make clean && make`
-  > Note: if you don't have [`make`](https://www.ibm.com/docs/en/aix/7.2?topic=concepts-make-command), you can `cd` into `server` dir and build using `go build` command
-- Run binary `./build/server`
+- [Vanilla Javascript](https://github.com/authorizerdev/authorizer-js)
+- [React](https://github.com/authorizerdev/authorizer-react)
