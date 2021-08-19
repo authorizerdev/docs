@@ -43,7 +43,7 @@ Please ask as many questions as you need, either directly in the issue or on [Di
 1. [Architecture of authorizer](TODO)
 2. [authorizer code and file structure overview](TODO)
 
-### Project Setup
+### Project Setup for Authorizer core
 
 1. Fork the [authorizer](https://github.com/authorizerdev/authorizer) repository (**Skip this step if you have access to repo**)
 2. `git clone https://github.com/authorizerdev/authorizer.git`
