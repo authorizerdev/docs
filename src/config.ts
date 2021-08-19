@@ -1,47 +1,46 @@
 export const sidebar = [
 	{
 		text: 'Introduction',
-		link: '', // No leading slash needed, so this links to the homepage
+		link: '/', // No leading slash needed, so this links to the homepage
 		children: [
-			{ text: 'Getting Started', link: 'getting-started' },
-			{ text: 'Contributing', link: 'contributing' },
+			{ text: 'Getting Started', link: '/getting-started' },
+			{ text: 'Contributing', link: '/contributing' },
 		],
 	},
 	{
 		text: 'Authorizer Core',
-		link: 'core/', // No leading slash needed, so this links to the homepage
+		link: '/core', // No leading slash needed, so this links to the homepage
 		children: [
-			{ text: 'Environment Variables', link: 'getting-started' },
-			{ text: 'Databases', link: 'databases' },
-			{ text: 'GraphQL API', link: 'core/gql-api' },
-			{ text: 'Session Management', link: 'contributing' },
+			{ text: 'Environment Variables', link: '/core/env' },
+			{ text: 'Databases', link: '/core/databases' },
+			{ text: 'GraphQL API', link: '/core/graphql-api' },
+			{ text: 'Session Management', link: '/core/session-management' },
 		],
 	},
 	{
 		text: 'Deployment Options',
-		link: 'core/deployments/',
+		link: '/deployment',
 		children: [
-			{ text: 'Heroku', link: 'heroku' },
-			{ text: 'Docker', link: 'docker' },
-			{ text: 'Kubernetes', link: 'kubernetes' },
-			{ text: 'Binary', link: 'binary' },
-			{ text: 'Authorizer Cloud', link: 'binary' },
+			{ text: 'Heroku', link: '/deployment/heroku' },
+			{ text: 'Docker', link: '/deployment/docker' },
+			{ text: 'Binary', link: '/deployment/binary' },
+			{ text: 'Authorizer Cloud', link: '/deployment/authorizer-cloud' },
 		],
 	},
 	{
 		text: 'Authorizer JS',
-		link: 'core/deployments/',
+		link: '/authorizer-js/getting-started',
 		children: [
-			{ text: 'Getting Started', link: 'getting-started' },
-			{ text: 'Functions', link: 'functions' },
+			{ text: 'Getting Started', link: '/authorizer-js/getting-started' },
+			{ text: 'Functions', link: '/authorizer-js/functions' },
 		],
 	},
 	{
 		text: 'Authorizer React',
-		link: 'core/deployments/',
+		link: '/authorizer-react/getting-started',
 		children: [
-			{ text: 'Getting Started', link: 'getting-started' },
-			{ text: 'Components', link: 'components' },
+			{ text: 'Getting Started', link: '/authorizer-react/getting-started' },
+			{ text: 'Components', link: '/authorizer-react/components' },
 		],
 	},
 ];
