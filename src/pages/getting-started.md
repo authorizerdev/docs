@@ -15,17 +15,17 @@ Deploy Authorizer using [heroku](https://github.com/authorizerdev/authorizer-her
 
 ### Things to consider
 
-- For social logins you will need respective social platform key and secret
-- For having verified users you will need smtp server with email address using which system can send emails. System will send verify email link to email address and once verified then only user will be able to access it. _(Note: One can always disable the email verification to allow open sign up, which is not recommended for production as anyone can use anyone's email address 😅 )_
-- For persisting user sessions you will need Redis URL. Else user session will be only persisted till the server is on / restarted, which is not recommended for production. For better performance and security it is recommended to deploy redis on the same infra as of your authorizer server.
+- For social logins, you will need respective social platform key and secret
+- For having verified users, you will need an SMTP server with an email address and password using which system can send emails. The system will send a verification link to an email address. Once an email is verified then, only able to access it. _(Note: One can always disable the email verification to allow open sign up, which is not recommended for production as anyone can use anyone's email address 😅 )_
+- For persisting user sessions, you will need Redis URL. If you do not configure a Redis server, sessions will be persisted until the instance is up or not restarted. For better response time on authorization requests/middleware, we recommend deploying Redis on the same infra/network as your authorizer server.
 
 ## Integrating into your website
 
-This example just demonstrates how you can use `@authorizerdev/authorizer-js` CDN version and have login wall ready in few seconds. You can also use the ES module version of `@authorizerdev/authorizer-js` or framework specific versions like `@authorizerdev/authorizer-react`
+This example demonstrates how you can use `@authorizerdev/authorizer-js` CDN version and have login ready for your site in few seconds. You can also use the ES module version of `@authorizerdev/authorizer-js` or framework-specific versions like `@authorizerdev/authorizer-react`
 
 ### Copy the following code in `html` file
 
-> **Note:** Change AUTHORIZER_URL in below code with your authorizer url. Also you can change logout button component
+> **Note:** Change AUTHORIZER_URL in the below code with your authorizer URL. Also, you can change the logout button component
 
 ```html
 <script src="https://unpkg.com/@authorizerdev/authorizer-js/lib/authorizer.min.js"></script>
