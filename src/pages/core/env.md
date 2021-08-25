@@ -8,6 +8,7 @@ Authorizer server supports the following environment variables
 | Variable                       | Description                                                                                            | Required | Default Value                     |
 | ------------------------------ | ------------------------------------------------------------------------------------------------------ | -------- | --------------------------------- |
 | `ENV`                          | Which env you are running your server in. Supported envs `production`, `development`                   | true     | `production`                      |
+| `ADMIN_SECRET`                 | Super admin secret used to access the master data                                                      | true     |                                   |
 | `DATABASE_TYPE`                | Which database you are using. Supported database types are `postgres`, `mysql`, `sqlite`               | true     |                                   |
 | `DATABASE_URL`                 | Database connection string                                                                             | true     |                                   |
 | `PORT`                         | Port on which server should be running                                                                 | true     | 8080                              |
