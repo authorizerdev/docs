@@ -5,7 +5,7 @@ layout: ../layouts/Main.astro
 
 ## Trying out Authorizer
 
-This guide helps you practice using Authorizer to evaluate it before you use it in a production environment. It includes instructions for installing the Authorizer server in standalone mode, creating accounts and realms for managing users and applications, and securing a WildFly server application.
+This guide helps you practice using Authorizer to evaluate it before you use it in a production environment. It includes instructions for installing the Authorizer server in standalone mode.
 
 ## Installing a simple instance of Authorizer
 
