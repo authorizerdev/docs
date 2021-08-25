@@ -7,6 +7,128 @@ Authorizer instance supports GraphQL natively and thus helps you share the commo
 You can play with GraphQL API using the GraphQL playground that comes with your Authorizer instance. Access GraphQL playground on the
 instance same as of your Authorizer instance URL.
 
+## Schema
+
+Available types with the Authorizer:
+
+```graphql
+type AuthResponse {
+	message: String!
+	accessToken: String
+	accessTokenExpiresAt: Int64
+	user: User
+}
+
+input DeleteUserInput {
+	email: String!
+}
+
+type Error {
+	message: String!
+	reason: String!
+}
+
+input ForgotPasswordInput {
+	email: String!
+}
+
+scalar Int64
+
+input LoginInput {
+	email: String!
+	password: String!
+}
+
+type Meta {
+	version: String!
+	isGoogleLoginEnabled: Boolean!
+	isFacebookLoginEnabled: Boolean!
+	isTwitterLoginEnabled: Boolean!
+	isGithubLoginEnabled: Boolean!
+	isEmailVerificationEnabled: Boolean!
+	isBasicAuthenticationEnabled: Boolean!
+}
+
+type Mutation {
+	signup(params: SignUpInput!): AuthResponse!
+	login(params: LoginInput!): AuthResponse!
+	logout: Response!
+	updateProfile(params: UpdateProfileInput!): Response!
+	verifyEmail(params: VerifyEmailInput!): AuthResponse!
+	resendVerifyEmail(params: ResendVerifyEmailInput!): Response!
+	forgotPassword(params: ForgotPasswordInput!): Response!
+	resetPassword(params: ResetPasswordInput!): Response!
+	deleteUser(params: DeleteUserInput!): Response!
+}
+
+type Query {
+	meta: Meta!
+	users: [User!]!
+	token: AuthResponse
+	profile: User!
+	verificationRequests: [VerificationRequest!]!
+}
+
+input ResendVerifyEmailInput {
+	email: String!
+}
+
+input ResetPasswordInput {
+	token: String!
+	password: String!
+	confirmPassword: String!
+}
+
+type Response {
+	message: String!
+}
+
+input SignUpInput {
+	firstName: String
+	lastName: String
+	email: String!
+	password: String!
+	confirmPassword: String!
+	image: String
+}
+
+input UpdateProfileInput {
+	oldPassword: String
+	newPassword: String
+	confirmNewPassword: String
+	firstName: String
+	lastName: String
+	image: String
+	email: String
+}
+
+type User {
+	id: ID!
+	email: String!
+	signupMethod: String!
+	firstName: String
+	lastName: String
+	emailVerifiedAt: Int64
+	image: String
+	createdAt: Int64
+	updatedAt: Int64
+}
+
+type VerificationRequest {
+	id: ID!
+	identifier: String
+	token: String
+	email: String
+	expires: Int64
+	createdAt: Int64
+	updatedAt: Int64
+}
+
+input VerifyEmailInput {
+	token: String!
+}
+```
+
 ## Queries
 
 ### - `meta`
