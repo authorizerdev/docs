@@ -1,5 +1,5 @@
 ---
-title: Authorizer Env
+title: Authorizer Environment Variables
 layout: ../../layouts/Main.astro
 ---
 

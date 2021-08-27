@@ -31,30 +31,30 @@ This example demonstrates how you can use `@authorizerdev/authorizer-js` CDN ver
 <script src="https://unpkg.com/@authorizerdev/authorizer-js/lib/authorizer.min.js"></script>
 
 <script type="text/javascript">
-	const authorizerRef = new Authorizer.Authorizer({
-		authorizerURL: `AUTHORIZER_URL`,
-		redirectURL: window.location.origin,
-	});
+  const authorizerRef = new Authorizer.Authorizer({
+    authorizerURL: `AUTHORIZER_URL`,
+    redirectURL: window.location.origin,
+  });
 
-	// use the button selector as per your application
-	const logoutBtn = document.getElementById('logout');
-	logoutBtn.addEventListener('click', async function () {
-		await authorizerRef.logout();
-		window.location.href = '/';
-	});
+  // use the button selector as per your application
+  const logoutBtn = document.getElementById('logout');
+  logoutBtn.addEventListener('click', async function () {
+    await authorizerRef.logout();
+    window.location.href = '/';
+  });
 
-	async function onLoad() {
-		const res = await authorizerRef.fingertipLogin();
-		if (res && res.user) {
-			// you can use user information here, eg:
-			/**
-			const userSection = document.getElementById('user');
-			const logoutSection = document.getElementById('logout-section');
-			logoutSection.classList.toggle('hide');
-			userSection.innerHTML = `Welcome, ${res.user.email}`;
-			*/
-		}
-	}
-	onLoad();
+  async function onLoad() {
+    const res = await authorizerRef.fingertipLogin();
+    if (res && res.user) {
+      // you can use user information here, eg:
+      /**
+      const userSection = document.getElementById('user');
+      const logoutSection = document.getElementById('logout-section');
+      logoutSection.classList.toggle('hide');
+      userSection.innerHTML = `Welcome, ${res.user.email}`;
+      */
+    }
+  }
+  onLoad();
 </script>
 ```
