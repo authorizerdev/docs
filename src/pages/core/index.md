@@ -10,7 +10,7 @@ Authorizer is developed using [Golang](https://golang.org/). Authorizer core com
 - OAuth login
 - Forgot password
 - Update profile API
-- Web application with a login page, sign up page, and forgot-password page. These can save hundreds of hours 😅
+- Web application with a login page, sign up page, and forgot-password page. These can save hundreds of hours 🕰️
 - Secure session management with [HTTP cookie](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies)
 
 ## How Authorizer is secure?

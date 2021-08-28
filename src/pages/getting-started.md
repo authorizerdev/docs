@@ -16,7 +16,8 @@ Deploy Authorizer using [heroku](https://github.com/authorizerdev/authorizer-her
 ### Things to consider
 
 - For social logins, you will need respective social platform key and secret
-- For having verified users, you will need an SMTP server with an email address and password using which system can send emails. The system will send a verification link to an email address. Once an email is verified then, only able to access it. _(Note: One can always disable the email verification to allow open sign up, which is not recommended for production as anyone can use anyone's email address 😅 )_
+- For having verified users, you will need an SMTP server with an email address and password using which system can send emails. The system will send a verification link to an email address. Once an email is verified then, only able to access it.
+  > Note: One can always disable the email verification to allow open sign up, which is not recommended for production as anyone can use anyone's email address 😅
 - For persisting user sessions, you will need Redis URL. If you do not configure a Redis server, sessions will be persisted until the instance is up or not restarted. For better response time on authorization requests/middleware, we recommend deploying Redis on the same infra/network as your authorizer server.
 
 ## Integrating into your website
@@ -37,10 +38,10 @@ This example demonstrates how you can use `@authorizerdev/authorizer-js` CDN ver
   });
 
   // use the button selector as per your application
-  const logoutBtn = document.getElementById('logout');
-  logoutBtn.addEventListener('click', async function () {
+  const logoutBtn = document.getElementById("logout");
+  logoutBtn.addEventListener("click", async function () {
     await authorizerRef.logout();
-    window.location.href = '/';
+    window.location.href = "/";
   });
 
   async function onLoad() {

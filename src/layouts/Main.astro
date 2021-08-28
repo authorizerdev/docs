@@ -13,7 +13,7 @@ const { content } = Astro.props;
 const headers = content.astro.headers;
 const currentPage = Astro.request.url.pathname;
 const currentFile = currentPage === '/' ? 'src/pages/index.md' : `src/pages${currentPage.replace(/\/$/, "")}.md`;
-const githubEditUrl = `https://github.com/authorizerdev/docs/blob/main/${currentFile}`
+const githubEditUrl = `https://github.dev/authorizerdev/docs/blob/main/${currentFile}`
 
 // Full Astro Component Syntax:
 // https://docs.astro.build/core-concepts/astro-components/

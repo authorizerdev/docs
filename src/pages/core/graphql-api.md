@@ -324,7 +324,7 @@ A mutation to signup users using email and password. It accepts `params` of type
 
 This mutation returns `AuthResponse` type with following keys
 
-**Response Keys**
+**Response**
 
 | Key                    | Description                                                                                                                                                                         |
 | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -358,7 +358,7 @@ A mutation to login users using email and password. It accepts `params` of type 
 
 This mutation returns `AuthResponse` type with following keys
 
-**Response Keys**
+**Response**
 
 | Key                    | Description                                                                         |
 | ---------------------- | ----------------------------------------------------------------------------------- |
@@ -390,7 +390,7 @@ mutation {
 Mutation to logout user. This is authorized request and accepts `token` as HTTP cookie or Authorization header with `Bearer token`.
 This action clears the session data from server. It returns `Response` type with following keys
 
-**Response Keys**
+**Response**
 
 | Key       | Description                         |
 | --------- | ----------------------------------- |
@@ -423,7 +423,7 @@ Mutation to update profile of user. It accepts `params` of type `UpdateProfileIn
 
 This mutation returns `Response` type with following keys
 
-**Response Keys**
+**Response**
 
 | Key       | Description                         |
 | --------- | ----------------------------------- |
@@ -451,7 +451,7 @@ Mutation to verify email address of user. It accepts `params` of type `VerifyEma
 
 This mutation returns `AuthResponse` type with following keys
 
-**Response Keys**
+**Response**
 
 | Key                    | Description                                                                         |
 | ---------------------- | ----------------------------------------------------------------------------------- |
@@ -490,7 +490,7 @@ Mutation to resend verification email. This is helpful if user does not receive 
 
 This mutation returns `Response` type with following keys
 
-**Response Keys**
+**Response**
 
 | Key       | Description                         |
 | --------- | ----------------------------------- |
@@ -518,7 +518,7 @@ Mutation to reset the password in case user have forgotten it. For security reas
 
 This mutation returns `Response` type with following keys
 
-**Response Keys**
+**Response**
 
 | Key       | Description                         |
 | --------- | ----------------------------------- |
@@ -548,7 +548,7 @@ Mutation to reset the password. For security reasons this is 2 step process, we 
 
 This mutation returns `Response` type with following keys
 
-**Response Keys**
+**Response**
 
 | Key       | Description                         |
 | --------- | ----------------------------------- |
@@ -580,7 +580,7 @@ Mutation to delete user. This mutation is only allowed for super admins. It acce
 
 This mutation returns `Response` type with following keys
 
-**Response Keys**
+**Response**
 
 | Key       | Description                         |
 | --------- | ----------------------------------- |
