@@ -69,14 +69,14 @@ spec:
               value: "release"
             - name: DATABASE_URL
               value: "YOUR_DATA BASE URL"
-						- name: DATABASE_TYPE
-							value: "DATABASE TYPE postgres/mysql/sqlite"
+            - name: DATABASE_TYPE
+              value: "DATABASE TYPE postgres/mysql/sqlite"
             - name: ADMIN_SECRET
               value: "YOUR_ADMIN_SECRET"
             - name: JWT_SECRET
               value: "SOME_RANDOM_STRING"
-						- name: JWT_TYPE
-							value: "HS256"
+            - name: JWT_TYPE
+              value: "HS256"
           imagePullPolicy: Always
 ---
 apiVersion: cert-manager.io/v1
