@@ -32,7 +32,7 @@ This example demonstrates how you can use `@authorizerdev/authorizer-js` CDN ver
 <script src="https://unpkg.com/@authorizerdev/authorizer-js/lib/authorizer.min.js"></script>
 
 <script type="text/javascript">
-  const authorizerRef = new Authorizer.Authorizer({
+  const authorizerRef = new authorizerdev.Authorizer({
     authorizerURL: `AUTHORIZER_URL`,
     redirectURL: window.location.origin,
   });
