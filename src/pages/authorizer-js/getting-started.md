@@ -10,7 +10,15 @@ It supports:
 - [CommonJS(cjs)](https://flaviocopes.com/commonjs/) build for NodeJS version that don't support ES Modules
 - [ESM (ES Modules)](https://hacks.mozilla.org/2018/03/es-modules-a-cartoon-deep-dive/) build for modern javascript standard, i.e. ES Modules
 
-All the above versions require `Authorizer` instance to be instantiated and used. Instance constructor requires an object with the following keys
+Here is a quick guide on getting started with `@authorizerdev/authorizer-js` package.
+
+## Step 1 - Create Instance
+
+Get Authorizer URL by instantiating [Authorizer instance](/deployment) and configuring it with necessary [environment variables](/core/env).
+
+## Step 2 - Install SDK
+
+Load the `authorizer-js` library and initialize the authorizer object. Authorizer object can be instantiated with JSON object with following keys in its constructor.
 
 | Key             | Description                                                                  |
 | --------------- | ---------------------------------------------------------------------------- |
@@ -26,7 +34,7 @@ const authRef = new Authorizer({
 });
 ```
 
-## UMD
+### UMD
 
 - Step 1: Load Javascript using CDN
 
@@ -66,7 +74,7 @@ const authRef = new Authorizer({
 </script>
 ```
 
-## CommonJS
+### CommonJS
 
 - Step 1: Install dependencies
 
@@ -94,7 +102,7 @@ async function main() {
 }
 ```
 
-## ES Modules
+### ES Modules
 
 - Step 1: Install dependencies
 
