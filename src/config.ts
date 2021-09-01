@@ -23,7 +23,7 @@ export const sidebar = [
     link: "/deployment",
     children: [
       { text: "Heroku", link: "/deployment/heroku" },
-      { text: "Docker", link: "/deployment/docker" },
+      { text: "Kubernetes", link: "/deployment/kubernetes" },
       { text: "Binary", link: "/deployment/binary" },
       { text: "Authorizer Cloud", link: "/deployment/authorizer-cloud" },
     ],
