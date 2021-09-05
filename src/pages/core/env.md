@@ -22,7 +22,9 @@ Authorizer server supports the following environment variables
 | `GOOGLE_CLIENT_ID`             | OAuth [Google login](https://developers.google.com/identity/sign-in/web/sign-in) client id             | false    |                                   |
 | `GOOGLE_CLIENT_SECRET`         | OAuth [Google login client secret](https://developers.google.com/identity/sign-in/web/sign-in)         | false    |                                   |
 | `GITHUB_CLIENT_ID`             | OAuth [Github login](https://docs.github.com/en/rest/guides/basics-of-authentication) client id        | false    |                                   |
-| `GITHUB_CLIENT_SECRET`         | OAuth [Github login](https://docs.github.com/en/rest/guides/basics-of-authentication) client secret    | false    |                                   |
+| `GITHUB_CLIENT_SECRET`         | OAuth [Github login](https://docs.github.com/en/rest/guides/basics-of-authentication) client secret    | false    |
+| `FACEBOOK_CLIENT_ID`           | OAuth [Facebook login](https://docs.github.com/en/rest/guides/basics-of-authentication) client id      | false    |                                   |
+| `FACEBOOK_CLIENT_SECRET`       | OAuth [Facebook login](https://docs.github.com/en/rest/guides/basics-of-authentication) client secret  | false    |                                   |
 | `RESET_PASSWORD_URL`           | Reset password link, that can be used to send the correct forgot password link                         | true     | `/reset-password`                 |
 | `DISABLE_BASIC_AUTHENTICATION` | Used to explicitly disable email and password based authentication                                     | false    | false                             |
 | `DISABLE_EMAIL_VERIFICATION`   | Used to disable the email verification while signing up                                                | false    | false                             |
