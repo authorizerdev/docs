@@ -52,7 +52,7 @@ Required environment variables are pre-configured in `.env` file. But based on t
 
 > Note: For mac users, you might have to give binary the permission to execute. Here is the command you can use to grant permission `xattr -d com.apple.quarantine build/server`
 
-Thats all you need to start a server
+That's all you need to start a server!
 
 ## Running binary for production
 
