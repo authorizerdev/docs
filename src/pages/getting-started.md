@@ -22,7 +22,7 @@ Deploy Authorizer using [heroku](https://github.com/authorizerdev/authorizer-her
 
 ## Integrating into your website
 
-This example demonstrates how you can use `@authorizerdev/authorizer-js` CDN version and have login ready for your site in few seconds. You can also use the ES module version of `@authorizerdev/authorizer-js` or framework-specific versions like `@authorizerdev/authorizer-react`
+This example demonstrates how you can use [`@authorizerdev/authorizer-js`](/authorizer-js/getting-started) CDN version and have login ready for your site in few seconds. You can also use the ES module version of [`@authorizerdev/authorizer-js`](/authorizer-js/getting-started) or framework-specific versions like [`@authorizerdev/authorizer-react`](/authorizer-react/getting-started)
 
 ### Copy the following code in `html` file
 

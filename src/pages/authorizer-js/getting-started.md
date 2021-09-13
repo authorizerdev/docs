@@ -10,7 +10,7 @@ It supports:
 - [CommonJS(cjs)](https://flaviocopes.com/commonjs/) build for NodeJS version that don't support ES Modules
 - [ESM (ES Modules)](https://hacks.mozilla.org/2018/03/es-modules-a-cartoon-deep-dive/) build for modern javascript standard, i.e. ES Modules
 
-Here is a quick guide on getting started with `@authorizerdev/authorizer-js` package.
+Here is a quick guide on getting started with [`@authorizerdev/authorizer-js`](/authorizer-js/getting-started) package.
 
 ## Step 1 - Create Instance
 
