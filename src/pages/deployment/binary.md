@@ -54,7 +54,7 @@ Thats all you need to start a server
 
 ## Running binary for production
 
-Often we deploy our services on linux machine and run them as daemon process, you can do same with authorizer.
+Often we deploy our services on linux machine and run them as daemon process, you can do same with authorizer. After following the above mentioned steps you can follow this steps to create a daemon process:
 
 ### Step 1: Create a `systemd` service file
 
