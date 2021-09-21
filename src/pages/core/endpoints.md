@@ -25,6 +25,13 @@ Endpoints supported by Authorizer
 
 `GET /oauth_login/:oauth_provider` - Endpoint to perform oauth login for various providers like google, github, facebook
 
+This endpoint supports following query paramters
+
+- `redirectURL`: URL where user should be redirected after login
+- `role`: Role with which user should login. This is optional and by default it will use the `DEFAULT_ROLE` specified in `env`
+
+Sample URL: `/oauth_login/google?redirectURL=https://myapp.com&role=admin`
+
 ## `/oauth_callback/:oauth_provider`
 
 `GET /oauth_callback/:oauth_provider` - Endpoint that is used by oauth providers as callback after success / unsuccessful login
