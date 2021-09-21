@@ -16,7 +16,8 @@ layout: ../layouts/Main.astro
 - ✅ Email verification
 - ✅ APIs to update profile securely
 - ✅ Forgot password flow using email
-- ✅ Social logins (Google, Github, more coming soon)
+- ✅ Social logins (Google, Github, Facebook, more coming soon)
+- ✅ Role-based access management
 
 ## Project Status
 
@@ -25,7 +26,6 @@ layout: ../layouts/Main.astro
 ## Roadmap
 
 - Password-less login with email and magic link
-- Role-based access management system
 - Support more JWT encryption algorithms (Currently supporting HS256)
 - 2 Factor authentication
 - Back office (Admin dashboard to manage user)

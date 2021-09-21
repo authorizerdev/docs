@@ -28,5 +28,8 @@ Authorizer server supports the following environment variables
 | `RESET_PASSWORD_URL`           | Reset password link, that can be used to send the correct forgot password link                         | true     | `/reset-password`                 |
 | `DISABLE_BASIC_AUTHENTICATION` | Used to explicitly disable email and password based authentication                                     | false    | false                             |
 | `DISABLE_EMAIL_VERIFICATION`   | Used to disable the email verification while signing up                                                | false    | false                             |
+| `ROLES` | Comma separated list of roles that your platform supports | true | `user,admin` |
+| `DEFAULT_ROLE` | Default role that you would like to assign to users with signup | true | `user` |
+| `JWT_ROLE_CLAIM` | Claim key that will be part of JWT token | true | `role` |
 
 It is expected for this variable to be present as system env or `.env` at the root of project.

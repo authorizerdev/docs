@@ -23,8 +23,9 @@ Table of Contents
   - [`updateProfile`](#--updateprofile)
   - [`verifyEmail`](#--verifyemail)
   - [`resendVerifyEmail`](#--resendverifyemail)
-  - [`forgotPassword`](#--forgotPassword)
-  - [`resetPassword`](#--resetPassword)
+  - [`forgotPassword`](#--forgotpassword)
+  - [`resetPassword`](#--resetpassword)
+  - [`adminUpdateUser`](#--adminupdateuser)
   - [`deleteUser`](#--deleteuser)
 
 ## Schema
@@ -32,120 +33,132 @@ Table of Contents
 Available types with the Authorizer:
 
 ```graphql
-type AuthResponse {
-  message: String!
-  accessToken: String
-  accessTokenExpiresAt: Int64
-  user: User
-}
-
-input DeleteUserInput {
-  email: String!
-}
-
-type Error {
-  message: String!
-  reason: String!
-}
-
-input ForgotPasswordInput {
-  email: String!
-}
-
-scalar Int64
-
-input LoginInput {
-  email: String!
-  password: String!
-}
-
 type Meta {
-  version: String!
-  isGoogleLoginEnabled: Boolean!
-  isFacebookLoginEnabled: Boolean!
-  isTwitterLoginEnabled: Boolean!
-  isGithubLoginEnabled: Boolean!
-  isEmailVerificationEnabled: Boolean!
-  isBasicAuthenticationEnabled: Boolean!
-}
-
-type Mutation {
-  signup(params: SignUpInput!): AuthResponse!
-  login(params: LoginInput!): AuthResponse!
-  logout: Response!
-  updateProfile(params: UpdateProfileInput!): Response!
-  verifyEmail(params: VerifyEmailInput!): AuthResponse!
-  resendVerifyEmail(params: ResendVerifyEmailInput!): Response!
-  forgotPassword(params: ForgotPasswordInput!): Response!
-  resetPassword(params: ResetPasswordInput!): Response!
-  deleteUser(params: DeleteUserInput!): Response!
-}
-
-type Query {
-  meta: Meta!
-  users: [User!]!
-  token: AuthResponse
-  profile: User!
-  verificationRequests: [VerificationRequest!]!
-}
-
-input ResendVerifyEmailInput {
-  email: String!
-}
-
-input ResetPasswordInput {
-  token: String!
-  password: String!
-  confirmPassword: String!
-}
-
-type Response {
-  message: String!
-}
-
-input SignUpInput {
-  firstName: String
-  lastName: String
-  email: String!
-  password: String!
-  confirmPassword: String!
-  image: String
-}
-
-input UpdateProfileInput {
-  oldPassword: String
-  newPassword: String
-  confirmNewPassword: String
-  firstName: String
-  lastName: String
-  image: String
-  email: String
+	version: String!
+	isGoogleLoginEnabled: Boolean!
+	isFacebookLoginEnabled: Boolean!
+	isTwitterLoginEnabled: Boolean!
+	isGithubLoginEnabled: Boolean!
+	isEmailVerificationEnabled: Boolean!
+	isBasicAuthenticationEnabled: Boolean!
 }
 
 type User {
-  id: ID!
-  email: String!
-  signupMethod: String!
-  firstName: String
-  lastName: String
-  emailVerifiedAt: Int64
-  image: String
-  createdAt: Int64
-  updatedAt: Int64
+	id: ID!
+	email: String!
+	signupMethod: String!
+	firstName: String
+	lastName: String
+	emailVerifiedAt: Int64
+	image: String
+	createdAt: Int64
+	updatedAt: Int64
+	roles: [String!]!
 }
 
 type VerificationRequest {
-  id: ID!
-  identifier: String
-  token: String
-  email: String
-  expires: Int64
-  createdAt: Int64
-  updatedAt: Int64
+	id: ID!
+	identifier: String
+	token: String
+	email: String
+	expires: Int64
+	createdAt: Int64
+	updatedAt: Int64
+}
+
+type Error {
+	message: String!
+	reason: String!
+}
+
+type AuthResponse {
+	message: String!
+	accessToken: String
+	accessTokenExpiresAt: Int64
+	user: User
+}
+
+type Response {
+	message: String!
+}
+
+input SignUpInput {
+	firstName: String
+	lastName: String
+	email: String!
+	password: String!
+	confirmPassword: String!
+	image: String
+	roles: [String]
+}
+
+input LoginInput {
+	email: String!
+	password: String!
+	role: String
 }
 
 input VerifyEmailInput {
-  token: String!
+	token: String!
+}
+
+input ResendVerifyEmailInput {
+	email: String!
+}
+
+input UpdateProfileInput {
+	oldPassword: String
+	newPassword: String
+	confirmNewPassword: String
+	firstName: String
+	lastName: String
+	image: String
+	email: String
+	# roles: [String]
+}
+
+input AdminUpdateUserInput {
+  id: ID!
+  email: String
+  firstName: String
+  lastName: String
+  image: String
+  roles: [String]
+}
+
+input ForgotPasswordInput {
+	email: String!
+}
+
+input ResetPasswordInput {
+	token: String!
+	password: String!
+	confirmPassword: String!
+}
+
+input DeleteUserInput {
+	email: String!
+}
+
+type Mutation {
+	signup(params: SignUpInput!): AuthResponse!
+	login(params: LoginInput!): AuthResponse!
+	logout: Response!
+	updateProfile(params: UpdateProfileInput!): Response!
+  adminUpdateUser(params: AdminUpdateUserInput!): User!
+	verifyEmail(params: VerifyEmailInput!): AuthResponse!
+	resendVerifyEmail(params: ResendVerifyEmailInput!): Response!
+	forgotPassword(params: ForgotPasswordInput!): Response!
+	resetPassword(params: ResetPasswordInput!): Response!
+	deleteUser(params: DeleteUserInput!): Response!
+}
+
+type Query {
+	meta: Meta!
+	users: [User!]!
+	token(role: String): AuthResponse
+	profile: User!
+	verificationRequests: [VerificationRequest!]!
 }
 ```
 
@@ -188,6 +201,22 @@ Query to get the `token` information. It returns `AuthResponse` type with the fo
 
 > Note: If `token` is present as HTTP Cookie / Authorization header with bearer token. If the token is not present or an invalid token is present it throws `unauthorized` error
 
+This query can take a optional input `role` of type `string` to verify if the current token is valid for a given role.
+
+**Example**
+
+```graphql
+query {
+  token(role: "admin") {
+    user {
+      ...
+    }
+  }
+}
+```
+
+**Response**
+
 | Key                    | Description                                                                                            |
 | ---------------------- | ------------------------------------------------------------------------------------------------------ |
 | `message`              | Error / Success message from server                                                                    |
@@ -209,6 +238,7 @@ query {
       lastName
       email
       image
+      roles
     }
   }
 }
@@ -229,6 +259,7 @@ Query to get the `profile` information of a user. It returns `User` type with th
 | `signupMethod`    | methods using which user have signed up, eg: `google,github` |
 | `emailVerifiedAt` | timestamp at which the email address was verified            |
 | `image`           | profile picture URL                                          |
+| `roles`           | List of roles assigned to user                               |
 | `createdAt`       | timestamp at which the user entry was created                |
 | `updatedAt`       | timestamp at which the user entry was updated                |
 
@@ -241,6 +272,7 @@ query {
     lastName
     email
     image
+    roles
   }
 }
 ```
@@ -267,6 +299,7 @@ query {
     lastName
     email
     image
+    roles
   }
 }
 ```
@@ -321,6 +354,7 @@ A mutation to signup users using email and password. It accepts `params` of type
 | `firstName`       | First name of the user                                          | false    |
 | `lastName`        | Last name of the user                                           | false    |
 | `image`           | Profile picture URL                                             | false    |
+| `roles`           | List of roles to be assigned. If not specified `DEFAULT_ROLE` value of env will be used | false |
 
 This mutation returns `AuthResponse` type with following keys
 
@@ -355,6 +389,7 @@ A mutation to login users using email and password. It accepts `params` of type 
 | ---------- | ------------------------------- | -------- |
 | `email`    | Email address of user           | true     |
 | `password` | Password that user wants to set | true     |
+| `role` | Role to login with | false |
 
 This mutation returns `AuthResponse` type with following keys
 
@@ -377,6 +412,7 @@ mutation {
       firstName
       lastName
       image
+      roles
     }
     accessToken
     accessTokenExpiresAt
@@ -562,6 +598,44 @@ mutation {
     params: { token: "some token", password: "test", confirmPassword: "test" }
   ) {
     message
+  }
+}
+```
+
+### - `adminUpdateProfile`
+
+Mutation to update the profile of users. This mutation is only allowed for super admins. It accepts `params` of type `AdminUpdateUserInput` with following keys
+
+> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) as value
+
+**Request Params**
+
+| Key               | Description                                                                 | Required |
+| ----------------- | --------------------------------------------------------------------------- | -------- |
+| `id`           | ID of user to be updated                                            | true     |
+| `email`        | New email address of user                                         | false     |
+| `firstName` | Updated first name of user | false     |
+| `lastName` | Updated last name of user | false     |
+| `image` | Updated image url of user | false     |
+| `roles` | Set of new roles for a given user | false     |
+
+This mutation returns `User` type with update values
+
+
+**Sample Mutation**
+
+```graphql
+mutation {
+  adminUpdateUser(params: {
+    id: "20"
+    firstName: "Bob"
+    roles: ["user", "admin"]
+  }) {
+    id
+    firstName
+    roles
+    createdAt
+    updatedAt
   }
 }
 ```
