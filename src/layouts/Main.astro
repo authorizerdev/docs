@@ -4,6 +4,7 @@ import ArticleFooter from '../components/ArticleFooter.astro';
 import SiteSidebar from '../components/SiteSidebar.astro';
 import ThemeToggle from '../components/ThemeToggle.tsx';
 import DocSidebar from '../components/DocSidebar.tsx';
+import SidebarToggle from '../components/SidebarToggle.tsx';
 
 // Component Script:
 // You can write any JavaScript/TypeScript that you'd like here.
@@ -101,6 +102,7 @@ const title = `Authorizer Docs | ${content.title}`
         line-height: 1;
         color: var(--theme-text);
         text-decoration: none;
+        font-size: 18px;
       }
 
       #site-title:hover,
@@ -166,8 +168,23 @@ const title = `Authorizer Docs | ${content.title}`
         display: none;
       }
 
+      button {
+        cursor: pointer;
+      }
+
+      :global(.mobile-sidebar-toggle) {
+        overflow: hidden;
+      }
+      :global(.mobile-sidebar-toggle #sidebar-nav) {
+        display: block;
+        top: 80px;
+        width: 100vw;
+        background: #fff;
+        padding: 0 20px;
+      }
+
       @media (min-width: 64em) {
-        .menu-and-logo button {
+        #menu-toggle {
           display: none;
         }
         .layout {
@@ -188,6 +205,10 @@ const title = `Authorizer Docs | ${content.title}`
 
         .nav-wrapper {
           display: contents;
+        }
+
+        #site-title {
+          font-size: 24px;
         }
       }
 
@@ -221,11 +242,9 @@ const title = `Authorizer Docs | ${content.title}`
       <nav class="layout">
         <div class="nav-wrapper">
           <div class="menu-and-logo flex">
-            <button id="menu-toggle">
-              <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
+            <div id="menu-toggle">
+              <SidebarToggle:load />
+            </div>
             <a id="site-title" href="/">
               <img src="/images/logo.png" alt="logo" style="height:1.5em"/>
               Authorizer

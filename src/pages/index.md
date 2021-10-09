@@ -7,7 +7,7 @@ layout: ../layouts/Main.astro
 
 **Authorizer** is an open-source authentication and authorization solution for your applications. Bring your database and have complete control over the user information. You can self-host authorizer instances and connect to any SQL database.
 
-<img src="/images/authorizer-architecture.png" style="height:20em;width:100%;object-fit:cover;"/>
+<img src="/images/authorizer-architecture.png" style="height:20em;width:100%;object-fit:contain;"/>
 
 #### We offer the following functionality
 
