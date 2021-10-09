@@ -7,7 +7,7 @@ layout: ../../layouts/Main.astro
 
 **Table of Contents**
 
-- [fingertipLogin](#--fingertiplogin)
+- [browserLogin](#--browserlogin)
 - [login](#--login)
 - [signup](#--signup)
 - [verifyEmail](#--verifyemail)
@@ -29,7 +29,7 @@ const authRef = new Authorizer({
 });
 ```
 
-## - `fingertipLogin`
+## - `browserLogin`
 
 Function to auto login from browser using the builtin UI of `authorizer`. It checks for session, if available returns the user information, else redirects to login page.
 
@@ -46,37 +46,7 @@ If session exists following keys are returned.
 **Sample Usage**
 
 ```js
-const res = await authRef.fingertipLogin();
-```
-
-## - `login`
-
-Function to login user using email and password.
-
-It accepts JSON object as a parameter with following keys
-
-| Key        | Description           | Required |
-| ---------- | --------------------- | -------- |
-| `email`    | Email address of user | true     |
-| `password` | Password of user      | true     |
-
-Following is the response for `login` function
-
-**Response**
-| Key | Description |
-| ---------------------- | ------------------------------------------------------------------------------------------------------ |
-| `message` | Error / Success message from server |
-| `accessToken` | accessToken that frontend application can use for further authorized requests |
-| `accessTokenExpiresAt` | timestamp when the current token is going to expire, so that frontend can request for new access token |
-| `user` | User object with all the basic profile information |
-
-**Sample Usage**
-
-```js
-const res = await authRef.login({
-  email: "foo@bar.com",
-  password: "test",
-});
+const res = await authRef.browserLogin();
 ```
 
 ## - `signup`
@@ -85,14 +55,15 @@ Function to sign-up user using email and password.
 
 It accepts JSON object as a parameter with following keys
 
-| Key               | Description                                                     | Required |
-| ----------------- | --------------------------------------------------------------- | -------- |
-| `email`           | Email address of user                                           | true     |
-| `password`        | Password that user wants to set                                 | true     |
-| `confirmPassword` | Value same as password to make sure that its user and not robot | true     |
-| `firstName`       | First name of the user                                          | false    |
-| `lastName`        | Last name of the user                                           | false    |
-| `image`           | Profile picture URL                                             | false    |
+| Key               | Description                                                              | Required |
+| ----------------- | ------------------------------------------------------------------------ | -------- |
+| `email`           | Email address of user                                                    | true     |
+| `password`        | Password that user wants to set                                          | true     |
+| `confirmPassword` | Value same as password to make sure that its user and not robot          | true     |
+| `firstName`       | First name of the user                                                   | false    |
+| `lastName`        | Last name of the user                                                    | false    |
+| `image`           | Profile picture URL                                                      | false    |
+| `roles`           | Array of string with valid roles. Defaults to `[user]` if not configured | false    |
 
 Following is the response for `signup` function
 
@@ -112,6 +83,37 @@ const res = await authRef.signup({
   email: "foo@bar.com",
   password: "test",
   confirmPassword: "test",
+});
+```
+
+## - `login`
+
+Function to login user using email and password.
+
+It accepts JSON object as a parameter with following keys
+
+| Key        | Description                                                                             | Required |
+| ---------- | --------------------------------------------------------------------------------------- | -------- |
+| `email`    | Email address of user                                                                   | true     |
+| `password` | Password of user                                                                        | true     |
+| `role`     | Role of user that he/she wants to login with. Defaults to `user` role if not configured | false    |
+
+Following is the response for `login` function
+
+**Response**
+| Key | Description |
+| ---------------------- | ------------------------------------------------------------------------------------------------------ |
+| `message` | Error / Success message from server |
+| `accessToken` | accessToken that frontend application can use for further authorized requests |
+| `accessTokenExpiresAt` | timestamp when the current token is going to expire, so that frontend can request for new access token |
+| `user` | User object with all the basic profile information |
+
+**Sample Usage**
+
+```js
+const res = await authRef.login({
+  email: "foo@bar.com",
+  password: "test",
 });
 ```
 
@@ -165,6 +167,7 @@ It accepts the optional JSON object as parameter, you can pass the HTTP Headers 
 | `signupMethod`    | methods using which user have signed up, eg: `google,github` |
 | `emailVerifiedAt` | timestamp at which the email address was verified            |
 | `image`           | profile picture URL                                          |
+| `roles`           | user roles                                                   |
 | `createdAt`       | timestamp at which the user entry was created                |
 | `updatedAt`       | timestamp at which the user entry was updated                |
 
@@ -290,10 +293,15 @@ Function to login using OAuth Providers. This is mainly used in browser as user 
 
 > Note only enabled oauth providers can be used here. To get the information about enabled oauth provider you can use [`getMetadata`](#--getmetadata) function
 
+It supports optional argument for `role` based login
+
 **Sample Usage**
 
 ```js
 await authRef.oauthLogin("google");
+
+// login with specific role
+await authRef.oauthLogin("google", "admin");
 ```
 
 ## - `getMetadata`
@@ -322,7 +330,7 @@ const res await authRef.getMetadata()
 
 Function to get session information. This function makes an authorized request, hence if it is used from the browser the HTTP cookie is sent if user has logged in else you need to pass headers object.
 
-It accepts the optional JSON object as parameter, you can pass the HTTP Headers there.
+It accepts the optional JSON object as parameter, you can pass the HTTP Headers there. Optionally you can also validate the role against the given token by passing the role as second argument to function.
 
 | Key             | Description                                                                          | Required |
 | --------------- | ------------------------------------------------------------------------------------ | -------- |
@@ -343,10 +351,16 @@ It accepts the optional JSON object as parameter, you can pass the HTTP Headers 
 // from browser with HTTP Cookie
 const res = await authRef.getSession();
 
+// role validation with http cookie
+const res = await authRef.getSession(null, "admin");
+
 // from NodeJS / if HTTP cookie is not used
-const res = await authRef.getSession({
-  Authorization: `Bearer some_token`,
-});
+const res = await authRef.getSession(
+  {
+    Authorization: `Bearer some_token`,
+  },
+  "admin"
+);
 ```
 
 ## - `logout`

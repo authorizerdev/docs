@@ -59,7 +59,7 @@ const authRef = new Authorizer({
   });
 
   async function onLoad() {
-    const res = await authorizerRef.fingertipLogin();
+    const res = await authorizerRef.browserLogin();
     if (res && res.user) {
       // you can use user information here, eg:
       /**
