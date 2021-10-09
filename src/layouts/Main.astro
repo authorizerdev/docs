@@ -59,12 +59,15 @@ const title = `Authorizer Docs | ${content.title}`
       }
 
       header {
-        width: 100%;
-        height: 100%;
+        width: 100vw;
+        height: 70px;
         background-color: var(--theme-bg-offset);
         display: flex;
         align-items: center;
         justify-content: center;
+        position: sticky;
+        top: 0;
+        z-index: 100;
       }
 
       .layout {
@@ -128,7 +131,7 @@ const title = `Authorizer Docs | ${content.title}`
       .sidebar {
         max-height: 100vh;
         position: sticky;
-        top: 0;
+        top: 70px;
         padding: var(--doc-padding) 0;
       }
 
@@ -238,7 +241,7 @@ const title = `Authorizer Docs | ${content.title}`
       </nav>
     </header>
 
-    <main class="layout">
+    <main class="layout body">
       <aside class="sidebar" id="sidebar-nav">
         <SiteSidebar />
       </aside>
