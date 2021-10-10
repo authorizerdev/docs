@@ -49,6 +49,7 @@ const title = `Authorizer Docs | ${content.title}`
 		<link rel="preconnect" href="https://fonts.googleapis.com">
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 		<link href="https://fonts.googleapis.com/css2?family=Major+Mono+Display&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/9f098fb7e7.js" crossorigin="anonymous"></script>
 
     <style>
       body {
@@ -60,7 +61,6 @@ const title = `Authorizer Docs | ${content.title}`
       }
 
       header {
-        width: 100vw;
         height: 70px;
         background-color: var(--theme-bg-offset);
         display: flex;
@@ -149,7 +149,6 @@ const title = `Authorizer Docs | ${content.title}`
         display: flex;
         flex-direction: column;
         align-items: center;
-        height: 100%;
       }
 
       .content {
@@ -177,10 +176,13 @@ const title = `Authorizer Docs | ${content.title}`
       }
       :global(.mobile-sidebar-toggle #sidebar-nav) {
         display: block;
-        top: 80px;
+        top: 70px;
         width: 100vw;
-        background: #fff;
+        background-color: var(--theme-bg-offset);
+        z-index: 101;
+        overflow: auto;
         padding: 0 20px;
+        padding-bottom: 50px;
       }
 
       @media (min-width: 64em) {
@@ -254,13 +256,15 @@ const title = `Authorizer Docs | ${content.title}`
           <div />
 
           <div>
+            <a style="margin-right:20px;text-decoration: none;" href="https://discord.gg/bSPgHKZR" target="_blank"><i class="fab fa-discord"></i></a>
+						<a style="margin-right:25px;text-decoration: none;" href="https://github.com/authorizerdev/authorizer" target="_blank"><i class="fab fa-github"></i></a>
             <ThemeToggle client:idle />
           </div>
         </div>
       </nav>
     </header>
 
-    <main class="layout body">
+    <main class="layout">
       <aside class="sidebar" id="sidebar-nav">
         <SiteSidebar />
       </aside>
