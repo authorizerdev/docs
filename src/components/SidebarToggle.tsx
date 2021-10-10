@@ -16,9 +16,14 @@ const MenuToggle: FunctionalComponent = () => {
   const handleClick = () => {
     setSidebarShown(!sidebarShown);
   };
-  console.log({ sidebarShown });
+
   return (
-    <button onClick={handleClick}>
+    <button
+      type="button"
+      aria-pressed={sidebarShown ? "true" : "false"}
+      id="menu-toggle"
+      onClick={handleClick}
+    >
       <svg
         xmlns="http://www.w3.org/2000/svg"
         width="1em"
