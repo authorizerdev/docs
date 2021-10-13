@@ -92,11 +92,11 @@ Function to login user using email and password.
 
 It accepts JSON object as a parameter with following keys
 
-| Key        | Description                                                                             | Required |
-| ---------- | --------------------------------------------------------------------------------------- | -------- |
-| `email`    | Email address of user                                                                   | true     |
-| `password` | Password of user                                                                        | true     |
-| `role`     | Role of user that he/she wants to login with. Defaults to `user` role if not configured | false    |
+| Key        | Description                                                                                                            | Required |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------- | -------- |
+| `email`    | Email address of user                                                                                                  | true     |
+| `password` | Password of user                                                                                                       | true     |
+| `roles`    | Roles of user that he/she wants to login with. It accepts array of string. Defaults to `[user]` role if not configured | false    |
 
 Following is the response for `login` function
 
@@ -330,7 +330,7 @@ const res await authRef.getMetadata()
 
 Function to get session information. This function makes an authorized request, hence if it is used from the browser the HTTP cookie is sent if user has logged in else you need to pass headers object.
 
-It accepts the optional JSON object as parameter, you can pass the HTTP Headers there. Optionally you can also validate the role against the given token by passing the role as second argument to function.
+It accepts the optional JSON object as parameter, you can pass the HTTP Headers there. Optionally you can also validate the roles against the given token by passing the `roles` as second argument to function.
 
 | Key             | Description                                                                          | Required |
 | --------------- | ------------------------------------------------------------------------------------ | -------- |

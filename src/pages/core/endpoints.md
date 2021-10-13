@@ -28,7 +28,7 @@ Endpoints supported by Authorizer
 This endpoint supports following query parameters
 
 - `redirectURL`: URL where user should be redirected after login
-- `role`: Role with which user should login. This is optional and by default it will use the `DEFAULT_ROLE` specified in `env`
+- `roles`: Roles with which user should login. This is optional and by default it will use the `DEFAULT_ROLES` specified in `env`
 
 Sample URL: `/oauth_login/google?redirectURL=https://myapp.com&role=admin`
 
