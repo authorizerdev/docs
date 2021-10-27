@@ -8,7 +8,6 @@ binaries are baked with required deployment files and bundled. You can download 
 
 - Mac OSX
 - Linux
-- Windows
 
 ## Getting Started
 
@@ -16,7 +15,7 @@ binaries are baked with required deployment files and bundled. You can download 
 
 - Download the Bundle for the specific OS from the [release page](https://github.com/authorizerdev/authorizer/releases)
 
-> Note: For windows, it includes `.zip` file. For Linux & MacOS, it includes `.tar.gz` file.
+> Note: For windows, we recommend running using docker image to run authorizer.
 
 - Unzip using following command
 
@@ -24,12 +23,6 @@ binaries are baked with required deployment files and bundled. You can download 
 
   ```sh
   tar -zxf AUTHORIZER_VERSION -c authorizer
-  ```
-
-  - Windows
-
-  ```sh
-  unzip AUTHORIZER_VERSION
   ```
 
 - Change directory to `authorizer`
