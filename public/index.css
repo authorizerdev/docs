@@ -169,6 +169,21 @@ pre {
   overflow-x: auto;
 }
 
+td {
+  text-align: center;
+  padding: 5px;
+}
+
+table {
+  border-collapse: collapse;
+  border-radius: 3px;
+}
+
+th,
+td {
+  border: 1px solid #dfdfdf;
+}
+
 @media (min-width: 37.75em) {
   pre {
     --padding-inline: 1.25rem;
