@@ -16,6 +16,7 @@ layout: ../../layouts/Main.astro
 - [forgotPassword](#--forgotpassword)
 - [resetPassword](#--resetPassword)
 - [oauthLogin](#--oauthlogin)
+- [magicLogin](#--magiclogin)
 - [getMetadata](#--getmetadata)
 - [getSession](#--getsession)
 - [logout](#--logout)
@@ -245,6 +246,8 @@ This function is Step 1 process.
 
 It accepts JSON object as parameter with following keys
 
+> Note: You will need a SMTP server with an email address and password configured as [authorizer environment](/core/env/) using which system can send emails.
+
 | Key     | Description                                  | Required |
 | ------- | -------------------------------------------- | -------- |
 | `email` | Email for which password needs to be changed | true     |
@@ -302,6 +305,31 @@ await authRef.oauthLogin("google");
 
 // login with specific role
 await authRef.oauthLogin("google", "admin");
+```
+
+## - magicLogin
+
+Function to perform password less login.
+
+> Note: You will need a SMTP server with an email address and password configured as [authorizer environment](/core/env/) using which system can send emails.
+
+| Key     | Description                                               | Required |
+| ------- | --------------------------------------------------------- | -------- |
+| `email` | Email using which user needs to login                     | true     |
+| `roles` | List of valid valid roles using which user needs to login | false    |
+
+**Response**
+
+| Key       | Description                         |
+| --------- | ----------------------------------- |
+| `message` | Success / Error message from server |
+
+**Sample Usage**
+
+```js
+const res = await authRef.magicLogin({
+  email: "foo@bar.com",
+});
 ```
 
 ## - `getMetadata`

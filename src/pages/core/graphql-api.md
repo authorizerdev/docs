@@ -19,6 +19,7 @@ Table of Contents
 - [Mutations](#mutations)
   - [`signup`](#--signup)
   - [`login`](#--login)
+  - [`magicLogin`](#--magiclogin)
   - [`logout`](#--logout)
   - [`updateProfile`](#--updateprofile)
   - [`verifyEmail`](#--verifyemail)
@@ -41,6 +42,7 @@ type Meta {
   isGithubLoginEnabled: Boolean!
   isEmailVerificationEnabled: Boolean!
   isBasicAuthenticationEnabled: Boolean!
+  isMagicLoginEnabled: Boolean!
 }
 
 type User {
@@ -89,13 +91,13 @@ input SignUpInput {
   password: String!
   confirmPassword: String!
   image: String
-  roles: [String]
+  roles: [String!]
 }
 
 input LoginInput {
   email: String!
   password: String!
-  role: String
+  roles: [String!]
 }
 
 input VerifyEmailInput {
@@ -140,9 +142,15 @@ input DeleteUserInput {
   email: String!
 }
 
+input MagicLoginInput {
+  email: String!
+  roles: [String!]
+}
+
 type Mutation {
   signup(params: SignUpInput!): AuthResponse!
   login(params: LoginInput!): AuthResponse!
+  magicLogin(params: MagicLoginInput!): Response!
   logout: Response!
   updateProfile(params: UpdateProfileInput!): Response!
   adminUpdateUser(params: AdminUpdateUserInput!): User!
@@ -178,6 +186,7 @@ It returns `Meta` type with the following possible values
 | `isGithubLoginEnabled`       | It gives information if twitter login is configured or not            |
 | `isGithubLoginEnabled`       | It gives information if username and password login is enabled or not |
 | `isEmailVerificationEnabled` | It gives information if email verification is enabled or not          |
+| `isMagicLoginEnabled`        | It gives information if password less login is enabled or not         |
 
 **Sample Query**
 
@@ -188,6 +197,7 @@ query {
     isGoogleLoginEnabled
     isGithubLoginEnabled
     isBasicAuthenticationEnabled
+    isMagicLoginEnabled
     isEmailVerificationEnabled
     isFacebookLoginEnabled
     isTwitterLoginEnabled
@@ -416,6 +426,37 @@ mutation {
     }
     accessToken
     accessTokenExpiresAt
+    message
+  }
+}
+```
+
+### - `magicLogin`
+
+A mutation to perform password less login. It accepts `params` of type `MagicLoginInput` with following keys as parameter. When the operation is successful, it sends user email with magic link to login. This link is valid for 30 minutes only.
+
+> Note: You will need a SMTP server with an email address and password configured as [authorizer environment](/core/env/) using which system can send emails.
+
+**Request Params**
+
+| Key     | Description           | Required |
+| ------- | --------------------- | -------- |
+| `email` | Email address of user | true     |
+| `roles` | Roles to login with   | false    |
+
+This mutation returns `Response` type with following keys
+
+**Response**
+
+| Key       | Description                         |
+| --------- | ----------------------------------- |
+| `message` | Success / Error message from server |
+
+**Sample Mutation**
+
+```graphql
+mutation {
+  magicLogin(params: { email: "foo@bar.com" }) {
     message
   }
 }
