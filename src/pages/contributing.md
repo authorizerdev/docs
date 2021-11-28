@@ -38,17 +38,12 @@ Please ask as many questions as you need, either directly in the issue or on [Di
 - OS: Linux or macOS or windows
 - Go: (Golang)(https://golang.org/dl/) >= v1.15
 
-### Familiarize yourself with Authorizer
-
-1. [Architecture of Authorizer](TODO)
-2. [authorizer code and file structure overview](TODO)
-
 ### Project Setup for Authorizer core
 
 1. Fork the [authorizer](https://github.com/authorizerdev/authorizer) repository (**Skip this step if you have access to repo**)
 2. `git clone https://github.com/authorizerdev/authorizer.git`
 3. `cd authorizer`
-4. `cp .env.sample .env`. Check all the supported env [here](TODO)
+4. `cp .env.sample .env`. Check all the supported env [here](/core/env)
 5. Build the code `make clean && make`
    > Note: if you don't have [`make`](https://www.ibm.com/docs/en/aix/7.2?topic=concepts-make-command), you can `cd` into `server` dir and build using the `go build` command
 6. Run binary `./build/server`
