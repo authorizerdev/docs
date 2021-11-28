@@ -13,7 +13,7 @@ We're so excited you're interested in helping with Authorizer! We are happy to h
 ## Where to ask questions?
 
 1. Check our [Github Issues](https://github.com/authorizerdev/authorizer/issues) to see if someone has already answered your question.
-2. Join our community on Discord(TODO: coming soon) and feel free to ask us your questions
+2. Join our community on [Discord](https://discord.gg/bSPgHKZR) and feel free to ask us your questions
 
 As you gain experience with Authorizer, please help answer other people's questions! :pray:
 
@@ -22,7 +22,7 @@ As you gain experience with Authorizer, please help answer other people's questi
 You can get started by taking a look at our [Github issues](https://github.com/authorizerdev/authorizer/issues)  
 If you find one that looks interesting and no one else is already working on it, comment on that issue and start contributing 🙂.
 
-Please ask as many questions as you need, either directly in the issue or on [Discord](). We're happy to help!:raised_hands:
+Please ask as many questions as you need, either directly in the issue or on [Discord](https://discord.gg/bSPgHKZR). We're happy to help!:raised_hands:
 
 ### Contributions that are ALWAYS welcome
 

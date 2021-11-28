@@ -1,15 +1,18 @@
-import type { FunctionalComponent } from 'preact';
-import { h } from 'preact';
-import { useState, useEffect, useRef } from 'preact/hooks';
-import EditOnGithub from './EditOnGithub';
+import type { FunctionalComponent } from "preact";
+import { h } from "preact";
+import { useState, useEffect, useRef } from "preact/hooks";
+import EditOnGithub from "./EditOnGithub";
 
-const DocSidebar: FunctionalComponent<{ headers: any[]; editHref: string }> = ({ headers = [], editHref }) => {
+const DocSidebar: FunctionalComponent<{ headers: any[]; editHref: string }> = ({
+  headers = [],
+  editHref,
+}) => {
   const itemOffsets = useRef([]);
   const [activeId, setActiveId] = useState<string>(undefined);
 
   useEffect(() => {
     const getItemOffsets = () => {
-      const titles = document.querySelectorAll('article :is(h2, h3, h4)');
+      const titles = document.querySelectorAll("article :is(h2, h3, h4)");
       itemOffsets.current = Array.from(titles).map((title) => ({
         id: title.id,
         topOffset: title.getBoundingClientRect().top + window.scrollY,
@@ -17,7 +20,9 @@ const DocSidebar: FunctionalComponent<{ headers: any[]; editHref: string }> = ({
     };
 
     const onScroll = () => {
-      const itemIndex = itemOffsets.current.findIndex((item) => item.topOffset > window.scrollY + window.innerHeight / 3);
+      const itemIndex = itemOffsets.current.findIndex(
+        (item) => item.topOffset > window.scrollY + window.innerHeight / 3
+      );
       if (itemIndex === 0) {
         setActiveId(undefined);
       } else if (itemIndex === -1) {
@@ -28,12 +33,12 @@ const DocSidebar: FunctionalComponent<{ headers: any[]; editHref: string }> = ({
     };
 
     getItemOffsets();
-    window.addEventListener('resize', getItemOffsets);
-    window.addEventListener('scroll', onScroll);
+    window.addEventListener("resize", getItemOffsets);
+    window.addEventListener("scroll", onScroll);
 
     return () => {
-      window.removeEventListener('resize', getItemOffsets);
-      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener("resize", getItemOffsets);
+      window.removeEventListener("scroll", onScroll);
     };
   }, []);
 
@@ -45,7 +50,11 @@ const DocSidebar: FunctionalComponent<{ headers: any[]; editHref: string }> = ({
           {headers
             .filter(({ depth }) => depth > 1 && depth < 5)
             .map((header) => (
-              <li class={`header-link depth-${header.depth} ${activeId === header.slug ? 'active' : ''}`.trim()}>
+              <li
+                class={`header-link depth-${header.depth} ${
+                  activeId === header.slug ? "active" : ""
+                }`.trim()}
+              >
                 <a href={`#${header.slug}`}>{header.text}</a>
               </li>
             ))}
