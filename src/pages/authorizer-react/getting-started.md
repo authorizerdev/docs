@@ -7,6 +7,10 @@ Authorizer React SDK allows you to implement authentication in your [React](http
 
 Here is a quick guide on getting started with `@authorizerdev/authorizer-react` package.
 
+<div class="video-container">
+  <iframe class="frame" width="560" height="315" src="https://www.youtube.com/embed/2aOTuwkfYvM" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+
 ## Step 1 - Create Instance
 
 Get Authorizer URL by instantiating [Authorizer instance](/deployment) and configuring it with necessary [environment variables](/core/env).
@@ -63,9 +67,4 @@ const Profile = () => {
 
 ## Examples
 
-Here are link to examples that covers the use of above mentioned components with auth based routing.
-
-- [Basic Example with React Router](https://github.com/authorizerdev/authorizer-react/tree/main/example)
-- [Example with Gatsby]() - Coming Soon
-- [Example with NextJS]() - Coming Soon
-- [Example with custom theme]() - Coming Soon
+Please check the [example repo](https://github.com/authorizerdev/examples) to see how to use this component library.
