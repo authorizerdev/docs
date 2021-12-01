@@ -20,6 +20,12 @@ layout: ../layouts/Main.astro
 - ✅ Role-based access management
 - ✅ Password-less login with email and magic link
 
+### Introduction to authorizer.dev
+
+<div class="video-container">
+  <iframe class="frame" width="560" height="315" src="https://www.youtube.com/embed/uQka5O2RwpU" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+
 ## Roadmap
 
 - Support more JWT encryption algorithms (Currently supporting HS256)
