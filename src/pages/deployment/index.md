@@ -6,8 +6,8 @@ layout: ../../layouts/Main.astro
 You can self host Authorizer instance using various deployment options
 
 - [Heroku](/deployment/heroku/)
-- [Kubernetes](/deployment/docker)
-- [Binary and Systemd](/deployment/binary)
+- [Kubernetes](/deployment/kubernetes)
+- [Binary](/deployment/binary)
 
 OR
 
