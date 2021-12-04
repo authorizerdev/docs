@@ -6,6 +6,7 @@ const MenuToggle: FunctionalComponent = () => {
 
   useEffect(() => {
     const body = document.getElementsByTagName("body")[0];
+
     if (sidebarShown) {
       body.classList.add("mobile-sidebar-toggle");
     } else {
@@ -14,6 +15,7 @@ const MenuToggle: FunctionalComponent = () => {
   }, [sidebarShown]);
 
   const handleClick = () => {
+    console.log(`clicked:`);
     setSidebarShown(!sidebarShown);
   };
 
@@ -22,6 +24,7 @@ const MenuToggle: FunctionalComponent = () => {
       type="button"
       aria-pressed={sidebarShown ? "true" : "false"}
       id="menu-toggle"
+      onClick={handleClick}
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
