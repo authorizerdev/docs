@@ -7,7 +7,7 @@ Helm chart for Authorizer deployment is coming soon.
 
 Till that you can use [docker image](https://hub.docker.com/repository/docker/lakhansamani/authorizer) to deploy with following configuration. It includes
 
-- [Workload](https://kubernetes.io/docs/concepts/workloads/)
+- [Deployment](https://kubernetes.io/docs/concepts/workloads/)
 - [Service](https://kubernetes.io/docs/concepts/services-networking/)
 - [Nginx](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-helm/)
 - [Cert manager](https://github.com/jetstack/cert-manager)
@@ -22,26 +22,13 @@ Till that you can use [docker image](https://hub.docker.com/repository/docker/la
 
 In your kubernetes cluster install nginx using helm chart. Here are the [docs](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-helm/)
 
-## Step 3: Add Authorizer Service and Workload
+## Step 3: Add Authorizer Deployment and Service
 
 Copy following into `authorizer.yml` file and update the required variables
 
 > Note: Replace your domain, database strings and other environment variables. For more environment variables check [here](/core/env)
 
 ```yml
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: authorizer
-spec:
-  selector:
-    app: authorizer
-  ports:
-    - port: 80
-      name: http
-      targetPort: 8080
-  type: ClusterIP
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -78,6 +65,19 @@ spec:
             - name: JWT_TYPE
               value: "HS256"
           imagePullPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: authorizer
+spec:
+  selector:
+    app: authorizer
+  ports:
+    - port: 80
+      name: http
+      targetPort: 8080
+  type: ClusterIP
 ---
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
