@@ -24,6 +24,8 @@ layout: ../../layouts/Main.astro
 | `authorizerURL` | `string` | Authorizer backend URL                                                                                                     | `true`   |
 | `redirectURL`   | `string` | Frontend application URL or the page where you want to redirect user post login. Default value is `window.location.origin` | `false`  |
 
+- `onTokenCallback`: [optional] Async callback that is called when a successful token is received from backend. This can be used to manage frontend state.
+
 ### Sample Usage
 
 ```jsx
