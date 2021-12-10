@@ -53,10 +53,10 @@ Let’s say your Heroku app is called authorizer-heroku and is running on https:
 From inside the graphql-engine-heroku directory, use the Heroku CLI to configure the git repo you cloned in Step 1 to be able to push to this app.
 
 ```sh
-# Replace <authorizer-heroku> with your Heroku app's name
+# Replace authorizer-heroku with your Heroku app's name
 
-heroku git:remote -a <authorizer-heroku>
-heroku stack:set container -a <authorizer-heroku>
+heroku git:remote -a authorizer-heroku
+heroku stack:set container -a authorizer-heroku
 ```
 
 You can find your Heroku git repo in your Heroku - Settings - Info - Heroku Git URL
