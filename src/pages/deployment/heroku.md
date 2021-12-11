@@ -3,9 +3,9 @@ title: Heroku
 layout: ../../layouts/Main.astro
 ---
 
-## Deploying new heroku instance
+## Deploying new instance
 
-Deploy Authorizer using [heroku](https://github.com/authorizerdev/authorizer-heroku) with Postgres database for free and quickly play with it in 30seconds
+Deploy Authorizer using [heroku](https://github.com/authorizerdev/authorizer-heroku) for free and quickly play with it in 30seconds
 <br/>
 
 [![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/authorizerdev/authorizer-heroku)
