@@ -87,7 +87,7 @@ metadata:
 spec:
   acme:
     server: https://acme-v02.api.letsencrypt.org/directory
-    email: lakhan@contentment.org
+    email: your_email_address
     privateKeySecretRef:
       name: letsencrypt-prod
     solvers:
