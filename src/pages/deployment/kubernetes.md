@@ -57,7 +57,7 @@ spec:
             - name: DATABASE_URL
               value: "YOUR_DATA BASE URL"
             - name: DATABASE_TYPE
-              value: "DATABASE TYPE postgres/mysql/sqlite"
+              value: "DATABASE TYPE postgres/mysql/sqlite/sqlserver/arangodb"
             - name: ADMIN_SECRET
               value: "YOUR_ADMIN_SECRET"
             - name: JWT_SECRET

@@ -8,11 +8,16 @@ layout: ../../layouts/Main.astro
 - [Postgres](https://www.postgresql.org/)
 - [MySQL](https://www.mysql.com/)
 - [SQLite](https://www.sqlite.org/index.html)
+- [SQLServer](https://www.microsoft.com/en-us/sql-server/)
+- [ArangoDB](https://www.arangodb.com/)
 
-## Tables created and used by Authorizer
+> Note: New environment variable is introduced - `DATABASE_NAME`: as database name, is not part of connection URL in case of arangodb.
+
+## Tables / collections created and used by Authorizer
 
 - `authorizer_users` - store the basic user information
 - `authorizer_verification_requests` - store the email verification / forgot password verification requests
+- `authorizer_sessions` - store the user sessions generated
 
 ## Data Store used for Authorization
 
