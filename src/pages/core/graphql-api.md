@@ -643,11 +643,17 @@ mutation {
 }
 ```
 
-### - `adminUpdateProfile`
+### - `adminUpdateUser`
 
 Mutation to update the profile of users. This mutation is only allowed for super admins. It accepts `params` of type `AdminUpdateUserInput` with following keys
 
-> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) as value
+> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) as value.
+
+```json
+{
+  "x-authorizer-admin-secret": "ADMIN_SECRET"
+}
+```
 
 **Request Params**
 
