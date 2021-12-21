@@ -9,9 +9,10 @@ layout: ../../layouts/Main.astro
 - [MySQL](https://www.mysql.com/)
 - [SQLite](https://www.sqlite.org/index.html)
 - [SQLServer](https://www.microsoft.com/en-us/sql-server/)
+- [MongoDB](https://www.mongodb.com)
 - [ArangoDB](https://www.arangodb.com/)
 
-> Note: New environment variable is introduced - `DATABASE_NAME`: as database name, is not part of connection URL in case of arangodb.
+> Note: New environment variable is introduced - `DATABASE_NAME`: as database name, is not part of connection URL in case of arangodb and mongodb.
 
 ## Tables / collections created and used by Authorizer
 
