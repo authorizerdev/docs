@@ -7,27 +7,29 @@ Authorizer instance supports GraphQL natively and thus helps you share the commo
 You can play with GraphQL API using the GraphQL playground that comes with your Authorizer instance. Access GraphQL playground on the
 instance same as of your Authorizer instance URL.
 
+> Note super admin only queries / mutations starts with underscore `_`.
+
 Table of Contents
 
 - [Schema](#schema)
 - [Queries](#queries)
   - [`meta`](#--meta)
-  - [`token`](#--token)
+  - [`session`](#--session)
   - [`profile`](#--profile)
-  - [`users`](#--users)
-  - [`verificationRequests`](#--verificationrequests)
+  - [`_users`](#--_users)
+  - [`_verification_requests`](#--_verificationrequests)
 - [Mutations](#mutations)
   - [`signup`](#--signup)
   - [`login`](#--login)
-  - [`magicLogin`](#--magiclogin)
+  - [`magic_link_login`](#--magic_link_login)
   - [`logout`](#--logout)
-  - [`updateProfile`](#--updateprofile)
-  - [`verifyEmail`](#--verifyemail)
-  - [`resendVerifyEmail`](#--resendverifyemail)
-  - [`forgotPassword`](#--forgotpassword)
-  - [`resetPassword`](#--resetpassword)
-  - [`adminUpdateUser`](#--adminupdateuser)
-  - [`deleteUser`](#--deleteuser)
+  - [`update_profile`](#--update_profile)
+  - [`verify_email`](#--verify_email)
+  - [`resend_verify_email`](#--resend_verify_email)
+  - [`forgot_password`](#--forgot_password)
+  - [`reset_password`](#--reset_password)
+  - [`_update_user`](#--_update_user)
+  - [`_delete_user`](#--_delete_user)
 
 ## Schema
 
@@ -36,26 +38,33 @@ Available types with the Authorizer:
 ```graphql
 type Meta {
   version: String!
-  isGoogleLoginEnabled: Boolean!
-  isFacebookLoginEnabled: Boolean!
-  isTwitterLoginEnabled: Boolean!
-  isGithubLoginEnabled: Boolean!
-  isEmailVerificationEnabled: Boolean!
-  isBasicAuthenticationEnabled: Boolean!
-  isMagicLoginEnabled: Boolean!
+  is_google_login_enabled: Boolean!
+  is_facebook_login_enabled: Boolean!
+  is_github_login_enabled: Boolean!
+  is_email_verification_enabled: Boolean!
+  is_basic_authentication_enabled: Boolean!
+  is_magic_link_login_enabled: Boolean!
 }
 
 type User {
   id: ID!
   email: String!
-  signupMethod: String!
-  firstName: String
-  lastName: String
-  emailVerifiedAt: Int64
-  image: String
-  createdAt: Int64
-  updatedAt: Int64
+  email_verified: Boolean!
+  signup_methods: String!
+  given_name: String
+  family_name: String
+  middle_name: String
+  nickname: String
+  # defaults to email
+  preferred_username: String
+  gender: String
+  birthdate: String
+  phone_number: String
+  phone_number_verified: Boolean
+  picture: String
   roles: [String!]!
+  created_at: Int64
+  updated_at: Int64
 }
 
 type VerificationRequest {
@@ -64,8 +73,8 @@ type VerificationRequest {
   token: String
   email: String
   expires: Int64
-  createdAt: Int64
-  updatedAt: Int64
+  created_at: Int64
+  updated_at: Int64
 }
 
 type Error {
@@ -75,8 +84,8 @@ type Error {
 
 type AuthResponse {
   message: String!
-  accessToken: String
-  accessTokenExpiresAt: Int64
+  access_token: String
+  expires_at: Int64
   user: User
 }
 
@@ -85,12 +94,17 @@ type Response {
 }
 
 input SignUpInput {
-  firstName: String
-  lastName: String
   email: String!
+  given_name: String
+  family_name: String
+  middle_name: String
+  nickname: String
+  gender: String
+  birthdate: String
+  phone_number: String
+  picture: String
   password: String!
-  confirmPassword: String!
-  image: String
+  confirm_password: String!
   roles: [String!]
 }
 
@@ -106,25 +120,35 @@ input VerifyEmailInput {
 
 input ResendVerifyEmailInput {
   email: String!
+  identifier: String!
 }
 
 input UpdateProfileInput {
-  oldPassword: String
-  newPassword: String
-  confirmNewPassword: String
-  firstName: String
-  lastName: String
-  image: String
+  old_password: String
+  new_password: String
+  confirm_new_password: String
   email: String
-  # roles: [String]
+  given_name: String
+  family_name: String
+  middle_name: String
+  nickname: String
+  gender: String
+  birthdate: String
+  phone_number: String
+  picture: String
 }
 
-input AdminUpdateUserInput {
+input UpdateUserInput {
   id: ID!
   email: String
-  firstName: String
-  lastName: String
-  image: String
+  given_name: String
+  family_name: String
+  middle_name: String
+  nickname: String
+  gender: String
+  birthdate: String
+  phone_number: String
+  picture: String
   roles: [String]
 }
 
@@ -135,14 +159,14 @@ input ForgotPasswordInput {
 input ResetPasswordInput {
   token: String!
   password: String!
-  confirmPassword: String!
+  confirm_password: String!
 }
 
 input DeleteUserInput {
   email: String!
 }
 
-input MagicLoginInput {
+input MagicLinkLoginInput {
   email: String!
   roles: [String!]
 }
@@ -150,23 +174,25 @@ input MagicLoginInput {
 type Mutation {
   signup(params: SignUpInput!): AuthResponse!
   login(params: LoginInput!): AuthResponse!
-  magicLogin(params: MagicLoginInput!): Response!
+  magic_link_login(params: MagicLinkLoginInput!): Response!
   logout: Response!
-  updateProfile(params: UpdateProfileInput!): Response!
-  adminUpdateUser(params: AdminUpdateUserInput!): User!
-  verifyEmail(params: VerifyEmailInput!): AuthResponse!
-  resendVerifyEmail(params: ResendVerifyEmailInput!): Response!
-  forgotPassword(params: ForgotPasswordInput!): Response!
-  resetPassword(params: ResetPasswordInput!): Response!
-  deleteUser(params: DeleteUserInput!): Response!
+  update_profile(params: UpdateProfileInput!): Response!
+  verify_email(params: VerifyEmailInput!): AuthResponse!
+  resend_verify_email(params: ResendVerifyEmailInput!): Response!
+  forgot_password(params: ForgotPasswordInput!): Response!
+  reset_password(params: ResetPasswordInput!): Response!
+  # admin only apis
+  _delete_user(params: DeleteUserInput!): Response!
+  _update_user(params: UpdateUserInput!): User!
 }
 
 type Query {
   meta: Meta!
-  users: [User!]!
-  token(roles: [String!]): AuthResponse
+  session(roles: [String!]): AuthResponse
   profile: User!
-  verificationRequests: [VerificationRequest!]!
+  # admin only apis
+  _users: [User!]!
+  _verification_requests: [VerificationRequest!]!
 }
 ```
 
@@ -177,16 +203,15 @@ type Query {
 Query to get the `meta` information about your authorizer instance. eg, version, configurations, etc
 It returns `Meta` type with the following possible values
 
-| Key                          | Description                                                           |
-| ---------------------------- | --------------------------------------------------------------------- |
-| `version`                    | Authorizer version that is currently deployed                         |
-| `isGoogleLoginEnabled`       | It gives information if google login is configured or not             |
-| `isGithubLoginEnabled`       | It gives information if github login is configured or not             |
-| `isGithubLoginEnabled`       | It gives information if facebook login is configured or not           |
-| `isGithubLoginEnabled`       | It gives information if twitter login is configured or not            |
-| `isGithubLoginEnabled`       | It gives information if username and password login is enabled or not |
-| `isEmailVerificationEnabled` | It gives information if email verification is enabled or not          |
-| `isMagicLoginEnabled`        | It gives information if password less login is enabled or not         |
+| Key                               | Description                                                   |
+| --------------------------------- | ------------------------------------------------------------- |
+| `version`                         | Authorizer version that is currently deployed                 |
+| `is_google_login_enabled`         | It gives information if google login is configured or not     |
+| `is_github_login_enabled`         | It gives information if github login is configured or not     |
+| `is_facebook_login_enabled`       | It gives information if facebook login is configured or not   |
+| `is_email_verification_enabled`   | It gives information if email verification is enabled or not  |
+| `is_basic_authentication_enabled` | It gives information, if basic auth is enabled or not         |
+| `is_magic_link_login_enabled`     | It gives information if password less login is enabled or not |
 
 **Sample Query**
 
@@ -194,22 +219,21 @@ It returns `Meta` type with the following possible values
 query {
   meta {
     version
-    isGoogleLoginEnabled
-    isGithubLoginEnabled
-    isBasicAuthenticationEnabled
-    isMagicLoginEnabled
-    isEmailVerificationEnabled
-    isFacebookLoginEnabled
-    isTwitterLoginEnabled
+    is_google_login_enabled
+    is_github_login_enabled
+    is_facebook_login_enabled
+    is_email_verification_enabled
+    is_basic_authentication_enabled
+    is_magic_link_login_enabled
   }
 }
 ```
 
-### - `token`
+### - `session`
 
-Query to get the `token` information. It returns `AuthResponse` type with the following keys.
+Query to get the `session` information. It returns `AuthResponse` type with the following keys.
 
-> Note: If `token` is present as HTTP Cookie / Authorization header with bearer token. If the token is not present or an invalid token is present it throws `unauthorized` error
+> Note: Session information should be present as present as HTTP Cookie (`authorizer` / `COOKIE_NAME` configured via env) OR Authorization header with bearer token. If the information is not present or an invalid data is present it throws `unauthorized` error
 
 This query can take a optional input `roles` of type `string array` to verify if the current token is valid for a given roles.
 
@@ -227,12 +251,12 @@ query {
 
 **Response**
 
-| Key                    | Description                                                                                            |
-| ---------------------- | ------------------------------------------------------------------------------------------------------ |
-| `message`              | Error / Success message from server                                                                    |
-| `accessToken`          | accessToken that frontend application can use for further authorized requests                          |
-| `accessTokenExpiresAt` | timestamp when the current token is going to expire, so that frontend can request for new access token |
-| `user`                 | User object with all the basic profile information                                                     |
+| Key            | Description                                                                                            |
+| -------------- | ------------------------------------------------------------------------------------------------------ |
+| `message`      | Error / Success message from server                                                                    |
+| `access_token` | accessToken that frontend application can use for further authorized requests                          |
+| `expires_at`   | timestamp when the current token is going to expire, so that frontend can request for new access token |
+| `user`         | User object with all the basic profile information                                                     |
 
 **Sample Query**
 
@@ -241,13 +265,10 @@ query {
   token {
     message
     accessToken
-    accessTokenExpiresAt
+    expires_at
     user {
       id
-      firstName
-      lastName
       email
-      image
       roles
     }
   }
@@ -260,36 +281,43 @@ Query to get the `profile` information of a user. It returns `User` type with th
 
 > Note: this is authorized route, so HTTP Cookie / Authorization Header with bearer token must be present.
 
-| Key               | Description                                                  |
-| ----------------- | ------------------------------------------------------------ |
-| `id`              | user unique identifier                                       |
-| `email`           | email address of user                                        |
-| `firstName`       | first name of user                                           |
-| `lastName`        | last name of user                                            |
-| `signupMethod`    | methods using which user have signed up, eg: `google,github` |
-| `emailVerifiedAt` | timestamp at which the email address was verified            |
-| `image`           | profile picture URL                                          |
-| `roles`           | List of roles assigned to user                               |
-| `createdAt`       | timestamp at which the user entry was created                |
-| `updatedAt`       | timestamp at which the user entry was updated                |
+| Key                     | Description                                                  |
+| ----------------------- | ------------------------------------------------------------ |
+| `id`                    | user unique identifier                                       |
+| `email`                 | email address of user                                        |
+| `given_name`            | first name of user                                           |
+| `family_name`           | last name of user                                            |
+| `signup_methods`        | methods using which user have signed up, eg: `google,github` |
+| `email_verified`        | timestamp at which the email address was verified            |
+| `picture`               | profile picture URL                                          |
+| `roles`                 | List of roles assigned to user                               |
+| `middle_name`           | middle name of user                                          |
+| `nickname`              | nick name of user                                            |
+| `preferred_username`    | preferred username (defaults to email currently)             |
+| `gender`                | gender of user                                               |
+| `birthdate`             | birthdate of user                                            |
+| `phone_number`          | phone number of user                                         |
+| `phone_number_verified` | if phone number is verified                                  |
+| `created_at`            | timestamp at which the user entry was created                |
+| `updated_at`            | timestamp at which the user entry was updated                |
 
 **Sample Query**
 
 ```graphql
 query {
   profile {
-    firstName
-    lastName
+    given_name
+    family_name
     email
-    image
+    picture
     roles
   }
 }
 ```
 
-### - `users`
+### - `_users`
 
-Query to get all the `users`. This query is only allowed for super admins. It returns array of users `[User!]!` with above mentioned keys.
+Query to get all the `_users`. This query is only allowed for super admins. It returns array of users `[User!]!` with above mentioned keys.
 
 > Note: the super admin query can be access via special header with super admin secret (this is set via ENV) as value.
 
@@ -305,18 +333,18 @@ Query to get all the `users`. This query is only allowed for super admins. It re
 query {
   users {
     id
-    firstName
-    lastName
+    given_name
+    family_name
     email
-    image
+    picture
     roles
   }
 }
 ```
 
-### - `verificationRequests`
+### - `_verification_requests`
 
-Query to get all the `verificationRequests`. This query is only allowed for super admins. It returns array of verification requests `[VerificationRequest!]!` with following keys.
+Query to get all the `_verification_requests`. This query is only allowed for super admins. It returns array of verification requests `[VerificationRequest!]!` with following keys.
 
 > Note: the super admin query can be access via special header with super admin secret (this is set via ENV) as value.
 
@@ -329,7 +357,7 @@ Query to get all the `verificationRequests`. This query is only allowed for supe
 | Key          | Description                                                                                                                    |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------ |
 | `id`         | user unique identifier                                                                                                         |
-| `identified` | which type of verification request it is. `basic_auth_signup`, `update_email`, `forgot_password` are the supported identifiers |
+| `identifier` | which type of verification request it is. `basic_auth_signup`, `update_email`, `forgot_password` are the supported identifiers |
 | `email`      | email address of user                                                                                                          |
 | `token`      | verification token                                                                                                             |
 | `expires`    | timestamp at which token expires                                                                                               |
@@ -356,33 +384,38 @@ A mutation to signup users using email and password. It accepts `params` of type
 
 **Request Params**
 
-| Key               | Description                                                                             | Required |
-| ----------------- | --------------------------------------------------------------------------------------- | -------- |
-| `email`           | Email address of user                                                                   | true     |
-| `password`        | Password that user wants to set                                                         | true     |
-| `confirmPassword` | Value same as password to make sure that its user and not robot                         | true     |
-| `firstName`       | First name of the user                                                                  | false    |
-| `lastName`        | Last name of the user                                                                   | false    |
-| `image`           | Profile picture URL                                                                     | false    |
-| `roles`           | List of roles to be assigned. If not specified `DEFAULT_ROLE` value of env will be used | false    |
+| Key                | Description                                                                             | Required |
+| ------------------ | --------------------------------------------------------------------------------------- | -------- |
+| `email`            | Email address of user                                                                   | true     |
+| `password`         | Password that user wants to set                                                         | true     |
+| `confirm_password` | Value same as password to make sure that its user and not robot                         | true     |
+| `given_name`       | First name of the user                                                                  | false    |
+| `family_name`      | Last name of the user                                                                   | false    |
+| `picture`          | Profile picture URL                                                                     | false    |
+| `roles`            | List of roles to be assigned. If not specified `DEFAULT_ROLE` value of env will be used | false    |
+| `middle_name`      | middle name of user                                                                     | false    |
+| `nickname`         | nick name of user                                                                       | false    |
+| `gender`           | gender of user                                                                          | false    |
+| `birthdate`        | birthdate of user                                                                       | false    |
+| `phone_number`     | phone number of user                                                                    | false    |
 
 This mutation returns `AuthResponse` type with following keys
 
 **Response**
 
-| Key                    | Description                                                                                                                                                                         |
-| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `message`              | Success / Error message from server                                                                                                                                                 |
-| `accessToken`          | Token that can be used for further authorized requests. This is only returned if `DISABLE_EMAIL_NOTIFICATION` is set to `true` in environment variables                             |
-| `accessTokenExpiresAt` | Timestamp when the access Token will expire so that frontend can request new token. This is only returned if `DISABLE_EMAIL_NOTIFICATION` is set to `true` in environment variables |
-| `user`                 | User object with its profile keys mentioned [above](#--profile). This is only returned if `DISABLE_EMAIL_NOTIFICATION` is set to `true` in environment variables                    |
+| Key            | Description                                                                                                                                                                         |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `message`      | Success / Error message from server                                                                                                                                                 |
+| `access_token` | Token that can be used for further authorized requests. This is only returned if `DISABLE_EMAIL_NOTIFICATION` is set to `true` in environment variables                             |
+| `expires_at`   | Timestamp when the access Token will expire so that frontend can request new token. This is only returned if `DISABLE_EMAIL_NOTIFICATION` is set to `true` in environment variables |
+| `user`         | User object with its profile keys mentioned [above](#--profile). This is only returned if `DISABLE_EMAIL_NOTIFICATION` is set to `true` in environment variables                    |
 
 **Sample Mutation**
 
 ```graphql
 mutation {
   signup(
-    params: { email: "foo@bar.com", password: "test", confirmPassword: "test" }
+    params: { email: "foo@bar.com", password: "test", confirm_password: "test" }
   ) {
     message
   }
@@ -405,12 +438,12 @@ This mutation returns `AuthResponse` type with following keys
 
 **Response**
 
-| Key                    | Description                                                                         |
-| ---------------------- | ----------------------------------------------------------------------------------- |
-| `message`              | Success / Error message from server                                                 |
-| `accessToken`          | Token that can be used for further authorized requests.                             |
-| `accessTokenExpiresAt` | Timestamp when the access Token will expire so that frontend can request new token. |
-| `user`                 | User object with its profile keys mentioned [above](#--profile).                    |
+| Key            | Description                                                                         |
+| -------------- | ----------------------------------------------------------------------------------- |
+| `message`      | Success / Error message from server                                                 |
+| `access_token` | Token that can be used for further authorized requests.                             |
+| `expires_at`   | Timestamp when the access Token will expire so that frontend can request new token. |
+| `user`         | User object with its profile keys mentioned [above](#--profile).                    |
 
 **Sample Mutation**
 
@@ -419,21 +452,21 @@ mutation {
   login(params: { email: "foo@bar.com", password: "test" }) {
     user {
       email
-      firstName
-      lastName
-      image
+      given_name
+      family_name
+      picture
       roles
     }
     accessToken
-    accessTokenExpiresAt
+    expires_at
     message
   }
 }
 ```
 
-### - `magicLogin`
+### - `magic_link_login`
 
-A mutation to perform password less login. It accepts `params` of type `MagicLoginInput` with following keys as parameter. When the operation is successful, it sends user email with magic link to login. This link is valid for 30 minutes only.
+A mutation to perform password less login. It accepts `params` of type `MagicLinkLoginInput` with following keys as parameter. When the operation is successful, it sends user email with magic link to login. This link is valid for 30 minutes only.
 
 > Note: You will need a SMTP server with an email address and password configured as [authorizer environment](/core/env/) using which system can send emails.
 
@@ -456,7 +489,7 @@ This mutation returns `Response` type with following keys
 
 ```graphql
 mutation {
-  magicLogin(params: { email: "foo@bar.com" }) {
+  magic_link_login(params: { email: "foo@bar.com" }) {
     message
   }
 }
@@ -483,7 +516,7 @@ mutation {
 }
 ```
 
-### - `updateProfile`
+### - `update_profile`
 
 Mutation to update profile of user. It accepts `params` of type `UpdateProfileInput` with following keys as parameter
 
@@ -491,12 +524,17 @@ Mutation to update profile of user. It accepts `params` of type `UpdateProfileIn
 
 | Key                  | Description                                                                                                                                                      | Required |
 | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| `firstName`          | New first name of the user                                                                                                                                       | false    |
-| `lastName`           | New last name of the user                                                                                                                                        | false    |
+| `given_name`         | New first name of the user                                                                                                                                       | false    |
+| `family_name`        | New last name of the user                                                                                                                                        | false    |
 | `email`              | New email of th user. This will logout the user and send the new verification mail to user if `DISABLE_EMAIL_NOTIFICATION` is set to false                       | false    |
-| `oldPassword`        | In case if user wants to change password they need to specify the older password here. In this scenario `newPassword` and `confirmNewPassword` will be required. | false    |
-| `newPassword`        | New password that user wants to set. In this scenario `oldPassword` and `confirmNewPassword` will be required                                                    | false    |
-| `confirmNewPassword` | Value same as the new password to make sure it matches the password entered by user. In this scenario `oldPassword` and `newPassword` will be required           | false    |
+| `old_password`       | In case if user wants to change password they need to specify the older password here. In this scenario `newPassword` and `confirmNewPassword` will be required. | false    |
+| `newPassword`        | New password that user wants to set. In this scenario `old_password` and `confirmNewPassword` will be required                                                   | false    |
+| `confirmNewPassword` | Value same as the new password to make sure it matches the password entered by user. In this scenario `old_password` and `newPassword` will be required          | false    |
+| `middle_name`        | New middle name of user                                                                                                                                          | false    |
+| `nickname`           | New nick name of user                                                                                                                                            | false    |
+| `gender`             | New gender of user                                                                                                                                               | false    |
+| `birthdate`          | New birthdate of user                                                                                                                                            | false    |
+| `phone_number`       | New phone number of user                                                                                                                                         | false    |
 
 This mutation returns `Response` type with following keys
 
@@ -510,13 +548,13 @@ This mutation returns `Response` type with following keys
 
 ```graphql
 mutation {
-  updateProfile(params: { firstName: "bob" }) {
+  update_profile(params: { given_name: "bob" }) {
     message
   }
 }
 ```
 
-### - `verifyEmail`
+### - `verify_email`
 
 Mutation to verify email address of user. It accepts `params` of type `VerifyEmailInput` with following keys as parameter
 
@@ -530,40 +568,41 @@ This mutation returns `AuthResponse` type with following keys
 
 **Response**
 
-| Key                    | Description                                                                         |
-| ---------------------- | ----------------------------------------------------------------------------------- |
-| `message`              | Success / Error message from server                                                 |
-| `accessToken`          | Token that can be used for further authorized requests.                             |
-| `accessTokenExpiresAt` | Timestamp when the access Token will expire so that frontend can request new token. |
-| `user`                 | User object with its profile keys mentioned [above](#--profile).                    |
+| Key            | Description                                                                         |
+| -------------- | ----------------------------------------------------------------------------------- |
+| `message`      | Success / Error message from server                                                 |
+| `access_token` | Token that can be used for further authorized requests.                             |
+| `expires_at`   | Timestamp when the access Token will expire so that frontend can request new token. |
+| `user`         | User object with its profile keys mentioned [above](#--profile).                    |
 
 **Sample Mutation**
 
 ```graphql
 mutation {
-  verifyEmail(params: { token: "some token" }) {
+  verify_email(params: { token: "some token" }) {
     user {
       email
-      firstName
-      lastName
-      image
+      given_name
+      family_name
+      picture
     }
     accessToken
-    accessTokenExpiresAt
+    expires_at
     message
   }
 }
 ```
 
-### - `resendVerifyEmail`
+### - `resend_verify_email`
 
 Mutation to resend verification email. This is helpful if user does not receive verification email. It accepts `params` of type `ResendVerifyEmailInput` with following keys as parameter
 
 **Request Params**
 
-| Key     | Description                                           | Required |
-| ------- | ----------------------------------------------------- | -------- |
-| `email` | Email on which the verification email is not received | true     |
+| Key          | Description                                                                                                                    | Required |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------ | -------- |
+| `email`      | Email on which the verification email is not received                                                                          | true     |
+| `identifier` | Which type of verification request it is. `basic_auth_signup`, `update_email`, `forgot_password` are the supported identifiers | true     |
 
 This mutation returns `Response` type with following keys
 
@@ -577,13 +616,15 @@ This mutation returns `Response` type with following keys
 
 ```graphql
 mutation {
-  resendVerifyEmail(params: { email: "foo@bar.com" }) {
+  resend_verify_email(
+    params: { email: "foo@bar.com", identifier: "basic_auth_signup" }
+  ) {
     message
   }
 }
 ```
 
-### - `forgotPassword`
+### - `forgot_password`
 
 Mutation to reset the password in case user have forgotten it. For security reasons this is 2 step process, we send email to the registered and then the are redirect to reset password url through the link in that email. In the first step, it accepts `params` of type `ForgotPasswordInput` with following keys as parameter
 
@@ -605,23 +646,23 @@ This mutation returns `Response` type with following keys
 
 ```graphql
 mutation {
-  forgotPassword(params: { email: "foo@bar.com" }) {
+  forgot_password(params: { email: "foo@bar.com" }) {
     message
   }
 }
 ```
 
-### - `resetPassword`
+### - `reset_password`
 
 Mutation to reset the password. For security reasons this is 2 step process, we send email to the registered and then the are redirect to reset password url through the link in that email. In the second step, it accepts `params` of type `ResetPasswordInput` with following keys as parameter
 
 **Request Params**
 
-| Key               | Description                                                                 | Required |
-| ----------------- | --------------------------------------------------------------------------- | -------- |
-| `token`           | Token sent via email in step 1                                              | true     |
-| `password`        | New password that user wants to set                                         | true     |
-| `confirmPassword` | Same as password just to make sure the values match and is entered by human | true     |
+| Key                | Description                                                                 | Required |
+| ------------------ | --------------------------------------------------------------------------- | -------- |
+| `token`            | Token sent via email in step 1                                              | true     |
+| `password`         | New password that user wants to set                                         | true     |
+| `confirm_password` | Same as password just to make sure the values match and is entered by human | true     |
 
 This mutation returns `Response` type with following keys
 
@@ -635,17 +676,17 @@ This mutation returns `Response` type with following keys
 
 ```graphql
 mutation {
-  resetPassword(
-    params: { token: "some token", password: "test", confirmPassword: "test" }
+  reset_password(
+    params: { token: "some token", password: "test", confirm_password: "test" }
   ) {
     message
   }
 }
 ```
 
-### - `adminUpdateUser`
+### - `_update_user`
 
-Mutation to update the profile of users. This mutation is only allowed for super admins. It accepts `params` of type `AdminUpdateUserInput` with following keys
+Mutation to update the profile of users. This mutation is only allowed for super admins. It accepts `params` of type `UpdateUserInput` with following keys
 
 > Note: the super admin query can be access via special header with super admin secret (this is set via ENV) as value.
 
@@ -657,14 +698,19 @@ Mutation to update the profile of users. This mutation is only allowed for super
 
 **Request Params**
 
-| Key         | Description                       | Required |
-| ----------- | --------------------------------- | -------- |
-| `id`        | ID of user to be updated          | true     |
-| `email`     | New email address of user         | false    |
-| `firstName` | Updated first name of user        | false    |
-| `lastName`  | Updated last name of user         | false    |
-| `image`     | Updated image url of user         | false    |
-| `roles`     | Set of new roles for a given user | false    |
+| Key            | Description                       | Required |
+| -------------- | --------------------------------- | -------- |
+| `id`           | ID of user to be updated          | true     |
+| `email`        | New email address of user         | false    |
+| `given_name`   | Updated first name of user        | false    |
+| `family_name`  | Updated last name of user         | false    |
+| `picture`      | Updated picture url of user       | false    |
+| `roles`        | Set of new roles for a given user | false    |
+| `middle_name`  | New middle name of user           | false    |
+| `nickname`     | New nick name of user             | false    |
+| `gender`       | New gender of user                | false    |
+| `birthdate`    | New birthdate of user             | false    |
+| `phone_number` | New phone number of user          | false    |
 
 This mutation returns `User` type with update values
 
@@ -672,11 +718,11 @@ This mutation returns `User` type with update values
 
 ```graphql
 mutation {
-  adminUpdateUser(
-    params: { id: "20", firstName: "Bob", roles: ["user", "admin"] }
+  _update_user(
+    params: { id: "20", given_name: "Bob", roles: ["user", "admin"] }
   ) {
     id
-    firstName
+    given_name
     roles
     createdAt
     updatedAt
@@ -684,7 +730,7 @@ mutation {
 }
 ```
 
-### - `deleteUser`
+### - `_delete_user`
 
 Mutation to delete user. This mutation is only allowed for super admins. It accepts `params` of type `DeleteUserInput` with following keys
 
@@ -708,7 +754,7 @@ This mutation returns `Response` type with following keys
 
 ```graphql
 mutation {
-  deleteUser(params: { email: "foo@bar.com" }) {
+  _delete_user(params: { email: "foo@bar.com" }) {
     message
   }
 }

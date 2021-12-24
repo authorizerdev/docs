@@ -16,7 +16,7 @@ layout: ../../layouts/Main.astro
 - [forgotPassword](#--forgotpassword)
 - [resetPassword](#--resetPassword)
 - [oauthLogin](#--oauthlogin)
-- [magicLogin](#--magiclogin)
+- [magicLinkLogin](#--magiclinklogin)
 - [getMetadata](#--getmetadata)
 - [getSession](#--getsession)
 - [logout](#--logout)
@@ -40,8 +40,8 @@ If session exists following keys are returned.
 | Key | Description |
 | ---------------------- | ------------------------------------------------------------------------------------------------------ |
 | `message` | Error / Success message from server |
-| `accessToken` | accessToken that frontend application can use for further authorized requests |
-| `accessTokenExpiresAt` | timestamp when the current token is going to expire, so that frontend can request for new access token |
+| `access_token` | accessToken that frontend application can use for further authorized requests |
+| `expires_at` | timestamp when the current token is going to expire, so that frontend can request for new access token |
 | `user` | User object with all the basic profile information |
 
 **Sample Usage**
@@ -56,26 +56,31 @@ Function to sign-up user using email and password.
 
 It accepts JSON object as a parameter with following keys
 
-| Key               | Description                                                              | Required |
-| ----------------- | ------------------------------------------------------------------------ | -------- |
-| `email`           | Email address of user                                                    | true     |
-| `password`        | Password that user wants to set                                          | true     |
-| `confirmPassword` | Value same as password to make sure that its user and not robot          | true     |
-| `firstName`       | First name of the user                                                   | false    |
-| `lastName`        | Last name of the user                                                    | false    |
-| `image`           | Profile picture URL                                                      | false    |
-| `roles`           | Array of string with valid roles. Defaults to `[user]` if not configured | false    |
+| Key                | Description                                                              | Required |
+| ------------------ | ------------------------------------------------------------------------ | -------- |
+| `email`            | Email address of user                                                    | true     |
+| `password`         | Password that user wants to set                                          | true     |
+| `confirm_password` | Value same as password to make sure that its user and not robot          | true     |
+| `given_name`       | First name of the user                                                   | false    |
+| `family_name`      | Last name of the user                                                    | false    |
+| `picture`          | Profile picture URL                                                      | false    |
+| `roles`            | Array of string with valid roles. Defaults to `[user]` if not configured | false    |
+| `middle_name`      | middle name of user                                                      | false    |
+| `nickname`         | nick name of user                                                        | false    |
+| `gender`           | gender of user                                                           | false    |
+| `birthdate`        | birthdate of user                                                        | false    |
+| `phone_number`     | phone number of user                                                     | false    |
 
 Following is the response for `signup` function
 
 **Response**
 
-| Key                    | Description                                                                                                                                                                         |
-| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `message`              | Success / Error message from server                                                                                                                                                 |
-| `accessToken`          | Token that can be used for further authorized requests. This is only returned if `DISABLE_EMAIL_NOTIFICATION` is set to `true` in environment variables                             |
-| `accessTokenExpiresAt` | Timestamp when the access Token will expire so that frontend can request new token. This is only returned if `DISABLE_EMAIL_NOTIFICATION` is set to `true` in environment variables |
-| `user`                 | User object with its profile keys mentioned [above](#--getprofile). This is only returned if `DISABLE_EMAIL_NOTIFICATION` is set to `true` in environment variables                 |
+| Key            | Description                                                                                                                                                                         |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `message`      | Success / Error message from server                                                                                                                                                 |
+| `access_token` | Token that can be used for further authorized requests. This is only returned if `DISABLE_EMAIL_NOTIFICATION` is set to `true` in environment variables                             |
+| `expires_at`   | Timestamp when the access Token will expire so that frontend can request new token. This is only returned if `DISABLE_EMAIL_NOTIFICATION` is set to `true` in environment variables |
+| `user`         | User object with its profile keys mentioned [above](#--getprofile). This is only returned if `DISABLE_EMAIL_NOTIFICATION` is set to `true` in environment variables                 |
 
 **Sample Usage**
 
@@ -83,7 +88,7 @@ Following is the response for `signup` function
 const res = await authRef.signup({
   email: "foo@bar.com",
   password: "test",
-  confirmPassword: "test",
+  confirm_password: "test",
 });
 ```
 
@@ -105,8 +110,8 @@ Following is the response for `login` function
 | Key | Description |
 | ---------------------- | ------------------------------------------------------------------------------------------------------ |
 | `message` | Error / Success message from server |
-| `accessToken` | accessToken that frontend application can use for further authorized requests |
-| `accessTokenExpiresAt` | timestamp when the current token is going to expire, so that frontend can request for new access token |
+| `access_token` | accessToken that frontend application can use for further authorized requests |
+| `expires_at` | timestamp when the current token is going to expire, so that frontend can request for new access token |
 | `user` | User object with all the basic profile information |
 
 **Sample Usage**
@@ -132,12 +137,12 @@ This mutation returns `AuthResponse` type with following keys
 
 **Response**
 
-| Key                    | Description                                                                         |
-| ---------------------- | ----------------------------------------------------------------------------------- |
-| `message`              | Success / Error message from server                                                 |
-| `accessToken`          | Token that can be used for further authorized requests.                             |
-| `accessTokenExpiresAt` | Timestamp when the access Token will expire so that frontend can request new token. |
-| `user`                 | User object with its profile keys mentioned [above](#--getprofile).                 |
+| Key            | Description                                                                         |
+| -------------- | ----------------------------------------------------------------------------------- |
+| `message`      | Success / Error message from server                                                 |
+| `access_token` | Token that can be used for further authorized requests.                             |
+| `expires_at`   | Timestamp when the access Token will expire so that frontend can request new token. |
+| `user`         | User object with its profile keys mentioned [above](#--getprofile).                 |
 
 **Sample Usage**
 
@@ -159,18 +164,18 @@ It accepts the optional JSON object as parameter, you can pass the HTTP Headers 
 
 **Response**
 
-| Key               | Description                                                  |
-| ----------------- | ------------------------------------------------------------ |
-| `id`              | user unique identifier                                       |
-| `email`           | email address of user                                        |
-| `firstName`       | first name of user                                           |
-| `lastName`        | last name of user                                            |
-| `signupMethod`    | methods using which user have signed up, eg: `google,github` |
-| `emailVerifiedAt` | timestamp at which the email address was verified            |
-| `image`           | profile picture URL                                          |
-| `roles`           | user roles                                                   |
-| `createdAt`       | timestamp at which the user entry was created                |
-| `updatedAt`       | timestamp at which the user entry was updated                |
+| Key              | Description                                                  |
+| ---------------- | ------------------------------------------------------------ |
+| `id`             | user unique identifier                                       |
+| `email`          | email address of user                                        |
+| `given_name`     | first name of user                                           |
+| `family_name`    | last name of user                                            |
+| `signup_methods` | methods using which user have signed up, eg: `google,github` |
+| `email_verified` | determine if email is verified or not                        |
+| `picture`        | profile picture URL                                          |
+| `roles`          | user roles                                                   |
+| `created_at`     | timestamp at which the user entry was created                |
+| `updated_at`     | timestamp at which the user entry was updated                |
 
 **Sample Usage**
 
@@ -197,12 +202,12 @@ Here are the keys that `data` object accepts
 
 | Key                  | Description                                                                                                                                                      | Required |
 | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| `firstName`          | New first name of the user                                                                                                                                       | false    |
-| `lastName`           | New last name of the user                                                                                                                                        | false    |
+| `given_name`         | New first name of the user                                                                                                                                       | false    |
+| `family_name`        | New last name of the user                                                                                                                                        | false    |
 | `email`              | New email of th user. This will logout the user and send the new verification mail to user if `DISABLE_EMAIL_NOTIFICATION` is set to false                       | false    |
-| `oldPassword`        | In case if user wants to change password they need to specify the older password here. In this scenario `newPassword` and `confirmNewPassword` will be required. | false    |
-| `newPassword`        | New password that user wants to set. In this scenario `oldPassword` and `confirmNewPassword` will be required                                                    | false    |
-| `confirmNewPassword` | Value same as the new password to make sure it matches the password entered by user. In this scenario `oldPassword` and `newPassword` will be required           | false    |
+| `old_password`       | In case if user wants to change password they need to specify the older password here. In this scenario `newPassword` and `confirmNewPassword` will be required. | false    |
+| `newPassword`        | New password that user wants to set. In this scenario `old_password` and `confirmNewPassword` will be required                                                   | false    |
+| `confirmNewPassword` | Value same as the new password to make sure it matches the password entered by user. In this scenario `old_password` and `newPassword` will be required          | false    |
 
 Here is sample of `headers` object
 
@@ -221,13 +226,13 @@ Here is sample of `headers` object
 ```js
 // from browser with HTTP Cookie
 const res = await authRef.updateProfile({
-  firstName: `bob`,
+  given_name: `bob`,
 });
 
 // from NodeJS / if HTTP cookie is not used
 const res = await authRef.updateProfile(
   {
-    firstName: `bob`,
+    given_name: `bob`,
   },
   {
     Authorization: `Bearer some_token`,
@@ -307,7 +312,7 @@ await authRef.oauthLogin("google");
 await authRef.oauthLogin("google", "admin");
 ```
 
-## - magicLogin
+## - magicLinkLogin
 
 Function to perform password less login.
 
@@ -327,7 +332,7 @@ Function to perform password less login.
 **Sample Usage**
 
 ```js
-const res = await authRef.magicLogin({
+const res = await authRef.magicLinkLogin({
   email: "foo@bar.com",
 });
 ```
@@ -338,15 +343,15 @@ Function to get meta information about your authorizer instance. eg, version, co
 
 **Response**
 
-| Key                          | Description                                                           |
-| ---------------------------- | --------------------------------------------------------------------- |
-| `version`                    | Authorizer version that is currently deployed                         |
-| `isGoogleLoginEnabled`       | It gives information if google login is configured or not             |
-| `isGithubLoginEnabled`       | It gives information if github login is configured or not             |
-| `isGithubLoginEnabled`       | It gives information if facebook login is configured or not           |
-| `isGithubLoginEnabled`       | It gives information if twitter login is configured or not            |
-| `isGithubLoginEnabled`       | It gives information if username and password login is enabled or not |
-| `isEmailVerificationEnabled` | It gives information if email verification is enabled or not          |
+| Key                               | Description                                                   |
+| --------------------------------- | ------------------------------------------------------------- |
+| `version`                         | Authorizer version that is currently deployed                 |
+| `is_google_login_enabled`         | It gives information if google login is configured or not     |
+| `is_github_login_enabled`         | It gives information if github login is configured or not     |
+| `is_facebook_login_enabled`       | It gives information if facebook login is configured or not   |
+| `is_email_verification_enabled`   | It gives information if email verification is enabled or not  |
+| `is_basic_authentication_enabled` | It gives information, if basic auth is enabled or not         |
+| `is_magic_link_login_enabled`     | It gives information if password less login is enabled or not |
 
 **Sample Usage**
 
@@ -366,12 +371,12 @@ It accepts the optional JSON object as parameter, you can pass the HTTP Headers 
 
 **Response**
 
-| Key                    | Description                                                                                            |
-| ---------------------- | ------------------------------------------------------------------------------------------------------ |
-| `message`              | Error / Success message from server                                                                    |
-| `accessToken`          | accessToken that frontend application can use for further authorized requests                          |
-| `accessTokenExpiresAt` | timestamp when the current token is going to expire, so that frontend can request for new access token |
-| `user`                 | User object with all the basic profile information                                                     |
+| Key            | Description                                                                                            |
+| -------------- | ------------------------------------------------------------------------------------------------------ |
+| `message`      | Error / Success message from server                                                                    |
+| `access_token` | accessToken that frontend application can use for further authorized requests                          |
+| `expires_at`   | timestamp when the current token is going to expire, so that frontend can request for new access token |
+| `user`         | User object with all the basic profile information                                                     |
 
 **Sample Usage**
 
