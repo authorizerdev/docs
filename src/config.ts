@@ -13,6 +13,7 @@ export const sidebar = [
     children: [
       { text: "Environment Variables", link: "/core/env" },
       { text: "Databases", link: "/core/databases" },
+      { text: "Email", link: "/core/email" },
       { text: "Endpoints", link: "/core/endpoints" },
       { text: "GraphQL API", link: "/core/graphql-api" },
       // { text: 'Session Management', link: '/core/session-management' },
