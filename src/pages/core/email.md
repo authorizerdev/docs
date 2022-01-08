@@ -5,9 +5,7 @@ layout: ../../layouts/Main.astro
 
 ## Email Configuration
 
-Authorizer can be configured to send emails as part of the authentication flow. For example, to
-verify a users email address, to send a user a magic link for passwordless login, or to allow a
-user to reset their password.
+Authorizer can be configured to send emails as part of the authentication flow. For example, to verify a user's email address, to send a user a magic link for passwordless login, or to allow a user to reset their password.
 
 Authorizer should work with any [SMTP](https://en.wikipedia.org/wiki/Simple_Mail_Transfer_Protocol) compliant email server. Please refer to the [environment variables](/core/env) documentation for the environment variables required to configure SMTP host, port and authentication.
 
