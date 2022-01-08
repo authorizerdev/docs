@@ -20,6 +20,8 @@ Here is the complete list of state variables and functions that are returned by 
 | `setUser`       | Function to set user profile information. Accepts JSON object with all the possible profile values                                                                                               |
 | `setToken`      | Function to set token. Accepts string with correct access token value                                                                                                                            |
 | `setLoading`    | Function to set loading state. Accepts boolean value                                                                                                                                             |
+| `setAuthData`   | Function to set all the state data, `user`, `token`, `loading`, `config`. Accepts object with `{user, token, config, loading}` as value                                                          |
+| `logout`        | Function to logout user                                                                                                                                                                          |
 | `authorizerRef` | Reference to [authorizer-js](/authorizer-js/getting-started) instance which can be used to call [functions](/authorizer-js/functions) exposed by [authorizer-js](/authorizer-js/getting-started) |
 
 ### Sample Usage

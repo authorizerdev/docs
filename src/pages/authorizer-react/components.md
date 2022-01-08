@@ -24,7 +24,7 @@ layout: ../../layouts/Main.astro
 | `authorizerURL` | `string` | Authorizer backend URL                                                                                                     | `true`   |
 | `redirectURL`   | `string` | Frontend application URL or the page where you want to redirect user post login. Default value is `window.location.origin` | `true`   |
 
-- `onTokenCallback`: [optional] Async callback that is called when a successful token is received from backend. This can be used to manage frontend state.
+- `onStateChangeCallback`: [optional] Async callback that is called whenever context state information changes.
 
 ### Sample Usage
 
@@ -38,6 +38,7 @@ const App = () => {
         authorizerURL: "http://localhost:8080",
         redirectURL: window.location.origin,
       }}
+      onStateChangeCallback={async (newState) => {}}
     >
       // REST of the components goes here.
     </AuthorizerProvider>
@@ -57,7 +58,12 @@ It shows various login/signup options based on the backend configurations. Make 
 
 ### Props
 
-This component does not require any props!
+It has following optional props as callback events that are triggered via various user events.
+
+- `onLogin={(loginResponse)=>{}}`: event called when login form is submitted successfully
+- `onMagicLinkLogin={(magicLinkResponse)=>{}}`: event called when magic link login form is submitted successfully
+- `onSignup={(signupResponse)=>{}}`: event called when signup form is submitted successfully
+- `onForgotPassword={(forgotPasswordResponse)={}}`: called when forgot password form is submitted successfully
 
 ### Sample Usage
 
@@ -69,7 +75,12 @@ const LoginPage = () => {
     <>
       <h1 style={{ textAlign: "center" }}>Login / Signup</h1>
       <br />
-      <Authorizer />
+      <Authorizer
+        onLogin={(loginResponse) => {}}
+        onMagicLinkLogin={(magicLinkResponse) => {}}
+        onSignup={(signupResponse) => {}}
+        onForgotPassword={(forgotPasswordResponse = {})}
+      />
     </>
   );
 };
@@ -81,7 +92,9 @@ A component that can be used to reset the password. This component can be used i
 
 ### Props
 
-This component does not require any props!
+It has following optional prop as callback event that is triggered on form submit.
+
+- `onReset={(response) => {}}`: Called when reset form is submitted
 
 ### Sample Usage
 
@@ -93,7 +106,7 @@ const ResetPassword = () => {
     <>
       <h1 style={{ textAlign: "center" }}>Reset Password</h1>
       <br />
-      <AuthorizerResetPassword />
+      <AuthorizerResetPassword onReset={(response) => {}} />
     </>
   );
 };
