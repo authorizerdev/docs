@@ -3,7 +3,7 @@ title: Email
 layout: ../../layouts/Main.astro
 ---
 
-## Email Configuration
+## SMTP Configuration
 
 Authorizer can be configured to send emails as part of the authentication flow. For example, to verify a user's email address, to send a user a magic link for passwordless login, or to allow a user to reset their password.
 
@@ -11,7 +11,7 @@ Authorizer should work with any [SMTP](https://en.wikipedia.org/wiki/Simple_Mail
 
 ## Using Sendgrid
 
-[Sendgrid](https://sendgrid.net) is configured using an API Key, rather than traditional username/password login. To use Sendgrid you must:
+[Sendgrid](https://sendgrid.com) is configured using an API Key, rather than traditional username/password login. To use Sendgrid you must:
 
 1. Create a Sendgrid account and login
 1. Create an API Key for your application under `Settings > API Keys` within the Sendgrid console
