@@ -19,12 +19,11 @@ layout: ../../layouts/Main.astro
 
 - `config`: Object to configure the `authorizer` backend URL and redirect URL. It accepts JSON object with following keys
 
-| Key             | Type     | Description                                                                                                                | Required |
-| --------------- | -------- | -------------------------------------------------------------------------------------------------------------------------- | -------- |
-| `authorizerURL` | `string` | Authorizer backend URL                                                                                                     | `true`   |
-| `redirectURL`   | `string` | Frontend application URL or the page where you want to redirect user post login. Default value is `window.location.origin` | `true`   |
-
-- `onStateChangeCallback`: [optional] Async callback that is called whenever context state information changes.
+| Key                     | Type       | Description                                                                                                                | Required |
+| ----------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------- | -------- |
+| `authorizerURL`         | `string`   | Authorizer backend URL                                                                                                     | `true`   |
+| `redirectURL`           | `string`   | Frontend application URL or the page where you want to redirect user post login. Default value is `window.location.origin` | `true`   |
+| `onStateChangeCallback` | `function` | [optional] Async callback that is called whenever context state information changes.                                       | `false`  |
 
 ### Sample Usage
 
