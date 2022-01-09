@@ -4,201 +4,41 @@ layout: ../../layouts/Main.astro
 ---
 
 Authorizer instance supports GraphQL natively and thus helps you share the common schema for your frontend applications.
-You can play with GraphQL API using the GraphQL playground that comes with your Authorizer instance. Access GraphQL playground on the
-instance same as of your Authorizer instance URL.
+
+You can play with GraphQL API using the GraphQL playground that comes with your Authorizer instance. Access GraphQL playground on the instance same as of your Authorizer instance URL.
 
 > Note super admin only queries / mutations starts with underscore `_`.
 
 Table of Contents
 
-- [Schema](#schema)
 - [Queries](#queries)
-  - [`meta`](#--meta)
-  - [`session`](#--session)
-  - [`profile`](#--profile)
-  - [`_users`](#--_users)
-  - [`_verification_requests`](#--_verificationrequests)
+  - [`meta`](#meta)
+  - [`session`](#session)
+  - [`profile`](#profile)
+  - [`_users`](#_users)
+  - [`_verification_requests`](#_verification_requests)
+  - [`_admin_session`](#_admin_session)
+  - [`_config`](#_config)
 - [Mutations](#mutations)
-  - [`signup`](#--signup)
-  - [`login`](#--login)
-  - [`magic_link_login`](#--magic_link_login)
-  - [`logout`](#--logout)
-  - [`update_profile`](#--update_profile)
-  - [`verify_email`](#--verify_email)
-  - [`resend_verify_email`](#--resend_verify_email)
-  - [`forgot_password`](#--forgot_password)
-  - [`reset_password`](#--reset_password)
-  - [`_update_user`](#--_update_user)
-  - [`_delete_user`](#--_delete_user)
-
-## Schema
-
-Available types with the Authorizer:
-
-```graphql
-type Meta {
-  version: String!
-  is_google_login_enabled: Boolean!
-  is_facebook_login_enabled: Boolean!
-  is_github_login_enabled: Boolean!
-  is_email_verification_enabled: Boolean!
-  is_basic_authentication_enabled: Boolean!
-  is_magic_link_login_enabled: Boolean!
-}
-
-type User {
-  id: ID!
-  email: String!
-  email_verified: Boolean!
-  signup_methods: String!
-  given_name: String
-  family_name: String
-  middle_name: String
-  nickname: String
-  # defaults to email
-  preferred_username: String
-  gender: String
-  birthdate: String
-  phone_number: String
-  phone_number_verified: Boolean
-  picture: String
-  roles: [String!]!
-  created_at: Int64
-  updated_at: Int64
-}
-
-type VerificationRequest {
-  id: ID!
-  identifier: String
-  token: String
-  email: String
-  expires: Int64
-  created_at: Int64
-  updated_at: Int64
-}
-
-type Error {
-  message: String!
-  reason: String!
-}
-
-type AuthResponse {
-  message: String!
-  access_token: String
-  expires_at: Int64
-  user: User
-}
-
-type Response {
-  message: String!
-}
-
-input SignUpInput {
-  email: String!
-  given_name: String
-  family_name: String
-  middle_name: String
-  nickname: String
-  gender: String
-  birthdate: String
-  phone_number: String
-  picture: String
-  password: String!
-  confirm_password: String!
-  roles: [String!]
-}
-
-input LoginInput {
-  email: String!
-  password: String!
-  roles: [String!]
-}
-
-input VerifyEmailInput {
-  token: String!
-}
-
-input ResendVerifyEmailInput {
-  email: String!
-  identifier: String!
-}
-
-input UpdateProfileInput {
-  old_password: String
-  new_password: String
-  confirm_new_password: String
-  email: String
-  given_name: String
-  family_name: String
-  middle_name: String
-  nickname: String
-  gender: String
-  birthdate: String
-  phone_number: String
-  picture: String
-}
-
-input UpdateUserInput {
-  id: ID!
-  email: String
-  given_name: String
-  family_name: String
-  middle_name: String
-  nickname: String
-  gender: String
-  birthdate: String
-  phone_number: String
-  picture: String
-  roles: [String]
-}
-
-input ForgotPasswordInput {
-  email: String!
-}
-
-input ResetPasswordInput {
-  token: String!
-  password: String!
-  confirm_password: String!
-}
-
-input DeleteUserInput {
-  email: String!
-}
-
-input MagicLinkLoginInput {
-  email: String!
-  roles: [String!]
-}
-
-type Mutation {
-  signup(params: SignUpInput!): AuthResponse!
-  login(params: LoginInput!): AuthResponse!
-  magic_link_login(params: MagicLinkLoginInput!): Response!
-  logout: Response!
-  update_profile(params: UpdateProfileInput!): Response!
-  verify_email(params: VerifyEmailInput!): AuthResponse!
-  resend_verify_email(params: ResendVerifyEmailInput!): Response!
-  forgot_password(params: ForgotPasswordInput!): Response!
-  reset_password(params: ResetPasswordInput!): Response!
-  # admin only apis
-  _delete_user(params: DeleteUserInput!): Response!
-  _update_user(params: UpdateUserInput!): User!
-}
-
-type Query {
-  meta: Meta!
-  session(roles: [String!]): AuthResponse
-  profile: User!
-  # admin only apis
-  _users: [User!]!
-  _verification_requests: [VerificationRequest!]!
-}
-```
+  - [`signup`](#signup)
+  - [`login`](#login)
+  - [`magic_link_login`](#magic_link_login)
+  - [`logout`](#logout)
+  - [`update_profile`](#update_profile)
+  - [`verify_email`](#verify_email)
+  - [`resend_verify_email`](#resend_verify_email)
+  - [`forgot_password`](#forgot_password)
+  - [`reset_password`](#reset_password)
+  - [`_admin_signup`](#_admin_signup)
+  - [`_admin_login`](#_admin_login)
+  - [`_admin_logout`](#_admin_logout)
+  - [`_update_config`](#_update_config)
+  - [`_update_user`](#_update_user)
+  - [`_delete_user`](#_delete_user)
 
 ## Queries
 
-### - `meta`
+### `meta`
 
 Query to get the `meta` information about your authorizer instance. eg, version, configurations, etc
 It returns `Meta` type with the following possible values
@@ -229,7 +69,7 @@ query {
 }
 ```
 
-### - `session`
+### `session`
 
 Query to get the `session` information. It returns `AuthResponse` type with the following keys.
 
@@ -275,7 +115,7 @@ query {
 }
 ```
 
-### - `profile`
+### `profile`
 
 Query to get the `profile` information of a user. It returns `User` type with the following keys.
 
@@ -315,11 +155,11 @@ query {
 }
 ```
 
-### - `_users`
+### `_users`
 
 Query to get all the `_users`. This query is only allowed for super admins. It returns array of users `[User!]!` with above mentioned keys.
 
-> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) as value.
+> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer-admin` as http only cookie.
 
 ```json
 {
@@ -331,7 +171,7 @@ Query to get all the `_users`. This query is only allowed for super admins. It r
 
 ```graphql
 query {
-  users {
+  _users {
     id
     given_name
     family_name
@@ -342,11 +182,11 @@ query {
 }
 ```
 
-### - `_verification_requests`
+### `_verification_requests`
 
 Query to get all the `_verification_requests`. This query is only allowed for super admins. It returns array of verification requests `[VerificationRequest!]!` with following keys.
 
-> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) as value.
+> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer-admin` as http only cookie.
 
 ```json
 {
@@ -366,7 +206,7 @@ Query to get all the `_verification_requests`. This query is only allowed for su
 
 ```graphql
 query {
-  verificationRequests {
+  _verification_requests {
     id
     token
     email
@@ -376,9 +216,62 @@ query {
 }
 ```
 
+### `_admin_session`
+
+Query to get admin session for dashboard
+
+> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer-admin` as http only cookie.
+
+```json
+{
+  "x-authorizer-admin-secret": "ADMIN_SECRET"
+}
+```
+
+| Key       | Description                          |
+| --------- | ------------------------------------ |
+| `message` | Success response message from server |
+
+**Sample Query**
+
+```graphql
+query {
+  _admin_session {
+    message
+  }
+}
+```
+
+### `_config`
+
+Query to get all the [environment variables](/core/env).
+
+> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer-admin` as http only cookie.
+
+```json
+{
+  "x-authorizer-admin-secret": "ADMIN_SECRET"
+}
+```
+
+All the [environment variables](/core/env) values can be obtained using this this.
+
+**Sample Query**
+
+```graphql
+query {
+  _config {
+    DATABASE_TYPE
+    DATABASE_URL
+    DATABASE_NAME
+    ...
+  }
+}
+```
+
 ## Mutations
 
-### - `signup`
+### `signup`
 
 A mutation to signup users using email and password. It accepts `params` of type `SignUpInput` with following keys as parameter
 
@@ -422,7 +315,7 @@ mutation {
 }
 ```
 
-### - `login`
+### `login`
 
 A mutation to login users using email and password. It accepts `params` of type `LoginInput` with following keys as parameter
 
@@ -464,7 +357,7 @@ mutation {
 }
 ```
 
-### - `magic_link_login`
+### `magic_link_login`
 
 A mutation to perform password less login. It accepts `params` of type `MagicLinkLoginInput` with following keys as parameter. When the operation is successful, it sends user email with magic link to login. This link is valid for 30 minutes only.
 
@@ -495,7 +388,7 @@ mutation {
 }
 ```
 
-### - `logout`
+### `logout`
 
 Mutation to logout user. This is authorized request and accepts `token` as HTTP cookie or Authorization header with `Bearer token`.
 This action clears the session data from server. It returns `Response` type with following keys
@@ -516,7 +409,7 @@ mutation {
 }
 ```
 
-### - `update_profile`
+### `update_profile`
 
 Mutation to update profile of user. It accepts `params` of type `UpdateProfileInput` with following keys as parameter
 
@@ -554,7 +447,7 @@ mutation {
 }
 ```
 
-### - `verify_email`
+### `verify_email`
 
 Mutation to verify email address of user. It accepts `params` of type `VerifyEmailInput` with following keys as parameter
 
@@ -593,7 +486,7 @@ mutation {
 }
 ```
 
-### - `resend_verify_email`
+### `resend_verify_email`
 
 Mutation to resend verification email. This is helpful if user does not receive verification email. It accepts `params` of type `ResendVerifyEmailInput` with following keys as parameter
 
@@ -624,7 +517,7 @@ mutation {
 }
 ```
 
-### - `forgot_password`
+### `forgot_password`
 
 Mutation to reset the password in case user have forgotten it. For security reasons this is 2 step process, we send email to the registered and then the are redirect to reset password url through the link in that email. In the first step, it accepts `params` of type `ForgotPasswordInput` with following keys as parameter
 
@@ -652,7 +545,7 @@ mutation {
 }
 ```
 
-### - `reset_password`
+### `reset_password`
 
 Mutation to reset the password. For security reasons this is 2 step process, we send email to the registered and then the are redirect to reset password url through the link in that email. In the second step, it accepts `params` of type `ResetPasswordInput` with following keys as parameter
 
@@ -684,11 +577,91 @@ mutation {
 }
 ```
 
-### - `_update_user`
+### `_admin_signup`
+
+Mutation to signup administrator. This only works if `ADMIN_SECRET` env is not set. It accepts `params` of type `AdminSignupInput` with following keys
+
+> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer-admin` as http only cookie.
+
+| Key            | Description                        | Required |
+| -------------- | ---------------------------------- | -------- |
+| `admin_secret` | Secure secret with >= 6 characters | `true`   |
+
+This mutation returns `Response` type with message
+
+**Sample Mutation**
+
+```graphql
+mutation {
+  _admin_signup(params: { admin_secret: "some string" }) {
+    message
+  }
+}
+```
+
+### `_admin_login`
+
+Mutation to login administrator. It accepts `params` of type `AdminLoginInput` with following keys
+
+> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer-admin` as http only cookie.
+
+| Key            | Description                        | Required |
+| -------------- | ---------------------------------- | -------- |
+| `admin_secret` | Secure secret with >= 6 characters | `true`   |
+
+This mutation returns `Response` type with message
+
+**Sample Mutation**
+
+```graphql
+mutation {
+  _admin_login(params: { admin_secret: "some string" }) {
+    message
+  }
+}
+```
+
+### `_admin_logout`
+
+Mutation to logout administrator. It does not have any params
+
+> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer-admin` as http only cookie.
+
+This mutation returns `Response` type with message
+
+**Sample Mutation**
+
+```graphql
+mutation {
+  _admin_logout {
+    message
+  }
+}
+```
+
+### `_update_config`
+
+Mutation to update [environment variables](/core/env). It accepts `params` of type `UpdateConfigInput` with keys present in [environment variables](/core/env)
+
+> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer-admin` as http only cookie.
+
+This mutation returns `Response` type with message
+
+**Sample Mutation**
+
+```graphql
+mutation {
+  _update_config(params: { DATABASE_URL: "data.db", DATABASE_TYPE: "sqlite" }) {
+    message
+  }
+}
+```
+
+### `_update_user`
 
 Mutation to update the profile of users. This mutation is only allowed for super admins. It accepts `params` of type `UpdateUserInput` with following keys
 
-> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) as value.
+> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer-admin` as http only cookie.
 
 ```json
 {
@@ -730,11 +703,11 @@ mutation {
 }
 ```
 
-### - `_delete_user`
+### `_delete_user`
 
 Mutation to delete user. This mutation is only allowed for super admins. It accepts `params` of type `DeleteUserInput` with following keys
 
-> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) as value
+> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer-admin` as http only cookie.
 
 **Request Params**
 
