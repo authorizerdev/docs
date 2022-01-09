@@ -9,6 +9,11 @@ layout: ../../layouts/Main.astro
 
 - [`AuthorizerProvider`](#authorizerprovider)
 - [`Authorizer`](#authorizer)
+- [`AuthorizerSignup`](#authorizersignup)
+- [`AuthorizerBasicAuthLogin`](#authorizerbasicauthlogin)
+- [`AuthorizerMagicLinkLogin`](#authorizermagiclinklogin)
+- [`AuthorizerSocialLogin`](#authorizersociallogin)
+- [`AuthorizerForgotPassword`](#authorizerforgotpassword)
 - [`AuthorizerResetPassword`](#authorizerresetpassword)
 
 ## `AuthorizerProvider`
@@ -49,20 +54,21 @@ const App = () => {
 
 A core component that includes:
 
+- social logins
 - signup view
 - login view
 - forgot password view
 
-It shows various login/signup options based on the backend configurations. Make sure this is used as Child of `AuthorizerProvider`.
+Pre configured component that shows various login/signup options based on the backend configurations. Make sure it is used as Child of `AuthorizerProvider`.
 
 ### Props
 
 It has following optional props as callback events that are triggered via various user events.
 
-- `onLogin={(loginResponse)=>{}}`: event called when login form is submitted successfully
-- `onMagicLinkLogin={(magicLinkResponse)=>{}}`: event called when magic link login form is submitted successfully
-- `onSignup={(signupResponse)=>{}}`: event called when signup form is submitted successfully
-- `onForgotPassword={(forgotPasswordResponse)={}}`: called when forgot password form is submitted successfully
+- `onLogin={(loginResponse)=>{}}`: event called when login form is submitted successfully.
+- `onMagicLinkLogin={(magicLinkResponse)=>{}}`: event called when magic link login form is submitted successfully.
+- `onSignup={(signupResponse)=>{}}`: event called when signup form is submitted successfully.
+- `onForgotPassword={(forgotPasswordResponse)={}}`: called when forgot password form is submitted successfully.
 
 ### Sample Usage
 
@@ -80,6 +86,126 @@ const LoginPage = () => {
         onSignup={(signupResponse) => {}}
         onForgotPassword={(forgotPasswordResponse = {})}
       />
+    </>
+  );
+};
+```
+
+## `AuthorizerSignup`
+
+A component to render basic authentication singup form. Make sure it is used as Child of `AuthorizerProvider`.
+
+### Props
+
+- `onSignup={(response)=>{}}`: event called when signup form is submitted successfully.
+
+### Sample Usage
+
+```jsx
+import { AuthorizerSignup } from "@authorizerdev/authorizer-react";
+
+const SignupPage = () => {
+  return (
+    <>
+      <h1 style={{ textAlign: "center" }}>Signup</h1>
+      <br />
+      <AuthorizerSignup onSignup={(response) => {}} />
+    </>
+  );
+};
+```
+
+## `AuthorizerBasicAuthLogin`
+
+A component to render basic authentication login form. Make sure this is used as Child of `AuthorizerProvider`.
+
+### Props
+
+- `onLogin={(response)=>{}}`: event called when login form is submitted successfully.
+
+### Sample Usage
+
+```jsx
+import { AuthorizerBasicAuthLogin } from "@authorizerdev/authorizer-react";
+
+const LoginPage = () => {
+  return (
+    <>
+      <h1 style={{ textAlign: "center" }}>Login</h1>
+      <br />
+      <AuthorizerBasicAuthLogin onLogin={(response) => {}} />
+    </>
+  );
+};
+```
+
+## `AuthorizerMagicLinkLogin`
+
+A component to render magic link login form. Make sure this is used as Child of `AuthorizerProvider`.
+
+### Props
+
+- `onMagicLinkLogin={(response)=>{}}`: event called when magic link login form is submitted successfully.
+
+### Sample Usage
+
+```jsx
+import { AuthorizerMagicLinkLogin } from "@authorizerdev/authorizer-react";
+
+const LoginPage = () => {
+  return (
+    <>
+      <h1 style={{ textAlign: "center" }}>Login</h1>
+      <br />
+      <AuthorizerMagicLinkLogin onMagicLinkLogin={(response) => {}} />
+    </>
+  );
+};
+```
+
+## `AuthorizerSocialLogin`
+
+A component to render list of social media login buttons based on backend configurations. Make sure this is used as Child of `AuthorizerProvider`.
+
+### Props
+
+- `onForgotPassword={(response)=>{}}`: event called when forgot password form is submitted successfully.
+
+### Sample Usage
+
+```jsx
+import { AuthorizerSocialLogin } from "@authorizerdev/authorizer-react";
+
+const LoginPage = () => {
+  return (
+    <>
+      <h1 style={{ textAlign: "center" }}>Login / Signup</h1>
+      <br />
+      <AuthorizerSocialLogin />
+    </>
+  );
+};
+```
+
+## `AuthorizerForgotPassword`
+
+A component to render forgot password form. Make sure this is used as Child of `AuthorizerProvider`.
+
+### Props
+
+No props exposed for this components
+
+### Sample Usage
+
+```jsx
+import { AuthorizerForgotPassword } from "@authorizerdev/authorizer-react";
+
+const ForgotPasswordPage = () => {
+  return (
+    <>
+      <h1 style={{ textAlign: "center" }}>Forgot Password?</h1>
+      <br />
+      <AuthorizerForgotPassword onForgotPassword={(response) => {}} />
     </>
   );
 };
