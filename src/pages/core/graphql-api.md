@@ -18,7 +18,7 @@ Table of Contents
   - [`_users`](#_users)
   - [`_verification_requests`](#_verification_requests)
   - [`_admin_session`](#_admin_session)
-  - [`_config`](#_config)
+  - [`_env`](#_env)
 - [Mutations](#mutations)
   - [`signup`](#signup)
   - [`login`](#login)
@@ -32,7 +32,7 @@ Table of Contents
   - [`_admin_signup`](#_admin_signup)
   - [`_admin_login`](#_admin_login)
   - [`_admin_logout`](#_admin_logout)
-  - [`_update_config`](#_update_config)
+  - [`_update_env`](#_update_env)
   - [`_update_user`](#_update_user)
   - [`_delete_user`](#_delete_user)
 
@@ -242,7 +242,7 @@ query {
 }
 ```
 
-### `_config`
+### `_env`
 
 Query to get all the [environment variables](/core/env).
 
@@ -260,7 +260,7 @@ All the [environment variables](/core/env) values can be obtained using this thi
 
 ```graphql
 query {
-  _config {
+  _env {
     DATABASE_TYPE
     DATABASE_URL
     DATABASE_NAME
@@ -639,9 +639,9 @@ mutation {
 }
 ```
 
-### `_update_config`
+### `_update_env`
 
-Mutation to update [environment variables](/core/env). It accepts `params` of type `UpdateConfigInput` with keys present in [environment variables](/core/env)
+Mutation to update [environment variables](/core/env). It accepts `params` of type `UpdateEnvInput` with keys present in [environment variables](/core/env)
 
 > Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer-admin` as http only cookie.
 
@@ -651,7 +651,7 @@ This mutation returns `Response` type with message
 
 ```graphql
 mutation {
-  _update_config(params: { DATABASE_URL: "data.db", DATABASE_TYPE: "sqlite" }) {
+  _update_env(params: { DATABASE_URL: "data.db", DATABASE_TYPE: "sqlite" }) {
     message
   }
 }
