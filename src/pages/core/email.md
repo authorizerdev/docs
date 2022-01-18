@@ -14,9 +14,10 @@ Authorizer should work with any [SMTP](https://en.wikipedia.org/wiki/Simple_Mail
 [Sendgrid](https://sendgrid.com) is configured using an API Key, rather than traditional username/password login. To use Sendgrid you must:
 
 1. Create a Sendgrid account and login
-1. Create an API Key for your application under `Settings > API Keys` within the Sendgrid console
-1. Ensure that you are using a verified sender email under `Settings > Sender Authentication` within the Sendgrid console. Sendgrid will reject email sent `From:` unverified email addresses.
-1. Set the relevant Authenticator environment variables as follows:
+2. Create an API Key for your application under `Settings > API Keys` within the Sendgrid console
+3. Ensure that you are using a verified sender email under `Settings > Sender Authentication` within the Sendgrid console. Sendgrid will reject email sent `From:` unverified email addresses.
+4. Set the relevant Authenticator environment variables as follows:
+
 ```
    SMTP_HOST: smtp.sendgrid.net
    SMTP_PASSWORD: <Sendgrid API Key>
@@ -24,4 +25,5 @@ Authorizer should work with any [SMTP](https://en.wikipedia.org/wiki/Simple_Mail
    SMTP_USERNAME: apikey
    SENDER_EMAIL: <Sendgrid verified email>
 ```
-   > Note: the `SMTP_USERNAME` environment variable must be set to the liternal string `apikey` **not** your API key value.
+
+> Note: the `SMTP_USERNAME` environment variable must be set to the liternal string `apikey` **not** your API key value.
