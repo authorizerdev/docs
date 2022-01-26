@@ -14,6 +14,7 @@ Table of Contents
 - [Queries](#queries)
   - [`meta`](#meta)
   - [`session`](#session)
+  - [`is_valid_jwt`](#is_valid_jwt)
   - [`profile`](#profile)
   - [`_users`](#_users)
   - [`_verification_requests`](#_verification_requests)
@@ -71,23 +72,19 @@ query {
 
 ### `session`
 
-Query to get the `session` information. It returns `AuthResponse` type with the following keys.
+Query to get the `session` information.
 
-> Note: Session information should be present as present as HTTP Cookie (`authorizer` / `COOKIE_NAME` configured via env) OR Authorization header with bearer token. If the information is not present or an invalid data is present it throws `unauthorized` error
+> Note: Session information should be present as present as HTTP Cookie. If the information is not present or an invalid data is present it throws `unauthorized` error
 
-This query can take a optional input `roles` of type `string array` to verify if the current token is valid for a given roles.
+This query can take a optional input `params` of type `SessionQueryInput` which includes `roles` to verify if the current token is valid for a given roles.
 
-**Example**
+**Request Params**
 
-```graphql
-query {
-  token(roles: ["admin"]) {
-    user {
-      ...
-    }
-  }
-}
-```
+| Key     | Description                      | Required |
+| ------- | -------------------------------- | -------- |
+| `roles` | Array of string with valid roles | false    |
+
+It returns `AuthResponse` type with the following keys.
 
 **Response**
 
@@ -102,7 +99,47 @@ query {
 
 ```graphql
 query {
-  token {
+  session(params: { roles: ["admin"] }) {
+    message
+    accessToken
+    expires_at
+    user {
+      id
+      email
+      roles
+    }
+  }
+}
+```
+
+### `is_valid_jwt`
+
+Query to get the `jwt` / access token information.
+
+This query can take a optional input `params` of type `IsValidJWTQueryInput` which includes `token` & `roles` to verify if the current token is valid for a given roles.
+If the token is not passed via params query will try to access it via Authorization Header / HTTP Cookie and if not present there then it will return `unauthorized` error.
+
+**Request Params**
+
+| Key     | Description                      | Required |
+| ------- | -------------------------------- | -------- |
+| `token` | JWT token string                 | false    |
+| `roles` | Array of string with valid roles | false    |
+
+It returns `ValidJWTResponse` type with the following keys.
+
+**Response**
+
+| Key       | Description                                                |
+| --------- | ---------------------------------------------------------- |
+| `message` | Error / Success message from server                        |
+| `valid`   | Boolean value stating if the given jwt is valid or invalid |
+
+**Sample Query**
+
+```graphql
+query {
+  session(params: { roles: ["admin"] }) {
     message
     accessToken
     expires_at
@@ -157,9 +194,9 @@ query {
 
 ### `_users`
 
-Query to get all the `_users`. This query is only allowed for super admins. It returns array of users `[User!]!` with above mentioned keys.
+Query to get all the `_users`. This query is only allowed for super admins. It returns array of users `Users` with below mentioned keys.
 
-> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer-admin` as http only cookie.
+> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer.admin` as http only cookie.
 
 ```json
 {
@@ -167,17 +204,39 @@ Query to get all the `_users`. This query is only allowed for super admins. It r
 }
 ```
 
+It can take optional `params` input of type `PaginatedInput` with following keys
+
+**Request Params**
+
+| Key     | Description                  | Required | Default |
+| ------- | ---------------------------- | -------- | ------- |
+| `page`  | Number of page that you want | false    | 1       |
+| `limit` | Number of rows that you want | false    | 10      |
+
 **Sample Query**
 
 ```graphql
 query {
-  _users {
-    id
-    given_name
-    family_name
-    email
-    picture
-    roles
+  _users(params: {
+    pagination: {
+      page: 2
+      limit: 10
+    }
+  }) {
+    pagination: {
+      offset
+      total
+      page
+      limit
+    }
+    users {
+      id
+      given_name
+      family_name
+      email
+      picture
+      roles
+    }
   }
 }
 ```
@@ -194,24 +253,32 @@ Query to get all the `_verification_requests`. This query is only allowed for su
 }
 ```
 
-| Key          | Description                                                                                                                    |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------ |
-| `id`         | user unique identifier                                                                                                         |
-| `identifier` | which type of verification request it is. `basic_auth_signup`, `update_email`, `forgot_password` are the supported identifiers |
-| `email`      | email address of user                                                                                                          |
-| `token`      | verification token                                                                                                             |
-| `expires`    | timestamp at which token expires                                                                                               |
+It can take optional `params` input of type `PaginatedInput` with following keys
+
+**Request Params**
+
+| Key     | Description                  | Required | Default |
+| ------- | ---------------------------- | -------- | ------- |
+| `page`  | Number of page that you want | false    | 1       |
+| `limit` | Number of rows that you want | false    | 10      |
 
 **Sample Query**
 
 ```graphql
 query {
-  _verification_requests {
-    id
-    token
-    email
-    expires
-    identifier
+  _verification_requests(params: { pagination: { limit: 10, page: 2 } }) {
+    pagination {
+      limit
+      offset
+      page
+    }
+    verification_requests {
+      id
+      token
+      email
+      expires
+      identifier
+    }
   }
 }
 ```
