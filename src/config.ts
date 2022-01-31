@@ -25,9 +25,10 @@ export const sidebar = [
     children: [
       { text: "Heroku", link: "/deployment/heroku" },
       { text: "Railway.app", link: "/deployment/railway" },
+      { text: "Render", link: "/deployment/render" },
       { text: "Kubernetes", link: "/deployment/kubernetes" },
       { text: "Binary", link: "/deployment/binary" },
-      { text: "Authorizer Cloud", link: "/deployment/authorizer-cloud" },
+      // { text: "Authorizer Cloud", link: "/deployment/authorizer-cloud" },
     ],
   },
   {

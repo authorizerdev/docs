@@ -14,7 +14,7 @@ Here is a quick guide on getting started with [`@authorizerdev/authorizer-js`](/
 
 ## Step 1 - Create Instance
 
-Get Authorizer URL by instantiating [Authorizer instance](/deployment) and configuring it with necessary [environment variables](/core/env).
+Get Authorizer URL by deploying [Authorizer instance](/deployment) and configuring it with necessary [environment variables](/core/env).
 
 ## Step 2 - Install SDK
 
