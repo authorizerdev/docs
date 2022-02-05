@@ -8,7 +8,7 @@ layout: ../../layouts/Main.astro
 Deploy Authorizer using [heroku](https://github.com/authorizerdev/authorizer-heroku) for free and quickly play with it in 30seconds
 <br/>
 
-[![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/authorizerdev/authorizer-heroku)
+<a target="_blank" href="https://heroku.com/deploy?template=https://github.com/authorizerdev/authorizer-heroku"><img src="https://www.herokucdn.com/deploy/button.svg" alt="Deploy to Heroku" style="height: 44px;"></a>
 
 After click the above button you will see screen as below, follow the steps mentioned below:
 

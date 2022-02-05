@@ -7,7 +7,7 @@ layout: ../../layouts/Main.astro
 
 Click to deploy a [Authorizer](https://authorizer.dev) instance with a managed PostgreSQL database on [Render](https://render.com/).
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/authorizerdev/authorizer-render)
+<a target="_blank" href="https://render.com/deploy?repo=https://github.com/authorizerdev/authorizer-render"><img alt="render button" src="https://render.com/images/deploy-to-render-button.svg" /></a>
 
 After clicking the above button, follow the steps mentioned below:
 
