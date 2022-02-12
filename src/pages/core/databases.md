@@ -11,6 +11,7 @@ layout: ../../layouts/Main.astro
 - [SQLServer](https://www.microsoft.com/en-us/sql-server/)
 - [MongoDB](https://www.mongodb.com)
 - [ArangoDB](https://www.arangodb.com/)
+- [Yugabyte](https://www.yugabyte.com/)
 
 > Note: New environment variable is introduced - `DATABASE_NAME`: as database name, is not part of connection URL in case of arangodb and mongodb.
 
