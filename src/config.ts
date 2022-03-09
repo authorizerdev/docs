@@ -48,4 +48,9 @@ export const sidebar = [
       { text: "Hooks", link: "/authorizer-react/hooks" },
     ],
   },
+  {
+    text: "Integrations",
+    link: "/integrations",
+    children: [{ text: "React Native", link: "/integrations/react-native" }],
+  },
 ];
