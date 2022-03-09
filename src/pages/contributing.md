@@ -120,7 +120,7 @@ query GetVerifyRequests {
 mutation VerifyEmail {
   verify_email(params: { token: "" }) {
     access_token
-    expires_at
+    expires_in
     user {
       id
       email
@@ -133,7 +133,7 @@ mutation VerifyEmail {
 mutation Login {
   login(params: { email: "lakhan@yopmail.com", password: "test" }) {
     access_token
-    expires_at
+    expires_in
     user {
       id
       family_name
@@ -146,7 +146,7 @@ mutation Login {
 query GetSession {
   session {
     access_token
-    expires_at
+    expires_in
     user {
       id
       given_name

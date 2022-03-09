@@ -7,10 +7,12 @@ layout: ../../layouts/Main.astro
 
 ## Step 1:
 
-- Have authorizer instance up and running. Check [docs](https://docs.authorizer.dev/getting-started/)
-- Get authorizer client id from your dashboard
-  - Open authorizer instance endpoint in browser
-  - Go to environment variables tab and you will see client id field
+Have authorizer instance up and running. Check [docs](https://docs.authorizer.dev/getting-started/)
+
+Get authorizer client id from your dashboard
+
+- Open authorizer instance endpoint in browser
+- Go to environment variables tab and you will see client id field
 
 ## Step 2:
 
@@ -64,7 +66,7 @@ const authorizerRef = new Authorizer({
 
 Configure `useAuthRequest` hook with above configs
 
-> Note: use `offline_access` in scope if you want to get refresh token and want to perform silent refresh when user comes back to app. If your app is data sensitive we recommend not using refresh token and asking user to login with each session (example banking / finance app)
+> Note: Use `offline_access` in scope if you want to get refresh token and want to perform silent refresh when user comes back to app. If your app is data sensitive we do not recommend using refresh token (example banking / finance app)
 
 ```js
 const [request, result, promptAsync] = AuthSession.useAuthRequest(
@@ -89,6 +91,8 @@ const [request, result, promptAsync] = AuthSession.useAuthRequest(
 Listen to auth result and set refresh token in secure store for silent refresh / get user info
 
 ```js
+const authorizerRefreshTokenKey = `authorizer_refresh_token`;
+
 useEffect(() => {
   async function setResult() {
     if (result) {

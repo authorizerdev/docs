@@ -30,6 +30,7 @@ Table of Contents
   - [`resend_verify_email`](#resend_verify_email)
   - [`forgot_password`](#forgot_password)
   - [`reset_password`](#reset_password)
+  - [`revoke`](#revoke)
   - [`_admin_signup`](#_admin_signup)
   - [`_admin_login`](#_admin_login)
   - [`_admin_logout`](#_admin_logout)
@@ -47,6 +48,7 @@ It returns `Meta` type with the following possible values
 | Key                               | Description                                                   |
 | --------------------------------- | ------------------------------------------------------------- |
 | `version`                         | Authorizer version that is currently deployed                 |
+| `client_id`                       | Identifier for your instance                                  |
 | `is_google_login_enabled`         | It gives information if google login is configured or not     |
 | `is_github_login_enabled`         | It gives information if github login is configured or not     |
 | `is_facebook_login_enabled`       | It gives information if facebook login is configured or not   |
@@ -60,6 +62,7 @@ It returns `Meta` type with the following possible values
 query {
   meta {
     version
+    client_id
     is_google_login_enabled
     is_github_login_enabled
     is_facebook_login_enabled
@@ -74,26 +77,29 @@ query {
 
 Query to get the `session` information.
 
-> Note: Session information should be present as present as HTTP Cookie. If the information is not present or an invalid data is present it throws `unauthorized` error
+> Note: Session information should be present as HTTP Cookie. If the information is not present or an invalid data is present it throws `unauthorized` error
 
 This query can take a optional input `params` of type `SessionQueryInput` which includes `roles` to verify if the current token is valid for a given roles.
 
 **Request Params**
 
-| Key     | Description                      | Required |
-| ------- | -------------------------------- | -------- |
-| `roles` | Array of string with valid roles | false    |
+| Key     | Description                                                                                 | Required |
+| ------- | ------------------------------------------------------------------------------------------- | -------- |
+| `roles` | Array of string with valid roles                                                            | false    |
+| `scope` | List of openID scopes. If not present default scopes ['openid', 'email', 'profile'] is used | false    |
 
 It returns `AuthResponse` type with the following keys.
 
 **Response**
 
-| Key            | Description                                                                                            |
-| -------------- | ------------------------------------------------------------------------------------------------------ |
-| `message`      | Error / Success message from server                                                                    |
-| `access_token` | accessToken that frontend application can use for further authorized requests                          |
-| `expires_at`   | timestamp when the current token is going to expire, so that frontend can request for new access token |
-| `user`         | User object with all the basic profile information                                                     |
+| Key             | Description                                                                                                                                       |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `message`       | Error / Success message from server                                                                                                               |
+| `access_token`  | accessToken that frontend application can use for further authorized requests                                                                     |
+| `expires_in`    | timestamp when the current token is going to expire, so that frontend can request for new access token                                            |
+| `id_token`      | JWT token holding the user information                                                                                                            |
+| `refresh_token` | When scope includes `offline_access`, Long living token is returned which can be used to get new access tokens. This is rotated with each request |
+| `user`          | User object with all the basic profile information                                                                                                |
 
 **Sample Query**
 
@@ -102,47 +108,7 @@ query {
   session(params: { roles: ["admin"] }) {
     message
     accessToken
-    expires_at
-    user {
-      id
-      email
-      roles
-    }
-  }
-}
-```
-
-### `is_valid_jwt`
-
-Query to get the `jwt` / access token information.
-
-This query can take a optional input `params` of type `IsValidJWTQueryInput` which includes `token` & `roles` to verify if the current token is valid for a given roles.
-If the token is not passed via params query will try to access it via Authorization Header / HTTP Cookie and if not present there then it will return `unauthorized` error.
-
-**Request Params**
-
-| Key     | Description                      | Required |
-| ------- | -------------------------------- | -------- |
-| `token` | JWT token string                 | false    |
-| `roles` | Array of string with valid roles | false    |
-
-It returns `ValidJWTResponse` type with the following keys.
-
-**Response**
-
-| Key       | Description                                                |
-| --------- | ---------------------------------------------------------- |
-| `message` | Error / Success message from server                        |
-| `valid`   | Boolean value stating if the given jwt is valid or invalid |
-
-**Sample Query**
-
-```graphql
-query {
-  session(params: { roles: ["admin"] }) {
-    message
-    accessToken
-    expires_at
+    expires_in
     user {
       id
       email
@@ -156,7 +122,7 @@ query {
 
 Query to get the `profile` information of a user. It returns `User` type with the following keys.
 
-> Note: this is authorized route, so HTTP Cookie / Authorization Header with bearer token must be present.
+> Note: this is authorized route, so Authorization Header with bearer access token must be present.
 
 | Key                     | Description                                                  |
 | ----------------------- | ------------------------------------------------------------ |
@@ -331,6 +297,8 @@ query {
     DATABASE_TYPE
     DATABASE_URL
     DATABASE_NAME
+    CLIENT_ID
+	  CLIENT_SECRET
     ...
   }
 }
@@ -344,20 +312,21 @@ A mutation to signup users using email and password. It accepts `params` of type
 
 **Request Params**
 
-| Key                | Description                                                                             | Required |
-| ------------------ | --------------------------------------------------------------------------------------- | -------- |
-| `email`            | Email address of user                                                                   | true     |
-| `password`         | Password that user wants to set                                                         | true     |
-| `confirm_password` | Value same as password to make sure that its user and not robot                         | true     |
-| `given_name`       | First name of the user                                                                  | false    |
-| `family_name`      | Last name of the user                                                                   | false    |
-| `picture`          | Profile picture URL                                                                     | false    |
-| `roles`            | List of roles to be assigned. If not specified `DEFAULT_ROLE` value of env will be used | false    |
-| `middle_name`      | middle name of user                                                                     | false    |
-| `nickname`         | nick name of user                                                                       | false    |
-| `gender`           | gender of user                                                                          | false    |
-| `birthdate`        | birthdate of user                                                                       | false    |
-| `phone_number`     | phone number of user                                                                    | false    |
+| Key                | Description                                                                                 | Required |
+| ------------------ | ------------------------------------------------------------------------------------------- | -------- |
+| `email`            | Email address of user                                                                       | true     |
+| `password`         | Password that user wants to set                                                             | true     |
+| `confirm_password` | Value same as password to make sure that its user and not robot                             | true     |
+| `given_name`       | First name of the user                                                                      | false    |
+| `family_name`      | Last name of the user                                                                       | false    |
+| `picture`          | Profile picture URL                                                                         | false    |
+| `roles`            | List of roles to be assigned. If not specified `DEFAULT_ROLE` value of env will be used     | false    |
+| `middle_name`      | middle name of user                                                                         | false    |
+| `nickname`         | nick name of user                                                                           | false    |
+| `gender`           | gender of user                                                                              | false    |
+| `birthdate`        | birthdate of user                                                                           | false    |
+| `phone_number`     | phone number of user                                                                        | false    |
+| `scope`            | List of openID scopes. If not present default scopes ['openid', 'email', 'profile'] is used | false    |
 
 This mutation returns `AuthResponse` type with following keys
 
@@ -367,7 +336,7 @@ This mutation returns `AuthResponse` type with following keys
 | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `message`      | Success / Error message from server                                                                                                                                                 |
 | `access_token` | Token that can be used for further authorized requests. This is only returned if `DISABLE_EMAIL_NOTIFICATION` is set to `true` in environment variables                             |
-| `expires_at`   | Timestamp when the access Token will expire so that frontend can request new token. This is only returned if `DISABLE_EMAIL_NOTIFICATION` is set to `true` in environment variables |
+| `expires_in`   | Timestamp when the access Token will expire so that frontend can request new token. This is only returned if `DISABLE_EMAIL_NOTIFICATION` is set to `true` in environment variables |
 | `user`         | User object with its profile keys mentioned [above](#--profile). This is only returned if `DISABLE_EMAIL_NOTIFICATION` is set to `true` in environment variables                    |
 
 **Sample Mutation**
@@ -388,22 +357,25 @@ A mutation to login users using email and password. It accepts `params` of type 
 
 **Request Params**
 
-| Key        | Description                     | Required |
-| ---------- | ------------------------------- | -------- |
-| `email`    | Email address of user           | true     |
-| `password` | Password that user wants to set | true     |
-| `roles`    | Roles to login with             | false    |
+| Key        | Description                                                                                 | Required |
+| ---------- | ------------------------------------------------------------------------------------------- | -------- |
+| `email`    | Email address of user                                                                       | true     |
+| `password` | Password that user wants to set                                                             | true     |
+| `roles`    | Roles to login with                                                                         | false    |
+| `scope`    | List of openID scopes. If not present default scopes ['openid', 'email', 'profile'] is used | false    |
 
 This mutation returns `AuthResponse` type with following keys
 
 **Response**
 
-| Key            | Description                                                                         |
-| -------------- | ----------------------------------------------------------------------------------- |
-| `message`      | Success / Error message from server                                                 |
-| `access_token` | Token that can be used for further authorized requests.                             |
-| `expires_at`   | Timestamp when the access Token will expire so that frontend can request new token. |
-| `user`         | User object with its profile keys mentioned [above](#--profile).                    |
+| Key             | Description                                                                                                                                       |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `message`       | Success / Error message from server                                                                                                               |
+| `access_token`  | accessToken that frontend application can use for further authorized requests                                                                     |
+| `expires_in`    | timestamp when the current token is going to expire, so that frontend can request for new access token                                            |
+| `id_token`      | JWT token holding the user information                                                                                                            |
+| `refresh_token` | When scope includes `offline_access`, Long living token is returned which can be used to get new access tokens. This is rotated with each request |
+| `user`          | User object with its profile keys mentioned [above](#--profile).                                                                                  |
 
 **Sample Mutation**
 
@@ -418,7 +390,7 @@ mutation {
       roles
     }
     accessToken
-    expires_at
+    expires_in
     message
   }
 }
@@ -432,10 +404,11 @@ A mutation to perform password less login. It accepts `params` of type `MagicLin
 
 **Request Params**
 
-| Key     | Description           | Required |
-| ------- | --------------------- | -------- |
-| `email` | Email address of user | true     |
-| `roles` | Roles to login with   | false    |
+| Key     | Description                                                                                 | Required |
+| ------- | ------------------------------------------------------------------------------------------- | -------- |
+| `email` | Email address of user                                                                       | true     |
+| `roles` | Roles to login with                                                                         | false    |
+| `scope` | List of openID scopes. If not present default scopes ['openid', 'email', 'profile'] is used | false    |
 
 This mutation returns `Response` type with following keys
 
@@ -479,6 +452,8 @@ mutation {
 ### `update_profile`
 
 Mutation to update profile of user. It accepts `params` of type `UpdateProfileInput` with following keys as parameter
+
+> Note: this is authorized route and Authorization with bearer access token is required
 
 **Request Params**
 
@@ -528,12 +503,14 @@ This mutation returns `AuthResponse` type with following keys
 
 **Response**
 
-| Key            | Description                                                                         |
-| -------------- | ----------------------------------------------------------------------------------- |
-| `message`      | Success / Error message from server                                                 |
-| `access_token` | Token that can be used for further authorized requests.                             |
-| `expires_at`   | Timestamp when the access Token will expire so that frontend can request new token. |
-| `user`         | User object with its profile keys mentioned [above](#--profile).                    |
+| Key             | Description                                                                                                                                       |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `message`       | Success / Error message from server                                                                                                               |
+| `access_token`  | accessToken that frontend application can use for further authorized requests                                                                     |
+| `expires_in`    | timestamp when the current token is going to expire, so that frontend can request for new access token                                            |
+| `id_token`      | JWT token holding the user information                                                                                                            |
+| `refresh_token` | When scope includes `offline_access`, Long living token is returned which can be used to get new access tokens. This is rotated with each request |
+| `user`          | User object with its profile keys mentioned [above](#--profile).                                                                                  |
 
 **Sample Mutation**
 
@@ -547,7 +524,7 @@ mutation {
       picture
     }
     accessToken
-    expires_at
+    expires_in
     message
   }
 }
@@ -639,6 +616,24 @@ mutation {
   reset_password(
     params: { token: "some token", password: "test", confirm_password: "test" }
   ) {
+    message
+  }
+}
+```
+
+### `revoke`
+
+Mutation to revoke refresh token.
+
+**Request Params**
+
+| Key             | Description                         | Required |
+| --------------- | ----------------------------------- | -------- |
+| `refresh_token` | Refresh token that needs to revoked | true     |
+
+```graphql
+mutation {
+  revoke(params: { refresh_token: "token" }) {
     message
   }
 }

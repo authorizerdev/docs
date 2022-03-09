@@ -7,7 +7,8 @@ layout: ../../layouts/Main.astro
 
 **Table of Contents**
 
-- [browserLogin](#--browserlogin)
+- [authorize](#--authorize)
+- [getToken](#--gettoken)
 - [login](#--login)
 - [signup](#--signup)
 - [verifyEmail](#--verifyemail)
@@ -19,6 +20,7 @@ layout: ../../layouts/Main.astro
 - [magicLinkLogin](#--magiclinklogin)
 - [getMetadata](#--getmetadata)
 - [getSession](#--getsession)
+- [revokeToken](#--revoketoken)
 - [logout](#--logout)
 
 These functions can be invoked using the `Authorizer` instance:
@@ -30,24 +32,71 @@ const authRef = new Authorizer({
 });
 ```
 
-## - `browserLogin`
+## - `authorize`
 
-Function to auto login from browser using the builtin UI of `authorizer`. It checks for session, if available returns the user information, else redirects to login page.
+Function to auto login from browser using the builtin UI of `authorizer`. It checks for session, if available returns the token information, else redirects to login page.
+
+- It supports [PKCE flow](https://datatracker.ietf.org/doc/html/rfc7636). This will help user to perform authentication and authorization in safe memory and prevent from CSRF attack. It also enables perform authorization with safety on mobile applications (Tried and tested with [Expo AuthSession](https://github.com/authorizerdev/examples/tree/main/with-react-native-expo))
+
+- It supports [Implicit Flow](https://datatracker.ietf.org/doc/html/rfc6749#section-1.3.2)
+
+It accepts JSON object as a parameter with following keys
+
+| Key                 | Description                                                                                                                                                                                                      | Required |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| `response_type`     | What type of response you want. It supports `code` & `token` as response types. Default value is `token`                                                                                                         | false    |
+| `response_mode`     | Response is required in which format. Supports 2 forms `query` (returns redirect url with response in query string) and `web_message` (returns html page with data embedded in JS). Default its value is `query` | false    |
+| `use_refresh_token` | Whether to include refresh token in response or not                                                                                                                                                              | false    |
 
 If session exists following keys are returned.
 
 **Response**
 | Key | Description |
 | ---------------------- | ------------------------------------------------------------------------------------------------------ |
-| `message` | Error / Success message from server |
 | `access_token` | accessToken that frontend application can use for further authorized requests |
-| `expires_at` | timestamp when the current token is going to expire, so that frontend can request for new access token |
-| `user` | User object with all the basic profile information |
+| `expires_in` | timestamp when the current token is going to expire, so that frontend can request for new access token |
+| `id_token` | JWT token holding the user information |
+| `refresh_token` | When scope includes `offline_access`, Long living token is returned which can be used to get new access tokens. This is rotated with each request |
 
 **Sample Usage**
 
 ```js
-const res = await authRef.browserLogin();
+const res = await authRef.authorize({
+  response_type: "code",
+  response_mode: "query",
+});
+```
+
+## - `getToken`
+
+Function to get token information based on code / refresh_token
+
+It accepts JSON object as a parameter with following keys
+
+| Key             | Description                                                                                                                  | Required |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------- | -------- |
+| `grant_type`    | Supports `authorization_code` & `refresh_token` grant types. Default is `authorization_code`                                 | false    |
+| `code_verifier` | Code verifier to verify against the code_challenge sent in authorize request. Required if `authorization_code` flow is used. | false    |
+| `code`          | Code returned form authorize request is sent to make sure it is follow up of same request                                    | false    |
+| `refresh_token` | Refresh token used to get the new access token. Required in case of `refresh_token` grant type                               | false    |
+
+If session exists following keys are returned.
+
+**Response**
+| Key | Description |
+| ---------------------- | ------------------------------------------------------------------------------------------------------ |
+| `access_token` | accessToken that frontend application can use for further authorized requests |
+| `expires_in` | timestamp when the current token is going to expire, so that frontend can request for new access token |
+| `id_token` | JWT token holding the user information |
+| `refresh_token` | When scope includes `offline_access`, Long living token is returned which can be used to get new access tokens. This is rotated with each request |
+
+**Sample Usage**
+
+```js
+const res = await authRef.authorize({
+  response_type: "code",
+  response_mode: "query",
+});
 ```
 
 ## - `signup`
@@ -75,12 +124,14 @@ Following is the response for `signup` function
 
 **Response**
 
-| Key            | Description                                                                                                                                                                         |
-| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `message`      | Success / Error message from server                                                                                                                                                 |
-| `access_token` | Token that can be used for further authorized requests. This is only returned if `DISABLE_EMAIL_NOTIFICATION` is set to `true` in environment variables                             |
-| `expires_at`   | Timestamp when the access Token will expire so that frontend can request new token. This is only returned if `DISABLE_EMAIL_NOTIFICATION` is set to `true` in environment variables |
-| `user`         | User object with its profile keys mentioned [above](#--getprofile). This is only returned if `DISABLE_EMAIL_NOTIFICATION` is set to `true` in environment variables                 |
+| Key             | Description                                                                                                                                                         |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `message`       | Success / Error message from server                                                                                                                                 |
+| `access_token`  | accessToken that frontend application can use for further authorized requests                                                                                       |
+| `expires_in`    | timestamp when the current token is going to expire, so that frontend can request for new access token                                                              |
+| `id_token`      | JWT token holding the user information                                                                                                                              |
+| `refresh_token` | When scope includes `offline_access`, Long living token is returned which can be used to get new access tokens. This is rotated with each request                   |
+| `user`          | User object with its profile keys mentioned [above](#--getprofile). This is only returned if `DISABLE_EMAIL_NOTIFICATION` is set to `true` in environment variables |
 
 **Sample Usage**
 
@@ -103,6 +154,7 @@ It accepts JSON object as a parameter with following keys
 | `email`    | Email address of user                                                                                                  | true     |
 | `password` | Password of user                                                                                                       | true     |
 | `roles`    | Roles of user that he/she wants to login with. It accepts array of string. Defaults to `[user]` role if not configured | false    |
+| `scope`    | List of openID scopes. If not present default scopes ['openid', 'email', 'profile'] is used                            | false    |
 
 Following is the response for `login` function
 
@@ -111,7 +163,9 @@ Following is the response for `login` function
 | ---------------------- | ------------------------------------------------------------------------------------------------------ |
 | `message` | Error / Success message from server |
 | `access_token` | accessToken that frontend application can use for further authorized requests |
-| `expires_at` | timestamp when the current token is going to expire, so that frontend can request for new access token |
+| `expires_in` | timestamp when the current token is going to expire, so that frontend can request for new access token |
+| `id_token` | JWT token holding the user information |
+| `refresh_token` | When scope includes `offline_access`, Long living token is returned which can be used to get new access tokens. This is rotated with each request |
 | `user` | User object with all the basic profile information |
 
 **Sample Usage**
@@ -137,12 +191,14 @@ This mutation returns `AuthResponse` type with following keys
 
 **Response**
 
-| Key            | Description                                                                         |
-| -------------- | ----------------------------------------------------------------------------------- |
-| `message`      | Success / Error message from server                                                 |
-| `access_token` | Token that can be used for further authorized requests.                             |
-| `expires_at`   | Timestamp when the access Token will expire so that frontend can request new token. |
-| `user`         | User object with its profile keys mentioned [above](#--getprofile).                 |
+| Key             | Description                                                                                                                                       |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `message`       | Success / Error message from server                                                                                                               |
+| `access_token`  | accessToken that frontend application can use for further authorized requests                                                                     |
+| `expires_in`    | timestamp when the current token is going to expire, so that frontend can request for new access token                                            |
+| `id_token`      | JWT token holding the user information                                                                                                            |
+| `refresh_token` | When scope includes `offline_access`, Long living token is returned which can be used to get new access tokens. This is rotated with each request |
+| `user`          | User object with its profile keys mentioned [above](#--getprofile).                                                                               |
 
 **Sample Usage**
 
@@ -158,9 +214,9 @@ Function to get profile of user. This function makes an authorized request, henc
 
 It accepts the optional JSON object as parameter, you can pass the HTTP Headers there.
 
-| Key             | Description                                                                          | Required |
-| --------------- | ------------------------------------------------------------------------------------ | -------- |
-| `Authorization` | Authorization header passed to the server. It needs `Bearer some_token` as its value | false    |
+| Key             | Description                                                                            | Required |
+| --------------- | -------------------------------------------------------------------------------------- | -------- |
+| `Authorization` | Authorization header passed to the server. It needs `Bearer access_token` as its value | true     |
 
 **Response**
 
@@ -211,9 +267,9 @@ Here are the keys that `data` object accepts
 
 Here is sample of `headers` object
 
-| Key             | Description                                                                          | Required |
-| --------------- | ------------------------------------------------------------------------------------ | -------- |
-| `Authorization` | Authorization header passed to the server. It needs `Bearer some_token` as its value | false    |
+| Key             | Description                                                                            | Required |
+| --------------- | -------------------------------------------------------------------------------------- | -------- |
+| `Authorization` | Authorization header passed to the server. It needs `Bearer access_token` as its value | true     |
 
 **Response**
 
@@ -318,10 +374,11 @@ Function to perform password less login.
 
 > Note: You will need a SMTP server with an email address and password configured as [authorizer environment](/core/env/) using which system can send emails.
 
-| Key     | Description                                               | Required |
-| ------- | --------------------------------------------------------- | -------- |
-| `email` | Email using which user needs to login                     | true     |
-| `roles` | List of valid valid roles using which user needs to login | false    |
+| Key     | Description                                                                                 | Required |
+| ------- | ------------------------------------------------------------------------------------------- | -------- |
+| `email` | Email using which user needs to login                                                       | true     |
+| `roles` | List of valid valid roles using which user needs to login                                   | false    |
+| `scope` | List of openID scopes. If not present default scopes ['openid', 'email', 'profile'] is used | false    |
 
 **Response**
 
@@ -346,6 +403,7 @@ Function to get meta information about your authorizer instance. eg, version, co
 | Key                               | Description                                                   |
 | --------------------------------- | ------------------------------------------------------------- |
 | `version`                         | Authorizer version that is currently deployed                 |
+| `client_id`                       | Identifier of your instance                                   |
 | `is_google_login_enabled`         | It gives information if google login is configured or not     |
 | `is_github_login_enabled`         | It gives information if github login is configured or not     |
 | `is_facebook_login_enabled`       | It gives information if facebook login is configured or not   |
@@ -375,7 +433,7 @@ It accepts the optional JSON object as parameter, you can pass the HTTP Headers 
 | -------------- | ------------------------------------------------------------------------------------------------------ |
 | `message`      | Error / Success message from server                                                                    |
 | `access_token` | accessToken that frontend application can use for further authorized requests                          |
-| `expires_at`   | timestamp when the current token is going to expire, so that frontend can request for new access token |
+| `expires_in`   | timestamp when the current token is going to expire, so that frontend can request for new access token |
 | `user`         | User object with all the basic profile information                                                     |
 
 **Sample Usage**
@@ -394,6 +452,30 @@ const res = await authRef.getSession(
   },
   "admin"
 );
+```
+
+## - `revokeToken`
+
+Function to revoke refresh token. It accepts json object as its parameter with following keys
+
+**JSON Object**
+
+| Key             | Description                 | Required |
+| --------------- | --------------------------- | -------- |
+| `refresh_token` | Refresh token to be revoked | true     |
+
+**Response**
+
+| Key       | Description     |
+| --------- | --------------- |
+| `message` | Success message |
+
+**Sample Usage**
+
+```js
+const res = await authRef.revokeToken({
+  refresh_token: "foo",
+});
 ```
 
 ## - `logout`
