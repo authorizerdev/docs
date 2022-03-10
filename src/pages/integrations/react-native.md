@@ -1,30 +1,33 @@
 ---
-title: React Native
+title: React Native Expo
 layout: ../../layouts/Main.astro
 ---
 
-### Example of using authorizer with react-native expo
+## Step 1: Get Authorizer Instance
 
-## Step 1:
+Deploy production ready Authorizer instance using one click deployment options available below
 
-Have authorizer instance up and running. Check [docs](https://docs.authorizer.dev/getting-started/)
+| **Infra provider** |                                                                                                                **One-click link**                                                                                                                |               **Additional information**               |
+| :----------------: | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :----------------------------------------------------: |
+|    Railway.app     | <a target="_blank" href="https://railway.app/new/template?template=https://github.com/authorizerdev/authorizer-railway&amp;plugins=postgresql,redis"><img src="https://railway.app/button.svg" style="height: 44px" alt="Deploy on Railway"></a> | [docs](https://docs.authorizer.dev/deployment/railway) |
+|       Heroku       |             <a target="_blank" href="https://heroku.com/deploy?template=https://github.com/authorizerdev/authorizer-heroku"><img src="https://www.herokucdn.com/deploy/button.svg" alt="Deploy to Heroku" style="height: 44px;"></a>             | [docs](https://docs.authorizer.dev/deployment/heroku)  |
+|       Render       |                     <a target="_blank" href="https://render.com/deploy?repo=https://github.com/authorizerdev/authorizer-render"><img alt="render button" src="https://render.com/images/deploy-to-render-button.svg" /></a>                      | [docs](https://docs.authorizer.dev/deployment/render)  |
 
-Get authorizer client id from your dashboard
+For more information check [docs](https://docs.authorizer.dev/getting-started/)
+
+## Step 2: Setup Instance
 
 - Open authorizer instance endpoint in browser
-- Go to environment variables tab and you will see client id field
+- Signup with a secure password
+- Configure social logins / smtp server and other environment variables based on your needs
 
-## Step 2:
-
-Install expo cli
+## Step 2: Install expo
 
 ```
 npm install --global expo-cli
 ```
 
-## Step 3:
-
-Bootstrap project
+## Step 3: Bootstrap react native project
 
 ```
 expo init with-react-native-expo
@@ -32,24 +35,24 @@ expo init with-react-native-expo
 
 Select blank default app
 
-## Step 4:
+## Step 4: Install dependencies
 
-Install dependencies
+```
+npm install @authorizerdev/authorizer-js expo-auth-session expo-random expo-secure-store expo-web-browser jwt-decode react-native-base64
+```
 
-- `npm install @authorizerdev/authorizer-js expo-auth-session expo-random expo-secure-store expo-web-browser jwt-decode react-native-base64`
+## Step 5: Create redirect url
 
-## Step 5:
-
-Create redirect url
+Redirect URL is used to redirect back to your application once the authentication process is complete
 
 ```js
 const useProxy = false;
 const redirectUri = AuthSession.makeRedirectUri({ useProxy });
 ```
 
-## Step 6:
+## Step 6: Create AuthorizerJS Client
 
-Configure Authorizer Client
+- Get your client ID from authorizer dashboard environment variable section
 
 ```js
 const authorizerClientID = "YOUR_CLIENT_ID";
@@ -62,7 +65,7 @@ const authorizerRef = new Authorizer({
 });
 ```
 
-## Step 7
+## Step 7: Setup Expo AuthSession
 
 Configure `useAuthRequest` hook with above configs
 
@@ -86,9 +89,10 @@ const [request, result, promptAsync] = AuthSession.useAuthRequest(
 );
 ```
 
-## Step 8
+## Step 8: Listen to the authentication process change
 
-Listen to auth result and set refresh token in secure store for silent refresh / get user info
+Get auth session result and set refresh token in secure store for silent refresh.
+You also get the access token, id token for the further usage
 
 ```js
 const authorizerRefreshTokenKey = `authorizer_refresh_token`;
@@ -125,12 +129,13 @@ useEffect(() => {
 }, [result]);
 ```
 
-## Step 9 [Optional]
+## Step 9: Silent Refresh
 
-Perform Silent Refresh
+Perform Silent Refresh. Note silent refresh will give you new access token, id token and refresh token.
+You can use access token & id token for further API requests.
 
 ```js
-// on init silently refresh token if it exists
+// on init of app silently refresh token if it exists
 useEffect(() => {
   async function silentRefresh() {
     try {
@@ -163,3 +168,5 @@ useEffect(() => {
   silentRefresh();
 }, []);
 ```
+
+Also you can perform silent refresh when access token / id token expires. You also get `expires_in` in the response of token which you can use. So you can set time interval after which it should fetch new tokens.
