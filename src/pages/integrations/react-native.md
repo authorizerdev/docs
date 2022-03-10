@@ -21,13 +21,13 @@ For more information check [docs](https://docs.authorizer.dev/getting-started/)
 - Signup with a secure password
 - Configure social logins / smtp server and other environment variables based on your needs
 
-## Step 2: Install expo
+## Step 3: Install expo
 
 ```
 npm install --global expo-cli
 ```
 
-## Step 3: Bootstrap react native project
+## Step 4: Bootstrap react native project
 
 ```
 expo init with-react-native-expo
@@ -35,13 +35,13 @@ expo init with-react-native-expo
 
 Select blank default app
 
-## Step 4: Install dependencies
+## Step 5: Install dependencies
 
 ```
 npm install @authorizerdev/authorizer-js expo-auth-session expo-random expo-secure-store expo-web-browser jwt-decode react-native-base64
 ```
 
-## Step 5: Create redirect url
+## Step 6: Create redirect url
 
 Redirect URL is used to redirect back to your application once the authentication process is complete
 
@@ -50,7 +50,7 @@ const useProxy = false;
 const redirectUri = AuthSession.makeRedirectUri({ useProxy });
 ```
 
-## Step 6: Create AuthorizerJS Client
+## Step 7: Create AuthorizerJS Client
 
 - Get your client ID from authorizer dashboard environment variable section
 
@@ -65,7 +65,7 @@ const authorizerRef = new Authorizer({
 });
 ```
 
-## Step 7: Setup Expo AuthSession
+## Step 8: Setup Expo AuthSession
 
 Configure `useAuthRequest` hook with above configs
 
@@ -89,7 +89,7 @@ const [request, result, promptAsync] = AuthSession.useAuthRequest(
 );
 ```
 
-## Step 8: Listen to the authentication process change
+## Step 9: Listen to the authentication process change
 
 Get auth session result and set refresh token in secure store for silent refresh.
 You also get the access token, id token for the further usage
@@ -129,7 +129,7 @@ useEffect(() => {
 }, [result]);
 ```
 
-## Step 9: Silent Refresh
+## Step 10: Silent Refresh
 
 Perform Silent Refresh. Note silent refresh will give you new access token, id token and refresh token.
 You can use access token & id token for further API requests.
