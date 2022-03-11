@@ -404,11 +404,13 @@ A mutation to perform password less login. It accepts `params` of type `MagicLin
 
 **Request Params**
 
-| Key     | Description                                                                                 | Required |
-| ------- | ------------------------------------------------------------------------------------------- | -------- |
-| `email` | Email address of user                                                                       | true     |
-| `roles` | Roles to login with                                                                         | false    |
-| `scope` | List of openID scopes. If not present default scopes ['openid', 'email', 'profile'] is used | false    |
+| Key           | Description                                                                                 | Required |
+| ------------- | ------------------------------------------------------------------------------------------- | -------- |
+| `email`       | Email address of user                                                                       | true     |
+| `roles`       | Roles to login with                                                                         | false    |
+| `scope`       | List of openID scopes. If not present default scopes ['openid', 'email', 'profile'] is used | false    |
+| `redirect_uri | URL where user should be redirect after email verification                                  | false    |
+| `state`       | Unique string used to verify OAuth state                                                    | false    |
 
 This mutation returns `Response` type with following keys
 
