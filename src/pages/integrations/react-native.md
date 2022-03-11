@@ -3,6 +3,12 @@ title: React Native Expo
 layout: ../../layouts/Main.astro
 ---
 
+In this doc we will see how you can have authentication ready for your mobile application, which is developed using react native and expo.
+This is the github repository having the sample code: https://github.com/authorizerdev/examples/tree/main/with-react-native-expo
+
+Here are the 10 steps you need to follow:
+
+
 ## Step 1: Get Authorizer Instance
 
 Deploy production ready Authorizer instance using one click deployment options available below
