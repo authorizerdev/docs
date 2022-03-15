@@ -37,6 +37,7 @@ Table of Contents
   - [`_update_env`](#_update_env)
   - [`_update_user`](#_update_user)
   - [`_delete_user`](#_delete_user)
+  - [`_invite_members`](#_invite_members)
 
 ## Queries
 
@@ -792,6 +793,37 @@ This mutation returns `Response` type with following keys
 ```graphql
 mutation {
   _delete_user(params: { email: "foo@bar.com" }) {
+    message
+  }
+}
+```
+
+### `_invite_members`
+
+Mutation to invite members. This mutation is only allowed for super admins. It accepts `params` of type `InviteMemberInput` with following keys
+
+> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer-admin` as http only cookie.
+
+**Request Params**
+
+| Key            | Description                                                                                                | Required |
+| -------------- | ---------------------------------------------------------------------------------------------------------- | -------- |
+| `emails`       | List of emails that needs to be invited on platform                                                        | true     |
+| `redirect_uri` | URI to which user should be redirected when they click on invitation link. Defaults to authorizer app page | false    |
+
+This mutation returns `Response` type with following keys
+
+**Response**
+
+| Key       | Description                         |
+| --------- | ----------------------------------- |
+| `message` | Success / Error message from server |
+
+**Sample Mutation**
+
+```graphql
+mutation {
+  _invite_members(params: { emails: ["foo@yopmail.com"] }) {
     message
   }
 }
