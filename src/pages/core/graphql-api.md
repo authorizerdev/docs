@@ -56,6 +56,7 @@ It returns `Meta` type with the following possible values
 | `is_email_verification_enabled`   | It gives information if email verification is enabled or not  |
 | `is_basic_authentication_enabled` | It gives information, if basic auth is enabled or not         |
 | `is_magic_link_login_enabled`     | It gives information if password less login is enabled or not |
+| `is_sign_up_enabled`              | It gives information if sign up is enabled or not             |
 
 **Sample Query**
 
@@ -70,6 +71,7 @@ query {
     is_email_verification_enabled
     is_basic_authentication_enabled
     is_magic_link_login_enabled
+    is_sign_up_enabled
   }
 }
 ```
@@ -328,6 +330,7 @@ A mutation to signup users using email and password. It accepts `params` of type
 | `birthdate`        | birthdate of user                                                                           | false    |
 | `phone_number`     | phone number of user                                                                        | false    |
 | `scope`            | List of openID scopes. If not present default scopes ['openid', 'email', 'profile'] is used | false    |
+| `redirect_uri`     | URI where the user should be redirected after signup verification                           | false    |
 
 This mutation returns `AuthResponse` type with following keys
 
