@@ -29,7 +29,7 @@ For more information check [docs](https://docs.authorizer.dev/getting-started/)
 - Sign up as an admin with a secure password
 - Configure environment variables from authorizer dashboard. Check env [docs](/core/env) for more information
 
-> Note: `DATABASE_URL`, `DATABASE_TYPE` and `DATABASE_NAME` are
+> Note: `DATABASE_URL`, `DATABASE_TYPE` and `DATABASE_NAME` are only configurable via platform envs
 
 ## Step 3 - Install package
 
