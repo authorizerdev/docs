@@ -46,7 +46,7 @@ Load the `authorizer-js` library and initialize the authorizer object. Authorize
 
 ```js
 const authRef = new Authorizer({
-  authorizerURL: "https://app.herokuapp.com",
+  authorizerURL: "YOUR_AUTHORIZER_INSTANCE_URL",
   redirectURL: window.location.origin,
   clientID: "YOUR_CLIENT_ID", // obtain your client id from authorizer dashboard
 });
@@ -65,7 +65,7 @@ const authRef = new Authorizer({
 ```html
 <script type="text/javascript">
   const authorizerRef = new authorizerdev.Authorizer({
-    authorizerURL: `https://authorizer-demo.herokuapp.com`,
+    authorizerURL: `YOUR_AUTHORIZER_INSTANCE_URL`,
     redirectURL: window.location.origin,
     clientID: "YOUR_CLIENT_ID", // obtain your client id from authorizer dashboard
   });

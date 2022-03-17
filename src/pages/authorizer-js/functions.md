@@ -27,8 +27,9 @@ These functions can be invoked using the `Authorizer` instance:
 
 ```js
 const authRef = new Authorizer({
-  authorizerURL: "https://app.herokuapp.com",
+  authorizerURL: "YOUR_AUTHORIZER_INSTANCE_URL",
   redirectURL: window.location.origin,
+  clientID: "YOUR_CLIENT_ID",
 });
 ```
 
