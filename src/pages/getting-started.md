@@ -47,8 +47,9 @@ This example demonstrates how you can use [`@authorizerdev/authorizer-js`](/auth
 
 <script type="text/javascript">
   const authorizerRef = new authorizerdev.Authorizer({
-    authorizerURL: `AUTHORIZER_URL`,
+    authorizerURL: `https://authorizer-demo.herokuapp.com`,
     redirectURL: window.location.origin,
+    clientID: "YOUR_CLIENT_ID", // obtain your client id from authorizer dashboard
   });
 
   // use the button selector as per your application
@@ -59,15 +60,19 @@ This example demonstrates how you can use [`@authorizerdev/authorizer-js`](/auth
   });
 
   async function onLoad() {
-    const res = await authorizerRef.browserLogin();
-    if (res && res.user) {
+    const res = await authorizerRef.authorize({
+      response_type: "code",
+      use_refresh_token: false,
+    });
+    if (res && res.access_token) {
       // you can use user information here, eg:
-      /**
-      const userSection = document.getElementById('user');
-      const logoutSection = document.getElementById('logout-section');
-      logoutSection.classList.toggle('hide');
-      userSection.innerHTML = `Welcome, ${res.user.email}`;
-      */
+      const user = await authorizerRef.getProfile({
+        Authorization: `Bearer ${res.access_token}`,
+      });
+      const userSection = document.getElementById("user");
+      const logoutSection = document.getElementById("logout-section");
+      logoutSection.classList.toggle("hide");
+      userSection.innerHTML = `Welcome, ${user.email}`;
     }
   }
   onLoad();
