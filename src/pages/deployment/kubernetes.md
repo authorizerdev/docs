@@ -58,12 +58,6 @@ spec:
               value: "YOUR_DATA BASE URL"
             - name: DATABASE_TYPE
               value: "DATABASE TYPE postgres/mysql/sqlite/sqlserver/mongodb/arangodb"
-            - name: ADMIN_SECRET
-              value: "YOUR_ADMIN_SECRET"
-            - name: JWT_SECRET
-              value: "SOME_RANDOM_STRING"
-            - name: JWT_TYPE
-              value: "HS256"
           imagePullPolicy: Always
 ---
 apiVersion: v1

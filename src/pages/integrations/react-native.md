@@ -8,7 +8,6 @@ This is the github repository having the sample code: https://github.com/authori
 
 Here are the 10 steps you need to follow:
 
-
 ## Step 1: Get Authorizer Instance
 
 Deploy production ready Authorizer instance using one click deployment options available below
@@ -24,8 +23,10 @@ For more information check [docs](https://docs.authorizer.dev/getting-started/)
 ## Step 2: Setup Instance
 
 - Open authorizer instance endpoint in browser
-- Signup with a secure password
-- Configure social logins / smtp server and other environment variables based on your needs
+- Sign up as an admin with a secure password
+- Configure environment variables from authorizer dashboard. Check env [docs](/core/env) for more information
+
+> Note: `DATABASE_URL`, `DATABASE_TYPE` and `DATABASE_NAME` are only configurable via platform envs
 
 ## Step 3: Install expo
 

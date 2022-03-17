@@ -7,7 +7,7 @@ layout: ../layouts/Main.astro
 
 This guide helps you practice using Authorizer to evaluate it before you use it in a production environment. It includes instructions for installing the Authorizer server in standalone mode.
 
-## Installing a simple instance of Authorizer
+## Get Authorizer Instance
 
 Deploy production ready Authorizer instance using one click deployment options available below
 
@@ -16,6 +16,16 @@ Deploy production ready Authorizer instance using one click deployment options a
 |    Railway.app     | <a target="_blank" href="https://railway.app/new/template?template=https://github.com/authorizerdev/authorizer-railway&amp;plugins=postgresql,redis"><img src="https://railway.app/button.svg" style="height: 44px" alt="Deploy on Railway"></a> | [docs](https://docs.authorizer.dev/deployment/railway) |
 |       Heroku       |             <a target="_blank" href="https://heroku.com/deploy?template=https://github.com/authorizerdev/authorizer-heroku"><img src="https://www.herokucdn.com/deploy/button.svg" alt="Deploy to Heroku" style="height: 44px;"></a>             | [docs](https://docs.authorizer.dev/deployment/heroku)  |
 |       Render       |                     <a target="_blank" href="https://render.com/deploy?repo=https://github.com/authorizerdev/authorizer-render"><img alt="render button" src="https://render.com/images/deploy-to-render-button.svg" /></a>                      | [docs](https://docs.authorizer.dev/deployment/render)  |
+
+For more information check [docs](https://docs.authorizer.dev/getting-started/)
+
+## Setup Instance
+
+- Open authorizer instance endpoint in browser
+- Sign up as an admin with a secure password
+- Configure environment variables from authorizer dashboard. Check env [docs](/core/env) for more information
+
+> Note: `DATABASE_URL`, `DATABASE_TYPE` and `DATABASE_NAME` are only configurable via platform envs
 
 ### Things to consider
 

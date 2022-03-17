@@ -12,11 +12,27 @@ It supports:
 
 Here is a quick guide on getting started with [`@authorizerdev/authorizer-js`](/authorizer-js/getting-started) package.
 
-## Step 1 - Create Instance
+## Step 1: Get Authorizer Instance
 
-Get Authorizer URL by deploying [Authorizer instance](/deployment) and configuring it with necessary [environment variables](/core/env).
+Deploy production ready Authorizer instance using one click deployment options available below
 
-## Step 2 - Install SDK
+| **Infra provider** |                                                                                                                **One-click link**                                                                                                                |               **Additional information**               |
+| :----------------: | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :----------------------------------------------------: |
+|    Railway.app     | <a target="_blank" href="https://railway.app/new/template?template=https://github.com/authorizerdev/authorizer-railway&amp;plugins=postgresql,redis"><img src="https://railway.app/button.svg" style="height: 44px" alt="Deploy on Railway"></a> | [docs](https://docs.authorizer.dev/deployment/railway) |
+|       Heroku       |             <a target="_blank" href="https://heroku.com/deploy?template=https://github.com/authorizerdev/authorizer-heroku"><img src="https://www.herokucdn.com/deploy/button.svg" alt="Deploy to Heroku" style="height: 44px;"></a>             | [docs](https://docs.authorizer.dev/deployment/heroku)  |
+|       Render       |                     <a target="_blank" href="https://render.com/deploy?repo=https://github.com/authorizerdev/authorizer-render"><img alt="render button" src="https://render.com/images/deploy-to-render-button.svg" /></a>                      | [docs](https://docs.authorizer.dev/deployment/render)  |
+
+For more information check [docs](https://docs.authorizer.dev/getting-started/)
+
+## Step 2: Setup Instance
+
+- Open authorizer instance endpoint in browser
+- Sign up as an admin with a secure password
+- Configure environment variables from authorizer dashboard. Check env [docs](/core/env) for more information
+
+> Note: `DATABASE_URL`, `DATABASE_TYPE` and `DATABASE_NAME` are
+
+## Step 3 - Install SDK
 
 Load the `authorizer-js` library and initialize the authorizer object. Authorizer object can be instantiated with JSON object with following keys in its constructor.
 
@@ -24,6 +40,7 @@ Load the `authorizer-js` library and initialize the authorizer object. Authorize
 | --------------- | ---------------------------------------------------------------------------- |
 | `authorizerURL` | Authorizer server endpoint                                                   |
 | `redirectURL`   | URL to which you would like to redirect the user in case of successful login |
+| `clientID`      | Your client id that is obtained from authorizer dashboard                    |
 
 **Example**
 
@@ -31,6 +48,7 @@ Load the `authorizer-js` library and initialize the authorizer object. Authorize
 const authRef = new Authorizer({
   authorizerURL: "https://app.herokuapp.com",
   redirectURL: window.location.origin,
+  clientID: "YOUR_CLIENT_ID", // obtain your client id from authorizer dashboard
 });
 ```
 
@@ -47,8 +65,9 @@ const authRef = new Authorizer({
 ```html
 <script type="text/javascript">
   const authorizerRef = new authorizerdev.Authorizer({
-    authorizerURL: `AUTHORIZER_URL`,
+    authorizerURL: `https://authorizer-demo.herokuapp.com`,
     redirectURL: window.location.origin,
+    clientID: "YOUR_CLIENT_ID", // obtain your client id from authorizer dashboard
   });
 
   // use the button selector as per your application
@@ -59,15 +78,19 @@ const authRef = new Authorizer({
   });
 
   async function onLoad() {
-    const res = await authorizerRef.browserLogin();
-    if (res && res.user) {
+    const res = await authorizerRef.authorize({
+      response_type: "code",
+      use_refresh_token: false,
+    });
+    if (res && res.access_token) {
       // you can use user information here, eg:
-      /**
-      const userSection = document.getElementById('user');
-      const logoutSection = document.getElementById('logout-section');
-      logoutSection.classList.toggle('hide');
-      userSection.innerHTML = `Welcome, ${res.user.email}`;
-      */
+      const user = await authorizerRef.getProfile({
+        Authorization: `Bearer ${res.access_token}`,
+      });
+      const userSection = document.getElementById("user");
+      const logoutSection = document.getElementById("logout-section");
+      logoutSection.classList.toggle("hide");
+      userSection.innerHTML = `Welcome, ${user.email}`;
     }
   }
   onLoad();
@@ -92,6 +115,7 @@ const { Authorizer } = require("@authorizerdev/authoirzer-js");
 const authRef = new Authorizer({
   authorizerURL: "https://app.heroku.com",
   redirectURL: "http://app.heroku.com/app",
+  clientID:
 });
 
 async function main() {
@@ -118,8 +142,9 @@ yarn add @authorizerdev/authoirzer-js
 import { Authorizer } from "@authorizerdev/authoirzer-js";
 
 const authRef = new Authorizer({
-  authorizerURL: "https://app.heroku.com",
-  redirectURL: "http://app.heroku.com/app",
+  authorizerURL: "AUTHORIZER_URL",
+  redirectURL: "YOUR_APP",
+  clientID: "YOUR_CLIENT_ID", // obtain your client id from authorizer dashboard
 });
 
 async function main() {

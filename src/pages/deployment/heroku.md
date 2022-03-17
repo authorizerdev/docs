@@ -18,13 +18,17 @@ After click the above button you will see screen as below, follow the steps ment
 
 App name becomes the url for your application. Example if you have entered `authorizer-demo` as the app name then the authorizer url will be `authorizer-demo.herokuapp.com`.
 
-### Step 2: Choose the Region
+### Step 2: Choose the Region and deploy
 
 Select the region you want to deploy you application in. Heroku supports United States and Europe only.
 
-### Step 3: Configure the Environment Variables
+### Step 4: Setup Instance
 
-Required envs are pre-configured, but based on the production and social logins, please configure the environment variables. Please refer to [environment variables docs](/core/env) for more information
+- Open authorizer instance endpoint in browser
+- Sign up as an admin with a secure password
+- Configure environment variables from authorizer dashboard. Check env [docs](/core/env) for more information
+
+> Note: `DATABASE_URL`, `DATABASE_TYPE` and `DATABASE_NAME` are only configurable via platform envs
 
 ## Updating Authorizer to latest version on existing Heroku instance
 

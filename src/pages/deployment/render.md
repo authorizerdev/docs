@@ -21,10 +21,12 @@ Enter the name for your instance.
 
 ### Step 2: Configure Envs
 
-Open authorizer URL in your browser and configure rest of your [envs](https://docs.authorizer.dev/core/env).
+- Open authorizer instance endpoint in browser
+- Sign up as an admin with a secure password
+- Configure environment variables from authorizer dashboard. Check env [docs](/core/env) for more information
 
-> Note: `DATABASE_URL` and `DATABASE_TYPE` are only configurable via render envs
+> Note: `DATABASE_URL`, `DATABASE_TYPE` and `DATABASE_NAME` are only configurable via platform envs
 
 <img src="/images/render_2.png" style="height:20em;width:100%;object-fit:contain;"/>
 
-That's all 🎉 you can get started with [Authorizer](https://docs.authorizer.dev/getting-started) now! You have your authentication and authorization layer ready.
+That's all 🎉 you can start integrating [Authorizer](https://docs.authorizer.dev/getting-started) in your frontend application.

@@ -22,17 +22,13 @@ Railway app will create a repository in your github account and will use that fo
 
 Default repository name will be `authorizer-railway` but you can choose a different name and domain will be created accordingly
 
-### Step 3: Configure the Environment Variables
+### Step 3: Setup Instance
 
-- Database url will be configured automatically based on postgres plugin deployment
+- Open authorizer instance endpoint in browser
+- Sign up as an admin with a secure password
+- Configure environment variables from authorizer dashboard. Check env [docs](/core/env) for more information
 
-- Redis url will be configured automatically based on redis plugin deployment
-
-- Some of the required envs are pre configured but you will have to add value for admin secret and jwt token secrets
-
-- Also based on the production and social logins, please configure the environment variables.
-
-Please refer to [environment variables docs](/core/env) for more information
+> Note: `DATABASE_URL`, `DATABASE_TYPE` and `DATABASE_NAME` are only configurable via platform envs
 
 ## Updating Authorizer on existing Railway instance
 
