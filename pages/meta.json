@@ -1,0 +1,10 @@
+{
+  "index": "Introduction",
+  "getting-started": "Getting Started",
+  "core": "Core",
+  "deployment": "Deployments",
+  "authorizer-js": "authorizer-js",
+  "authorizer-react": "authorizer-react",
+  "integrations": "Integrations",
+  "contributing": "Contributing"
+}

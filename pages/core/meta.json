@@ -1,0 +1,8 @@
+{
+  "index": "Information",
+  "database": "Database",
+  "env": "Environment Variables",
+  "endpoints": "API",
+  "graphql-api": "GraphQL API",
+  "email": "Email"
+}
