@@ -1,4 +1,4 @@
-# React Native Expo
+# Using Authorizer with React Native Expo
 
 In this doc we will see how you can have authentication ready for your mobile application, which is developed using react native and expo.
 This is the [github repository](https://github.com/authorizerdev/examples/tree/main/with-react-native-expo) having the sample code
