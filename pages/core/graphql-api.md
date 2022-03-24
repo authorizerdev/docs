@@ -36,6 +36,9 @@ Table of Contents
   - [`_update_user`](#_update_user)
   - [`_delete_user`](#_delete_user)
   - [`_invite_members`](#_invite_members)
+  - [`_revoke_access`](#_revoke_access)
+  - [`_enable_access`](#_enable_access)
+  - [`_generate_jwt_keys`](#_generate_jwt_keys)
 
 ## Queries
 
@@ -855,6 +858,99 @@ This mutation returns `Response` type with following keys
 mutation {
   _invite_members(params: { emails: ["foo@yopmail.com"] }) {
     message
+  }
+}
+```
+
+### `_revoke_access`
+
+Mutation to revoke access of a given user. This mutation is only allowed for super admins. It accepts `params` of type `UpdateAccessInput` with following keys
+
+> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer-admin` as http only cookie.
+
+**Request Params**
+
+| Key       | Description                              | Required |
+| --------- | ---------------------------------------- | -------- |
+| `user_id` | Id of user whose access is to be revoked | true     |
+
+This mutation returns `Response` type with following keys
+
+**Response**
+
+| Key       | Description                         |
+| --------- | ----------------------------------- |
+| `message` | Success / Error message from server |
+
+**Sample Mutation**
+
+```graphql
+mutation {
+  _revoke_access(params: { user_id: "test" }) {
+    message
+  }
+}
+```
+
+### `_enable_access`
+
+Mutation to enable access of a given user whose access revoked earlier. This mutation is only allowed for super admins. It accepts `params` of type `UpdateAccessInput` with following keys
+
+> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer-admin` as http only cookie.
+
+**Request Params**
+
+| Key       | Description                              | Required |
+| --------- | ---------------------------------------- | -------- |
+| `user_id` | Id of user whose access is to be enabled | true     |
+
+This mutation returns `Response` type with following keys
+
+**Response**
+
+| Key       | Description                         |
+| --------- | ----------------------------------- |
+| `message` | Success / Error message from server |
+
+**Sample Mutation**
+
+```graphql
+mutation {
+  _enable_access(params: { user_id: "test" }) {
+    message
+  }
+}
+```
+
+### `_generate_jwt_keys`
+
+Mutation to generate new jwt keys based on given jwt algorithm. This mutation is only allowed for super admins. It accepts `params` of type `GenerateJWTKeysInput` with following keys
+
+> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer-admin` as http only cookie.
+
+**Request Params**
+
+| Key    | Description                                                                                                        | Required |
+| ------ | ------------------------------------------------------------------------------------------------------------------ | -------- |
+| `type` | JWT algorithm for which keys are to be generate. It supports HS256,HS384,HS512,RS256,RS384,RS512,ES256,ES384,ES512 | true     |
+
+This mutation returns `GenerateJWTKeysResponse` type with following keys
+
+**Response**
+
+| Key           | Description                                          |
+| ------------- | ---------------------------------------------------- |
+| `secret`      | In case of HMAC algorithm it returns secret          |
+| `public_key`  | In case of RSA / ECDSA it returns public key string  |
+| `private_key` | In case of RSA / ECDSA it returns private key string |
+
+**Sample Mutation**
+
+```graphql
+mutation {
+  _generate_jwt_keys(params: { type: "RS256" }) {
+    public_key
+    private_key
   }
 }
 ```
