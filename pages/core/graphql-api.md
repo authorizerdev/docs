@@ -13,6 +13,7 @@ Table of Contents
   - [`session`](#session)
   - [`is_valid_jwt`](#is_valid_jwt)
   - [`profile`](#profile)
+  - [`validate_jwt_token`](#validate_jwt_token)
   - [`_users`](#_users)
   - [`_verification_requests`](#_verification_requests)
   - [`_admin_session`](#_admin_session)
@@ -154,6 +155,35 @@ query {
     email
     picture
     roles
+  }
+}
+```
+
+### `validate_jwt_token`
+
+Query to validate the given jwt token. This query needs input `params` of type `ValidateJWTTokenInput`
+
+**Request Parameters**
+| Key | Description | Required |
+| ------------ | -------------------------------------------------------------------------------------------------------- | -------- |
+| `token_type` | Type of token that needs to be validated. It can be one of `access_token`, `refresh_token` or `id_token` | `true` |
+| `token` | Jwt token string | `true` |
+| `roles` | Array of roles to validate jwt token for | `false` |
+
+It returns `ValidateJWTTokenResponse` type with the following keys.
+
+**Response**
+
+| Key        | Description                                        |
+| ---------- | -------------------------------------------------- |
+| `is_valid` | Boolean indicating if given token was valid or not |
+
+**Sample Query**
+
+```graphql
+query {
+  validate_jwt_token(token_type: "access_token", token: "some jwt token") {
+    is_valid
   }
 }
 ```

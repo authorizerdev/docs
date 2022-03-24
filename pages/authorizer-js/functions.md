@@ -19,6 +19,7 @@
 - [getSession](#--getsession)
 - [revokeToken](#--revoketoken)
 - [logout](#--logout)
+- [validateJWTToken](#--validatejwttoken)
 
 These functions can be invoked using the `Authorizer` instance:
 
@@ -501,5 +502,32 @@ const res = await authRef.logout()
 // from NodeJS / if HTTP cookie is not used
 const res = await authRef.logout({
   Authorization: `Bearer some_token`,
+})
+```
+
+## - `validateJWTToken`
+
+Function to validate jwt tokens.
+
+It expects the JSON object as parameter with following parameters
+
+| Key          | Description                                                                                              | Required |
+| ------------ | -------------------------------------------------------------------------------------------------------- | -------- |
+| `token_type` | Type of token that needs to be validated. It can be one of `access_token`, `refresh_token` or `id_token` | `true`   |
+| `token`      | Jwt token string                                                                                         | `true`   |
+| `roles`      | Array of roles to validate jwt token for                                                                 | `false`  |
+
+**Response**
+
+| Key        | Description                                        |
+| ---------- | -------------------------------------------------- |
+| `is_valid` | Boolean indicating if given token was valid or not |
+
+**Sample Usage**
+
+```js
+const res = await authRef.validateJWTToken({
+  token_type: `access_token`
+  token: `some jwt token string`
 })
 ```
