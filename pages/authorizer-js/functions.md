@@ -118,6 +118,7 @@ It accepts JSON object as a parameter with following keys
 | `gender`           | gender of user                                                           | false    |
 | `birthdate`        | birthdate of user                                                        | false    |
 | `phone_number`     | phone number of user                                                     | false    |
+| `redirect_uri`     | URL where user should be redirected after login                          | false    |
 
 Following is the response for `signup` function
 
@@ -373,11 +374,12 @@ Function to perform password less login.
 
 > Note: You will need a SMTP server with an email address and password configured as [authorizer environment](/core/env/) using which system can send emails.
 
-| Key     | Description                                                                                 | Required |
-| ------- | ------------------------------------------------------------------------------------------- | -------- |
-| `email` | Email using which user needs to login                                                       | true     |
-| `roles` | List of valid valid roles using which user needs to login                                   | false    |
-| `scope` | List of openID scopes. If not present default scopes ['openid', 'email', 'profile'] is used | false    |
+| Key            | Description                                                                                 | Required |
+| -------------- | ------------------------------------------------------------------------------------------- | -------- |
+| `email`        | Email using which user needs to login                                                       | true     |
+| `roles`        | List of valid valid roles using which user needs to login                                   | false    |
+| `scope`        | List of openID scopes. If not present default scopes ['openid', 'email', 'profile'] is used | false    |
+| `redirect_uri` | URL where user should be redirected after login                                             | false    |
 
 **Response**
 
