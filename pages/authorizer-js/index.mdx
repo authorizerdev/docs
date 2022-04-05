@@ -33,11 +33,12 @@ For more information check [docs](https://docs.authorizer.dev/getting-started/)
 
 Load the `@authorizerdev/authorizer-js` library and initialize the authorizer object. Authorizer object can be instantiated with JSON object with following keys in its constructor.
 
-| Key             | Description                                                                  |
-| --------------- | ---------------------------------------------------------------------------- |
-| `authorizerURL` | Authorizer server endpoint                                                   |
-| `redirectURL`   | URL to which you would like to redirect the user in case of successful login |
-| `clientID`      | Your client id that is obtained from authorizer dashboard                    |
+| Key             | Description                                                                                      |
+| --------------- | ------------------------------------------------------------------------------------------------ |
+| `authorizerURL` | Authorizer server endpoint                                                                       |
+| `redirectURL`   | URL to which you would like to redirect the user in case of successful login                     |
+| `clientID`      | Your client id that is obtained from authorizer dashboard                                        |
+| `extraHeaders`  | Optional JSON object that you can pass to send extra headers to your gateway / authorizer server |
 
 **Example**
 

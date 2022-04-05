@@ -64,6 +64,7 @@ const App = () => {
         authorizerURL: 'http://localhost:8080',
         redirectURL: window.location.origin,
         clientID: 'YOUR_CLIENT_ID', // obtain your client id from authorizer dashboard
+        extraHeaders: {}, // Optional JSON object to pass extra headers in each authorizer requests.
       }}
     >
       <LoginSignup />
