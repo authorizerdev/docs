@@ -24,6 +24,18 @@ For more information please check [docs](https://docs.authorizer.dev/core/env/)
 
 - Signup to [https://cloud.hasura.io/](https://cloud.hasura.io/)
 - Create a free tire project
+- Set the config variables for your instance
+
+```
+DATABASE_URL: <AUTHORIZER_DATABASE_URL>
+HASURA_GRAPHOL_JWT_SECRET: {"type": <JWT_TYPE>, "key": <JWT_KEY>}
+HASURA_GRAPHOL_ADMIN_SECRET: <YOUR_ADMIN_SECRET>
+```
+
+Example for Heroku, check out [docs](https://devcenter.heroku.com/articles/config-vars)
+![image](https://i.ibb.co/mGXp8dC/authorizer-heroku-config.png)
+
+Check the [hasura docs](https://hasura.io/docs/latest/graphql/core/auth/authentication/jwt/) for more information.
 
 ## Step 4: Configure Database with Hasura
 
@@ -53,6 +65,8 @@ function(user,tokenPayload) {
 ```
 
 ![image](https://res.cloudinary.com/practicaldev/image/fetch/s--VDmobd4x--/c_limit%2Cf_auto%2Cfl_progressive%2Cq_auto%2Cw_880/https://dev-to-uploads.s3.amazonaws.com/uploads/articles/45d40ae1dz21ppox82pz.png)
+
+Once user login they get `id_token` which should be used with hasura queries as `Authorization: Bearer ID_TOKEN`. This will help in making `Authorized` requests.
 
 You can configure access control for various roles that your application needs. You can also configure same roles in your authorizer dashboard.
 
