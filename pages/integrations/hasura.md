@@ -27,18 +27,23 @@ For more information please check [docs](https://docs.authorizer.dev/core/env/)
 
 ## Step 4: Configure Database with Hasura
 
-- Open the hasura endpoint for your instance and configure the database that you have used for authorizer.
+- Open the hasura endpoint for your instance
+- Open settings and go to Env vars section
+- Add the following env variable to configure the database as that of authorizer
+
+```
+HASURA_GRAPHQL_DATABASE_URL: <AUTHORIZER_DATABASE_URL>
+```
 
 Check the [hasura docs](https://hasura.io/docs/latest/graphql/cloud/getting-started/index/) for more information.
 
-> Note: if you have used single click deployment option for authorizer you can get database URL from respective platform's env sections.
+> Note: If you have used single click deployment option for authorizer you can get database URL from respective platform's env sections.
 
 ## Step 5: Configure JWT token with Hasura
 
-- Open [https://cloud.hasura.io/](https://cloud.hasura.io/)
-- Select the project you created in _**Step 3**_
+- Open the hasura endpoint for your instance
 - Open settings and go to Env vars section
-- Add the following env variable
+- Add the following env variable to configure the JWT token
 
 ```
 HASURA_GRAPHOL_JWT_SECRET: {"type": <JWT_TYPE>, "key": <JWT_KEY>}
@@ -47,7 +52,7 @@ HASURA_GRAPHOL_JWT_SECRET: {"type": <JWT_TYPE>, "key": <JWT_KEY>}
 Example
 ![image](https://imagizer.imageshack.com/img923/215/M1dNiv.png)
 
-> Note: in case of RSA and ECDSA JWT types only provide the public key in PEM encoded string format.
+> Note: In case of RSA and ECDSA JWT types only provide the public key in PEM encoded string format. You can get the JWT type and key from the authorizer dashboard under env variables section.
 
 Check the [hasura docs](https://hasura.io/docs/latest/graphql/core/auth/authentication/jwt/) for more information.
 
