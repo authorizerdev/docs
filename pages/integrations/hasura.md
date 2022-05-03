@@ -35,6 +35,9 @@ For more information please check [docs](https://docs.authorizer.dev/core/env/)
 HASURA_GRAPHQL_DATABASE_URL: <AUTHORIZER_DATABASE_URL>
 ```
 
+Example
+![image](https://imagizer.imageshack.com/img923/551/Z2u1yo.png)
+
 Check the [hasura docs](https://hasura.io/docs/latest/graphql/cloud/getting-started/index/) for more information.
 
 > Note: If you have used single click deployment option for authorizer you can get database URL from respective platform's env sections.
