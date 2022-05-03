@@ -24,18 +24,6 @@ For more information please check [docs](https://docs.authorizer.dev/core/env/)
 
 - Signup to [https://cloud.hasura.io/](https://cloud.hasura.io/)
 - Create a free tire project
-- Set the config variables for your instance
-
-```
-DATABASE_URL: <AUTHORIZER_DATABASE_URL>
-HASURA_GRAPHOL_JWT_SECRET: {"type": <JWT_TYPE>, "key": <JWT_KEY>}
-HASURA_GRAPHOL_ADMIN_SECRET: <YOUR_ADMIN_SECRET>
-```
-
-Example for Heroku, check out [docs](https://devcenter.heroku.com/articles/config-vars)
-![image](https://i.ibb.co/mGXp8dC/authorizer-heroku-config.png)
-
-Check the [hasura docs](https://hasura.io/docs/latest/graphql/core/auth/authentication/jwt/) for more information.
 
 ## Step 4: Configure Database with Hasura
 
@@ -45,7 +33,25 @@ Check the [hasura docs](https://hasura.io/docs/latest/graphql/cloud/getting-star
 
 > Note: if you have used single click deployment option for authorizer you can get database URL from respective platform's env sections.
 
-## Step 5: Configure JWT token Authorization Script
+## Step 5: Configure JWT token with Hasura
+
+- Open [https://cloud.hasura.io/](https://cloud.hasura.io/)
+- Select the project you created in _**Step 3**_
+- Open settings and go to Env vars section
+- Add the following env variable
+
+```
+HASURA_GRAPHOL_JWT_SECRET: {"type": <JWT_TYPE>, "key": <JWT_KEY>}
+```
+
+Example
+![image](https://imagizer.imageshack.com/img923/215/M1dNiv.png)
+
+> Note: in case of RSA and ECDSA JWT types only provide the public key in PEM encoded string format.
+
+Check the [hasura docs](https://hasura.io/docs/latest/graphql/core/auth/authentication/jwt/) for more information.
+
+## Step 6: Configure JWT token Authorization Script
 
 In order for Hasura to authorize a user, JWT token needs to have specific keys, you can add those keys by modifying JWT token script in your Authorizer Dashboard.
 
