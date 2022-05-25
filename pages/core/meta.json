@@ -1,6 +1,7 @@
 {
   "index": "Information",
   "database": "Database",
+  "cli": "Command Line Args",
   "env": "Environment Variables",
   "endpoints": "API",
   "graphql-api": "GraphQL API",

@@ -66,6 +66,7 @@ export default {
         sizes="16x16"
         href="/favicon_io/favicon-16x16.png"
       />
+      <link rel="icon" type="image/png" href="/favicon_io/favicon.ico" />
       <meta
         name="msapplication-TileImage"
         content="/favicon_io/favicon-16x16.png"
