@@ -27,13 +27,39 @@ For more information please check [docs](https://docs.authorizer.dev/core/env/)
 
 ## Step 4: Configure Database with Hasura
 
-- Open the hasura endpoint for your instance and configure the database that you have used for authorizer.
+- Open the hasura endpoint for your instance
+- Open settings and go to Env vars section
+- Add the following env variable to configure the database as that of authorizer
+
+```
+HASURA_GRAPHQL_DATABASE_URL: <AUTHORIZER_DATABASE_URL>
+```
+
+Example
+![image](https://imagizer.imageshack.com/img923/551/Z2u1yo.png)
 
 Check the [hasura docs](https://hasura.io/docs/latest/graphql/cloud/getting-started/index/) for more information.
 
-> Note: if you have used single click deployment option for authorizer you can get database URL from respective platform's env sections.
+> Note: If you have used single click deployment option for authorizer you can get database URL from respective platform's env sections.
 
-## Step 5: Configure JWT token Authorization Script
+## Step 5: Configure JWT token with Hasura
+
+- Open the hasura endpoint for your instance
+- Open settings and go to Env vars section
+- Add the following env variable to configure the JWT token
+
+```
+HASURA_GRAPHOL_JWT_SECRET: {"type": <JWT_TYPE>, "key": <JWT_KEY>}
+```
+
+Example
+![image](https://imagizer.imageshack.com/img923/215/M1dNiv.png)
+
+> Note: In case of RSA and ECDSA JWT types only provide the public key in PEM encoded string format. You can get the JWT type and key from the authorizer dashboard under env variables section.
+
+Check the [hasura docs](https://hasura.io/docs/latest/graphql/core/auth/authentication/jwt/) for more information.
+
+## Step 6: Configure JWT token Authorization Script
 
 In order for Hasura to authorize a user, JWT token needs to have specific keys, you can add those keys by modifying JWT token script in your Authorizer Dashboard.
 
@@ -53,6 +79,8 @@ function(user,tokenPayload) {
 ```
 
 ![image](https://res.cloudinary.com/practicaldev/image/fetch/s--VDmobd4x--/c_limit%2Cf_auto%2Cfl_progressive%2Cq_auto%2Cw_880/https://dev-to-uploads.s3.amazonaws.com/uploads/articles/45d40ae1dz21ppox82pz.png)
+
+Once user login they get `id_token` which should be used with hasura queries as `Authorization: Bearer ID_TOKEN`. This will help in making `Authorized` requests.
 
 You can configure access control for various roles that your application needs. You can also configure same roles in your authorizer dashboard.
 
