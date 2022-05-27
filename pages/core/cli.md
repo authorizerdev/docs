@@ -12,5 +12,5 @@ Authorizer command following arguments
 ## Sample Usage
 
 ```sh
-./build/server --log.level="debug" --env_file=".env"
+./build/server --log_level="debug" --env_file=".env"
 ```
