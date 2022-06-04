@@ -11,10 +11,11 @@
 - [Yugabyte](https://www.yugabyte.com/)
 - [MariaDB](https://mariadb.org/)
 - [CassandraDB](https://cassandra.apache.org/)
+- [ScyllaDB](https://www.scylladb.com/)
 
 > Note: New environment variable is introduced - `DATABASE_NAME`: as database name, is not part of connection URL in case of arangodb and mongodb.
 
-> Note for CassandraDB: If you are using cloud provider like [DataStax](https://www.datastax.com/products/datastax-astra), they don't allow creating `keyspace`. So please make sure you have `keyspace` named `authorizer` created from their [GUI](https://docs.datastax.com/en/astra/docs/datastax-astra-faq.html#_i_am_trying_to_create_a_keyspace_in_the_cql_shell_and_i_am_running_into_an_error_how_do_i_fix_this).
+> Note for CassandraDB/ScyllaDB: If you are using cloud provider like [DataStax](https://www.datastax.com/products/datastax-astra), they don't allow creating `keyspace`. So please make sure you have `keyspace` named `authorizer` created from their [GUI](https://docs.datastax.com/en/astra/docs/datastax-astra-faq.html#_i_am_trying_to_create_a_keyspace_in_the_cql_shell_and_i_am_running_into_an_error_how_do_i_fix_this).
 
 ## Tables / collections created and used by Authorizer
 
