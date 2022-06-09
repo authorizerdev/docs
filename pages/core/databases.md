@@ -12,6 +12,7 @@
 - [MariaDB](https://mariadb.org/)
 - [CassandraDB](https://cassandra.apache.org/)
 - [ScyllaDB](https://www.scylladb.com/)
+- [CockroachDB](https://www.cockroachlabs.com)
 
 > Note: New environment variable is introduced - `DATABASE_NAME`: as database name, is not part of connection URL in case of arangodb and mongodb.
 
