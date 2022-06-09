@@ -3,16 +3,48 @@
 ## Supported Databases
 
 - [Postgres](https://www.postgresql.org/)
-- [MySQL](https://www.mysql.com/)
-- [SQLite](https://www.sqlite.org/index.html)
-- [SQLServer](https://www.microsoft.com/en-us/sql-server/)
-- [MongoDB](https://www.mongodb.com)
-- [ArangoDB](https://www.arangodb.com/)
+
+  Sample connection string: `postgres://username:password@localhost:5432/postgres`
+
 - [Yugabyte](https://www.yugabyte.com/)
-- [MariaDB](https://mariadb.org/)
-- [CassandraDB](https://cassandra.apache.org/)
-- [ScyllaDB](https://www.scylladb.com/)
+
+  Sample connection string: `postgres://username:password@localhost:5432/postgres`
+
 - [CockroachDB](https://www.cockroachlabs.com)
+
+  Sample connection string: `postgres://username:password@localhost:5432/postgres`
+
+- [MySQL](https://www.mysql.com/)
+
+  Sample connection string: `username:password@tcp(localhost:port)/database_name`
+
+- [MariaDB](https://mariadb.org/)
+
+  Sample connection string: `username:password@tcp(localhost:port)/database_name`
+
+- [SQLite](https://www.sqlite.org/index.html)
+
+  Sample connection string: `test.db`
+
+- [SQLServer](https://www.microsoft.com/en-us/sql-server/)
+
+  Sample connection string: `sqlserver://gorm:LoremIpsum86@localhost:9930?database=gorm"`
+
+- [MongoDB](https://www.mongodb.com)
+
+  Sample connection string: `mongodb://localhost:27017`
+
+- [ArangoDB](https://www.arangodb.com/)
+
+  Sample connection string: `https://root:password@localhost.arangodb.cloud:8529`
+
+- [CassandraDB](https://cassandra.apache.org/)
+
+  Sample connection string: `127.0.0.1:9042`
+
+- [ScyllaDB](https://www.scylladb.com/)
+
+  Sample connection string: `127.0.0.1:9042`
 
 > Note: New environment variable is introduced - `DATABASE_NAME`: as database name, is not part of connection URL in case of arangodb and mongodb.
 
