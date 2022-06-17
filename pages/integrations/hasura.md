@@ -23,12 +23,13 @@ For more information please check [docs](https://docs.authorizer.dev/core/env/)
 ## Step 3: Setup Hasura Instance
 
 - Signup to [https://cloud.hasura.io/](https://cloud.hasura.io/)
-- Create a free tire project
+- Create a free tier project
 
 ## Step 4: Configure Database with Hasura
 
-- Open the hasura endpoint for your instance
-- Open settings and go to Env vars section
+- Open the dashboard of hasura cloud ( go to https://cloud.hasura.io/)
+- Click on settings icon of your hasura project ( which is in top-right corner )
+- Go to Env vars section
 - Add the following env variable to configure the database as that of authorizer
 
 ```
