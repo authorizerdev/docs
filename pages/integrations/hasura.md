@@ -50,7 +50,7 @@ Check the [hasura docs](https://hasura.io/docs/latest/graphql/cloud/getting-star
 - Add the following env variable to configure the JWT token
 
 ```
-HASURA_GRAPHOL_JWT_SECRET: {"type": <JWT_TYPE>, "key": <JWT_KEY>}
+HASURA_GRAPHQL_JWT_SECRET: {"type": <JWT_TYPE>, "key": <JWT_KEY>}
 ```
 
 Example
