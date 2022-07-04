@@ -4,5 +4,6 @@
   "railway": "Railway.app",
   "render": "Render",
   "binary": "Binaries",
-  "kubernetes": "Kubernetes"
+  "kubernetes": "Kubernetes",
+  "flydotio": "Fly.io"
 }
