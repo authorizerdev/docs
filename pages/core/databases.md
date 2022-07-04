@@ -40,15 +40,32 @@
 
 - [CassandraDB](https://cassandra.apache.org/)
 
-  Sample connection string: `127.0.0.1:9042`
+  Sample config
+
+  ```
+    DATABASE_TYPE=cassandradb
+    DATABASE_HOST="db connection string"
+    DATABASE_USERNAME="test"
+    DATABASE_PASSWORD="*********"
+    DATABASE_CERT="Base64 encoded cert string"
+    DATABASE_CERT_KEY="Base64 encoded cert key"
+    DATABASE_CA_CERT="Base64 encoded CA cert"
+  ```
+
+  > Note for CassandraDB: If you are using cloud provider like [DataStax](https://www.datastax.com/products/datastax-astra), they don't allow creating `keyspace`. So please make sure you have `keyspace` named `authorizer` created from their [GUI](https://docs.datastax.com/en/astra/docs/datastax-astra-faq.html#_i_am_trying_to_create_a_keyspace_in_the_cql_shell_and_i_am_running_into_an_error_how_do_i_fix_this).
 
 - [ScyllaDB](https://www.scylladb.com/)
 
-  Sample connection string: `127.0.0.1:9042`
+  Sample config
+
+  ```
+    DATABASE_TYPE=scylladb
+    DATABASE_HOST="192.168.0.1,192.168.0.2,192.168.0.3"
+    DATABASE_USERNAME="scylladb"
+    DATABASE_PASSWORD="*********"
+  ```
 
 > Note: New environment variable is introduced - `DATABASE_NAME`: as database name, is not part of connection URL in case of arangodb and mongodb.
-
-> Note for CassandraDB/ScyllaDB: If you are using cloud provider like [DataStax](https://www.datastax.com/products/datastax-astra), they don't allow creating `keyspace`. So please make sure you have `keyspace` named `authorizer` created from their [GUI](https://docs.datastax.com/en/astra/docs/datastax-astra-faq.html#_i_am_trying_to_create_a_keyspace_in_the_cql_shell_and_i_am_running_into_an_error_how_do_i_fix_this).
 
 ## Tables / collections created and used by Authorizer
 
