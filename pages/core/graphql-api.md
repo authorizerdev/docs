@@ -9,6 +9,7 @@ You can play with GraphQL API using the GraphQL playground that comes with your 
 Table of Contents
 
 - [Queries](#queries)
+
   - [`meta`](#meta)
   - [`session`](#session)
   - [`is_valid_jwt`](#is_valid_jwt)
@@ -18,6 +19,10 @@ Table of Contents
   - [`_verification_requests`](#_verification_requests)
   - [`_admin_session`](#_admin_session)
   - [`_env`](#_env)
+  - [`_webhook`](#_webhook)
+  - [`_webhooks`](#_webhooks)
+  - [`_webhook_logs`](#_webhook_logs)
+
 - [Mutations](#mutations)
   - [`signup`](#signup)
   - [`login`](#login)
@@ -39,6 +44,10 @@ Table of Contents
   - [`_revoke_access`](#_revoke_access)
   - [`_enable_access`](#_enable_access)
   - [`_generate_jwt_keys`](#_generate_jwt_keys)
+  - [`_test_endpoint`](#_test_endpoint)
+  - [`_add_webhook`](#_add_webhook)
+  - [`_update_webhook`](#_update_webhook)
+  - [`_delete_webhook`](#_delete_webhook)
 
 ## Queries
 
@@ -335,6 +344,134 @@ query {
     ...
   }
 }
+```
+
+### `_webhook`
+
+Query to get webhook by its identifier. This query is allowed for admins only. It accepts `params` of type `WebhookRequest` with following keys and returns `Webhook`
+
+> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer-admin` as http only cookie.
+
+**Request Params**
+
+| Key  | Description               | Required |
+| ---- | ------------------------- | -------- |
+| `id` | Identifier of the webhook | `true`   |
+
+**Response**
+
+| Key          | Description                                                                |
+| ------------ | -------------------------------------------------------------------------- |
+| `id`         | Identifier of the webhook                                                  |
+| `event_name` | Event for which the webhook will be executed                               |
+| `endpoint`   | Endpoint that is to be called                                              |
+| `enabled`    | Boolean to know if webhook is enabled or disabled                          |
+| `headers`    | JSON key, value pair object with the set of headers to be sent for webhook |
+| `created_at` | Time at which the webhook entry was created                                |
+| `updated_at` | Time at which the webhook entry was updated                                |
+
+**Sample Query**
+
+```graphql
+query {
+  _webhook(params: { id: "123-adfa-123412-asdfasda" }) {
+    id
+    event_name
+  }
+}
+```
+
+### `_webhooks`
+
+Query to get list of webhooks. This query is allowed for admins only.
+
+> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer-admin` as http only cookie.
+
+It can take optional `params` input of type `PaginatedInput` with following keys
+
+**Request Params**
+
+| Key     | Description                  | Required | Default |
+| ------- | ---------------------------- | -------- | ------- |
+| `page`  | Number of page that you want | false    | 1       |
+| `limit` | Number of rows that you want | false    | 10      |
+
+**Response**
+
+It returns response of type `Webhooks` with following keys
+
+| Key        | Description                                             |
+| ---------- | ------------------------------------------------------- |
+| pagination | object with `limit`, `page`, `offset` & `total` value   |
+| webhooks   | List of webhook with params mentioned [here](#_webhook) |
+
+**Sample Query**
+
+```graphql
+
+_webhooks(params: {limit: 10, page: 1}) {
+  pagination {
+    limit
+    offset
+    total
+  }
+  webhooks {
+    id
+    event_name
+    endpoint
+  }
+}
+
+```
+
+### `_webhook_logs`
+
+Query to get list of webhook logs. This query is allowed for admins only.
+
+> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer-admin` as http only cookie.
+
+It can take optional `params` input of type `ListWebhookLogRequest` with following keys
+
+**Request Params**
+
+| Key          | Description                         | Required | Default                |
+| ------------ | ----------------------------------- | -------- | ---------------------- |
+| `pagination` | Pagination object with limit & page | false    | `{limit: 10, page: 1}` |
+| `webhook_id` | Identifier for the webhook          | false    | null                   |
+
+**Response**
+
+It returns response of type `WebhookLogs` with following keys
+
+| Key          | Description                                                                                                |
+| ------------ | ---------------------------------------------------------------------------------------------------------- |
+| pagination   | object with `limit`, `page`, `offset` & `total` value                                                      |
+| webhook_logs | List of webhook log (`id`, `http_status`, `request`, `response`, `webhook_id`, `created_at`, `updated_at`) |
+
+**Sample Query**
+
+```graphql
+
+_webhook_logs(params: {
+  pagination: {
+    limit: 10
+  }
+  webhook_id: "test"
+}) {
+  pagination {
+    limit
+    offset
+    total
+  }
+  webhook_logs {
+    id
+    http_status
+    request
+    response
+    webhook_id
+  }
+}
+
 ```
 
 ## Mutations
@@ -951,6 +1088,164 @@ mutation {
   _generate_jwt_keys(params: { type: "RS256" }) {
     public_key
     private_key
+  }
+}
+```
+
+### `_test_endpoint`
+
+Mutation to test webhook endpoint. This mutation is allowed for admins only. It accepts `params` of type `TestEndpointRequest` with following keys and returns `TestEndpointResponse`
+
+> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer-admin` as http only cookie.
+
+**Request Params**
+
+| Key          | Description                                                                                                                                                                                                                                                         | Required |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| `event_name` | Name of event for which webhook should be called. Currently, supports `user.login`, `user.created`, `user.signup`, `user.access_revoked`, `user.access_enabled`, `user.deleted` events only. This is a unique field, means you can have one webhook for each event. | `true`   |
+| `endpoint`   | Endpoint that needs to be called for a given event                                                                                                                                                                                                                  | `true`   |
+| `headers`    | JSON of key, value pair which are extra HTTP headers to be sent. Default header added is `content-type: application/json`                                                                                                                                           | `false`  |
+
+It sends following data to your webhook with `POST` method
+
+```json
+{
+  "event_name": "user.login", // whatever is called
+  "user": {}, // [user object](https://docs.authorizer.dev/core/graphql-api#profile)
+  "auth_recipe": "basic_auth" // optional key sent for signup / login event to describe the login/signup method used.
+}
+```
+
+**Response**
+
+| Key           | Description                                   |
+| ------------- | --------------------------------------------- |
+| `http_status` | HTTP status integer from the webhook endpoint |
+| `response`    | JSON response sent by webhook                 |
+
+**Sample Mutation**
+
+```graphql
+mutation {
+  _test_endpoint(params: {
+    event_name: "user.login",
+    endpoint: "https://foo.com/webhook",
+    headers: {"Authorization": "Basic test"}
+  }) {
+    http_status
+    response
+  }
+}
+```
+
+### `_add_webhook`
+
+Mutation to add webhook. This mutation is allowed for admins only. It accepts `params` of type `AddWebhookRequest` with following keys
+
+> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer-admin` as http only cookie.
+
+**Request Params**
+
+| Key          | Description                                                                                                                                                                                                                                                         | Required |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| `event_name` | Name of event for which webhook should be called. Currently, supports `user.login`, `user.created`, `user.signup`, `user.access_revoked`, `user.access_enabled`, `user.deleted` events only. This is a unique field, means you can have one webhook for each event. | `true`   |
+| `endpoint`   | Endpoint that needs to be called for a given event                                                                                                                                                                                                                  | `true`   |
+| `enabled`    | Boolean to state if the webhook is enabled or disabled                                                                                                                                                                                                              | `true`   |
+| `headers`    | JSON of key, value pair which are extra HTTP headers to be sent. Default header added is `content-type: application/json`                                                                                                                                           | `false`  |
+
+It sends following data to your webhook with `POST` method
+
+```json
+{
+  "event_name": "user.login", // whatever is called
+  "user": {}, // [user object](https://docs.authorizer.dev/core/graphql-api#profile)
+  "auth_recipe": "basic_auth" // optional key sent for signup / login event to describe the login/signup method used.
+}
+```
+
+**Response**
+
+| Key       | Description                         |
+| --------- | ----------------------------------- |
+| `message` | Success / Error message from server |
+
+**Sample Mutation**
+
+```graphql
+mutation {
+  _add_webhook(params: {
+    event_name: "user.login",
+    endpoint: "https://foo.com/webhook",
+    enabled: true,
+    headers: {"Authorization": "Basic test"}
+  }) {
+    message
+  }
+}
+```
+
+### `_update_webhook`
+
+Mutation to update webhook. This mutation is allowed for admins only. It accepts `params` of type `UpdateWebhookRequest` with following keys
+
+> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer-admin` as http only cookie.
+
+**Request Params**
+
+| Key          | Description                                                                                                                                                                                                                                                         | Required |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| `id`         | Identifier of the webhook                                                                                                                                                                                                                                           | `true`   |
+| `event_name` | Name of event for which webhook should be called. Currently, supports `user.login`, `user.created`, `user.signup`, `user.access_revoked`, `user.access_enabled`, `user.deleted` events only. This is a unique field, means you can have one webhook for each event. | `false`  |
+| `endpoint`   | Endpoint that needs to be called for a given event                                                                                                                                                                                                                  | `false`  |
+| `enabled`    | Boolean to state if the webhook is enabled or disabled                                                                                                                                                                                                              | `false`  |
+| `headers`    | JSON of key, value pair which are extra HTTP headers to be sent. Default header added is `content-type: application/json`                                                                                                                                           | `false`  |
+
+**Response**
+
+| Key       | Description                         |
+| --------- | ----------------------------------- |
+| `message` | Success / Error message from server |
+
+**Sample Mutation**
+
+```graphql
+mutation {
+  _update_webhook(params: {
+    id: "123-adfa-123412-asdfasda",
+    event_name: "user.login",
+    endpoint: "https://foo.com/webhook",
+    enabled: true,
+    headers: {"Authorization": "Basic test"}
+  }) {
+    message
+  }
+}
+```
+
+### `_delete_webhook`
+
+Mutation to delete webhook. This mutation is allowed for admins only. It accepts `params` of type `WebhookRequest` with following keys
+
+> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer-admin` as http only cookie.
+
+**Request Params**
+
+| Key  | Description               | Required |
+| ---- | ------------------------- | -------- |
+| `id` | Identifier of the webhook | `true`   |
+
+**Response**
+
+| Key       | Description                         |
+| --------- | ----------------------------------- |
+| `message` | Success / Error message from server |
+
+**Sample Mutation**
+
+```graphql
+mutation {
+  _delete_webhook(params: { id: "123-adfa-123412-asdfasda" }) {
+    message
   }
 }
 ```
