@@ -18,6 +18,10 @@
 
   Sample connection string: `username:password@tcp(localhost:port)/database_name`
 
+- [PlanetScale](https://planetscale.com/)
+
+  Sample connection string: `username:password@tcp(localhost:port)/database_name`
+
 - [MariaDB](https://mariadb.org/)
 
   Sample connection string: `username:password@tcp(localhost:port)/database_name`
