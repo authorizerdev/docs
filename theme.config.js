@@ -6,13 +6,13 @@ export default {
     <>
       <img src="/images/logo.png" alt="logo" style={{ height: 35 }} />
       <span
-        className="ml-2 mr-2 font-bold hidden md:inline"
+        className="ml-2 mr-2 font-bold hidden md:inline authorizer-logo"
         style={{
           fontSize: '1.5rem',
           letterSpacing: '0.1rem',
         }}
       >
-        AUTHORIZER
+        Authorizer
       </span>
     </>
   ),
