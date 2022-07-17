@@ -22,6 +22,7 @@ Table of Contents
   - [`_webhook`](#_webhook)
   - [`_webhooks`](#_webhooks)
   - [`_webhook_logs`](#_webhook_logs)
+  - [`_email_templates`](#_email_templates)
 
 - [Mutations](#mutations)
   - [`signup`](#signup)
@@ -48,6 +49,9 @@ Table of Contents
   - [`_add_webhook`](#_add_webhook)
   - [`_update_webhook`](#_update_webhook)
   - [`_delete_webhook`](#_delete_webhook)
+  - [`_add_email_template`](#_add_email_template)
+  - [`_update_email_template`](#_update_email_template)
+  - [`_delete_email_template`](#_delete_email_template)
 
 ## Queries
 
@@ -469,6 +473,51 @@ _webhook_logs(params: {
     request
     response
     webhook_id
+  }
+}
+
+```
+
+### `_email_templates`
+
+Query to get list of email templates. This query is allowed for admins only.
+
+> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer-admin` as http only cookie.
+
+It can take optional `params` input of type `PaginatedInput` with following keys
+
+**Request Params**
+
+| Key     | Description                  | Required | Default |
+| ------- | ---------------------------- | -------- | ------- |
+| `page`  | Number of page that you want | false    | 1       |
+| `limit` | Number of rows that you want | false    | 10      |
+
+**Response**
+
+It returns response of type `EmailTemplates` with following keys
+
+| Key             | Description                                           |
+| --------------- | ----------------------------------------------------- |
+| pagination      | object with `limit`, `page`, `offset` & `total` value |
+| email_templates | List of email template                                |
+
+**Sample Query**
+
+```graphql
+
+_email_templates(params: {limit: 10, page: 1}) {
+  pagination {
+    limit
+    offset
+    total
+  }
+  webhooks {
+    id
+    template
+    event_name
+    created_at
+    updated_at
   }
 }
 
@@ -1245,6 +1294,101 @@ Mutation to delete webhook. This mutation is allowed for admins only. It accepts
 ```graphql
 mutation {
   _delete_webhook(params: { id: "123-adfa-123412-asdfasda" }) {
+    message
+  }
+}
+```
+
+### `_add_email_template`
+
+Mutation to add email template that will be used while sending emails. This mutation is allowed for admins only. It accepts `params` of type `AddEmailTemplateRequest` with following keys
+
+> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer-admin` as http only cookie.
+
+**Request Params**
+
+| Key          | Description                                                                                                                                                                                                                                  | Required |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| `event_name` | Name of event for which email template should be called. Currently, supports `basic_auth_signup`, `magic_link_login`, `update_email`, `forgot_password` events only. This is a unique field, means you can have one template for each event. | `true`   |
+| `template`   | HTML template that will be used while sending emails                                                                                                                                                                                         | `true`   |
+
+**Response**
+
+| Key       | Description                         |
+| --------- | ----------------------------------- |
+| `message` | Success / Error message from server |
+
+**Sample Mutation**
+
+```graphql
+mutation {
+  _add_email_template(
+    params: { event_name: "user.login", template: "hello world" }
+  ) {
+    message
+  }
+}
+```
+
+### `_update_email_template`
+
+Mutation to update email template. This mutation is allowed for admins only. It accepts `params` of type `UpdateEmailTemplateRequest` with following keys
+
+> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer-admin` as http only cookie.
+
+**Request Params**
+
+| Key          | Description                                                                                                                                                                                                                                  | Required |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| `id`         | Identifier of the email template                                                                                                                                                                                                             | `true`   |
+| `event_name` | Name of event for which email template should be called. Currently, supports `basic_auth_signup`, `magic_link_login`, `update_email`, `forgot_password` events only. This is a unique field, means you can have one template for each event. | `false`  |
+| `template`   | HTML template that will be used while sending emails                                                                                                                                                                                         | `false`  |
+
+**Response**
+
+| Key       | Description                         |
+| --------- | ----------------------------------- |
+| `message` | Success / Error message from server |
+
+**Sample Mutation**
+
+```graphql
+mutation {
+  _update_email_Template(
+    params: {
+      id: "123-adfa-123412-asdfasda"
+      event_name: "update_email"
+      template: "Welcome back!"
+    }
+  ) {
+    message
+  }
+}
+```
+
+### `_delete_email_template`
+
+Mutation to delete email template. This mutation is allowed for admins only. It accepts `params` of type `DeleteEmailTemplateRequest` with following keys
+
+> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer-admin` as http only cookie.
+
+**Request Params**
+
+| Key  | Description                      | Required |
+| ---- | -------------------------------- | -------- |
+| `id` | Identifier of the email template | `true`   |
+
+**Response**
+
+| Key       | Description                         |
+| --------- | ----------------------------------- |
+| `message` | Success / Error message from server |
+
+**Sample Mutation**
+
+```graphql
+mutation {
+  _delete_email_template(params: { id: "123-adfa-123412-asdfasda" }) {
     message
   }
 }
