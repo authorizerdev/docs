@@ -20,6 +20,8 @@
 - [revokeToken](#--revoketoken)
 - [logout](#--logout)
 - [validateJWTToken](#--validatejwttoken)
+- [verifyOtp](#--verifyOtp)
+- [resendOtp](#--resendOtp)
 
 These functions can be invoked using the `Authorizer` instance:
 
@@ -191,14 +193,15 @@ This mutation returns `AuthResponse` type with following keys
 
 **Response**
 
-| Key             | Description                                                                                                                                       |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `message`       | Success / Error message from server                                                                                                               |
-| `access_token`  | accessToken that frontend application can use for further authorized requests                                                                     |
-| `expires_in`    | timestamp when the current token is going to expire, so that frontend can request for new access token                                            |
-| `id_token`      | JWT token holding the user information                                                                                                            |
-| `refresh_token` | When scope includes `offline_access`, Long living token is returned which can be used to get new access tokens. This is rotated with each request |
-| `user`          | User object with its profile keys mentioned [above](#--getprofile).                                                                               |
+| Key                      | Description                                                                                                                                       |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `message`                | Success / Error message from server                                                                                                               |
+| `should_show_otp_screen` | Boolean value for frontend application to show otp input screen                                                                                   |
+| `access_token`           | accessToken that frontend application can use for further authorized requests                                                                     |
+| `expires_in`             | timestamp when the current token is going to expire, so that frontend can request for new access token                                            |
+| `id_token`               | JWT token holding the user information                                                                                                            |
+| `refresh_token`          | When scope includes `offline_access`, Long living token is returned which can be used to get new access tokens. This is rotated with each request |
+| `user`                   | User object with its profile keys mentioned [above](#--getprofile).                                                                               |
 
 **Sample Usage**
 
@@ -531,5 +534,63 @@ It expects the JSON object as parameter with following parameters
 const res = await authRef.validateJWTToken({
   token_type: `access_token`
   token: `some jwt token string`
+})
+```
+
+## - `verifyOtp`
+
+Function to verify OTP sent to the user when they login.
+
+It accepts JSON object as a parameter with following keys
+
+| Key     | Description                                        | Required |
+| ------- | -------------------------------------------------- | -------- |
+| `email` | Email address of user                              | true     |
+| `otp`   | OTP (One Time Password) sent to user email address | true     |
+
+Following is the response for `verifyOtp` function
+
+**Response**
+| Key | Description |
+| ---------------------- | ------------------------------------------------------------------------------------------------------ |
+| `message` | Error / Success message from server |
+| `should_show_otp_screen` | Boolean value for frontend application to show otp input screen |
+| `access_token` | accessToken that frontend application can use for further authorized requests |
+| `expires_in` | timestamp when the current token is going to expire, so that frontend can request for new access token |
+| `id_token` | JWT token holding the user information |
+| `refresh_token` | When scope includes `offline_access`, Long living token is returned which can be used to get new access tokens. This is rotated with each request |
+| `user` | User object with all the basic profile information |
+
+**Sample Usage**
+
+```js
+const res = await authRef.verifyOtp({
+  email: 'foo@bar.com',
+  otp: 'AB123C',
+})
+```
+
+## - `resendOtp`
+
+Function to resend OTP to the user.
+
+It accepts JSON object as a parameter with following keys
+
+| Key     | Description           | Required |
+| ------- | --------------------- | -------- |
+| `email` | Email address of user | true     |
+
+Following is the response for `resendOtp` function
+
+**Response**
+| Key | Description |
+| ---------------------- | ------------------------------------------------------------------------------------------------------ |
+| `message` | Error / Success message from server |
+
+**Sample Usage**
+
+```js
+const res = await authRef.resendOtp({
+  email: 'foo@bar.com',
 })
 ```
