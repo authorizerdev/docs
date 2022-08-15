@@ -12,6 +12,7 @@
 - [`AuthorizerSocialLogin`](#authorizersociallogin)
 - [`AuthorizerForgotPassword`](#authorizerforgotpassword)
 - [`AuthorizerResetPassword`](#authorizerresetpassword)
+- [`AuthorizerVerifyOtp`](#authorizerverifyotp)
 
 ## `AuthorizerProvider`
 
@@ -229,6 +230,34 @@ const ResetPassword = () => {
       <h1 style={{ textAlign: 'center' }}>Reset Password</h1>
       <br />
       <AuthorizerResetPassword onReset={(response) => {}} />
+    </>
+  )
+}
+```
+
+## `AuthorizerVerifyOtp`
+
+A component to render the OTP verification form. Make sure it is used as Child of `AuthorizerProvider`.
+
+### Props
+
+- `email="foo@bar.com"`: user email address on which the OTP was sent.
+
+It also has following optional prop as callback event that is triggered on form submit.
+
+- `onLogin={(response)=>{}}`: event called when verify OTP form is submitted successfully.
+
+### Sample Usage
+
+```jsx
+import { AuthorizerVerifyOtp } from '@authorizerdev/authorizer-react'
+
+const VerifyOtp = () => {
+  return (
+    <>
+      <h1 style={{ textAlign: 'center' }}>Verify OTP</h1>
+      <br />
+      <AuthorizerVerifyOtp email="foo@bar.com" onLogin={(response) => {}} />
     </>
   )
 }

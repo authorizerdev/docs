@@ -35,6 +35,8 @@ Table of Contents
   - [`forgot_password`](#forgot_password)
   - [`reset_password`](#reset_password)
   - [`revoke`](#revoke)
+  - [`verify_otp`](#verify_otp)
+  - [`resend_otp`](#resend_otp)
   - [`_admin_signup`](#_admin_signup)
   - [`_admin_login`](#_admin_login)
   - [`_admin_logout`](#_admin_logout)
@@ -109,14 +111,15 @@ It returns `AuthResponse` type with the following keys.
 
 **Response**
 
-| Key             | Description                                                                                                                                       |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `message`       | Error / Success message from server                                                                                                               |
-| `access_token`  | accessToken that frontend application can use for further authorized requests                                                                     |
-| `expires_in`    | timestamp when the current token is going to expire, so that frontend can request for new access token                                            |
-| `id_token`      | JWT token holding the user information                                                                                                            |
-| `refresh_token` | When scope includes `offline_access`, Long living token is returned which can be used to get new access tokens. This is rotated with each request |
-| `user`          | User object with all the basic profile information                                                                                                |
+| Key                      | Description                                                                                                                                       |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `message`                | Error / Success message from server                                                                                                               |
+| `should_show_otp_screen` | Boolean value for frontend application to show otp input screen                                                                                   |
+| `access_token`           | accessToken that frontend application can use for further authorized requests                                                                     |
+| `expires_in`             | timestamp when the current token is going to expire, so that frontend can request for new access token                                            |
+| `id_token`               | JWT token holding the user information                                                                                                            |
+| `refresh_token`          | When scope includes `offline_access`, Long living token is returned which can be used to get new access tokens. This is rotated with each request |
+| `user`                   | User object with all the basic profile information                                                                                                |
 
 **Sample Query**
 
@@ -552,12 +555,13 @@ This mutation returns `AuthResponse` type with following keys
 
 **Response**
 
-| Key            | Description                                                                                                                                                                         |
-| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `message`      | Success / Error message from server                                                                                                                                                 |
-| `access_token` | Token that can be used for further authorized requests. This is only returned if `DISABLE_EMAIL_NOTIFICATION` is set to `true` in environment variables                             |
-| `expires_in`   | Timestamp when the access Token will expire so that frontend can request new token. This is only returned if `DISABLE_EMAIL_NOTIFICATION` is set to `true` in environment variables |
-| `user`         | User object with its profile keys mentioned [above](#--profile). This is only returned if `DISABLE_EMAIL_NOTIFICATION` is set to `true` in environment variables                    |
+| Key                      | Description                                                                                                                                                                         |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `message`                | Success / Error message from server                                                                                                                                                 |
+| `should_show_otp_screen` | Boolean value for frontend application to show otp input screen                                                                                                                     |
+| `access_token`           | Token that can be used for further authorized requests. This is only returned if `DISABLE_EMAIL_NOTIFICATION` is set to `true` in environment variables                             |
+| `expires_in`             | Timestamp when the access Token will expire so that frontend can request new token. This is only returned if `DISABLE_EMAIL_NOTIFICATION` is set to `true` in environment variables |
+| `user`                   | User object with its profile keys mentioned [above](#--profile). This is only returned if `DISABLE_EMAIL_NOTIFICATION` is set to `true` in environment variables                    |
 
 **Sample Mutation**
 
@@ -588,14 +592,15 @@ This mutation returns `AuthResponse` type with following keys
 
 **Response**
 
-| Key             | Description                                                                                                                                       |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `message`       | Success / Error message from server                                                                                                               |
-| `access_token`  | accessToken that frontend application can use for further authorized requests                                                                     |
-| `expires_in`    | timestamp when the current token is going to expire, so that frontend can request for new access token                                            |
-| `id_token`      | JWT token holding the user information                                                                                                            |
-| `refresh_token` | When scope includes `offline_access`, Long living token is returned which can be used to get new access tokens. This is rotated with each request |
-| `user`          | User object with its profile keys mentioned [above](#--profile).                                                                                  |
+| Key                      | Description                                                                                                                                       |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `message`                | Success / Error message from server                                                                                                               |
+| `should_show_otp_screen` | Boolean value for frontend application to show otp input screen                                                                                   |
+| `access_token`           | accessToken that frontend application can use for further authorized requests                                                                     |
+| `expires_in`             | timestamp when the current token is going to expire, so that frontend can request for new access token                                            |
+| `id_token`               | JWT token holding the user information                                                                                                            |
+| `refresh_token`          | When scope includes `offline_access`, Long living token is returned which can be used to get new access tokens. This is rotated with each request |
+| `user`                   | User object with its profile keys mentioned [above](#--profile).                                                                                  |
 
 **Sample Mutation**
 
@@ -725,14 +730,15 @@ This mutation returns `AuthResponse` type with following keys
 
 **Response**
 
-| Key             | Description                                                                                                                                       |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `message`       | Success / Error message from server                                                                                                               |
-| `access_token`  | accessToken that frontend application can use for further authorized requests                                                                     |
-| `expires_in`    | timestamp when the current token is going to expire, so that frontend can request for new access token                                            |
-| `id_token`      | JWT token holding the user information                                                                                                            |
-| `refresh_token` | When scope includes `offline_access`, Long living token is returned which can be used to get new access tokens. This is rotated with each request |
-| `user`          | User object with its profile keys mentioned [above](#--profile).                                                                                  |
+| Key                      | Description                                                                                                                                       |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `message`                | Success / Error message from server                                                                                                               |
+| `should_show_otp_screen` | Boolean value for frontend application to show otp input screen                                                                                   |
+| `access_token`           | accessToken that frontend application can use for further authorized requests                                                                     |
+| `expires_in`             | timestamp when the current token is going to expire, so that frontend can request for new access token                                            |
+| `id_token`               | JWT token holding the user information                                                                                                            |
+| `refresh_token`          | When scope includes `offline_access`, Long living token is returned which can be used to get new access tokens. This is rotated with each request |
+| `user`                   | User object with its profile keys mentioned [above](#--profile).                                                                                  |
 
 **Sample Mutation**
 
@@ -856,6 +862,78 @@ Mutation to revoke refresh token.
 ```graphql
 mutation {
   revoke(params: { refresh_token: "token" }) {
+    message
+  }
+}
+```
+
+### `verify_otp`
+
+Mutation to verify OTP sent to the user. It accepts `params` of type `VerifyOTPRequest` with following keys as parameter
+
+**Request Params**
+
+| Key     | Description                                        | Required |
+| ------- | -------------------------------------------------- | -------- |
+| `email` | Email address of user                              | true     |
+| `otp`   | OTP (One Time Password) sent to user email address | true     |
+
+This mutation returns `AuthResponse` type with following keys
+
+**Response**
+
+| Key                      | Description                                                                                                                                       |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `message`                | Success / Error message from server                                                                                                               |
+| `should_show_otp_screen` | Boolean value for frontend application to show otp input screen                                                                                   |
+| `access_token`           | accessToken that frontend application can use for further authorized requests                                                                     |
+| `expires_in`             | timestamp when the current token is going to expire, so that frontend can request for new access token                                            |
+| `id_token`               | JWT token holding the user information                                                                                                            |
+| `refresh_token`          | When scope includes `offline_access`, Long living token is returned which can be used to get new access tokens. This is rotated with each request |
+| `user`                   | User object with its profile keys mentioned [above](#profile).                                                                                    |
+
+**Sample Mutation**
+
+```graphql
+mutation {
+  verify_otp(params: { email: "foo@bar.com", otp: "AB123C" }) {
+    user {
+      email
+      given_name
+      family_name
+      picture
+      roles
+    }
+    accessToken
+    expires_in
+    message
+  }
+}
+```
+
+### `resend_otp`
+
+Mutation to resend OTP to the user. It accepts `params` of type `ResendOTPRequest` with following keys as parameter
+
+**Request Params**
+
+| Key     | Description           | Required |
+| ------- | --------------------- | -------- |
+| `email` | Email address of user | true     |
+
+This mutation returns `Response` type with following keys
+
+**Response**
+
+| Key       | Description                         |
+| --------- | ----------------------------------- |
+| `message` | Success / Error message from server |
+
+**Sample Mutation**
+
+```graphql
+mutation {
+  resend_otp(params: { email: "foo@bar.com" }) {
     message
   }
 }
