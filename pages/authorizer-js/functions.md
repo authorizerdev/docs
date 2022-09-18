@@ -250,12 +250,12 @@ const user = await authRef.getProfile({
 
 ## - `updateProfile`
 
-Function to update profile of user. This function makes an authorized request, hence if it is used from the browser the HTTP cookie is sent if user has logged in else you need to pass headers object.
+Function to update profile of user.
 
 It accepts 2 JSON object as its parameters.
 
 1. data - User data that needs to be updated
-2. headers - Optional parameter to pass Authorization header if HTTP Cookie is not used.
+2. headers - To pass Authorization header
 
 Here are the keys that `data` object accepts
 
@@ -283,12 +283,6 @@ Here is sample of `headers` object
 **Sample Usage**
 
 ```js
-// from browser with HTTP Cookie
-const res = await authRef.updateProfile({
-  given_name: `bob`,
-})
-
-// from NodeJS / if HTTP cookie is not used
 const res = await authRef.updateProfile(
   {
     given_name: `bob`,
