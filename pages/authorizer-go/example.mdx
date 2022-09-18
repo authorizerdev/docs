@@ -1,0 +1,81 @@
+# How to use authorizer as API gateway
+
+> Note: This example demonstrates how to use authorizer in middleware for a [go-gin](https://github.com/gin-gonic/gin) server. But logic remains the same under the hood, where you can get auth token from `header` and validate it via authorizer SDK
+
+```go
+package main
+
+import (
+	"net/http"
+	"strings"
+
+	"github.com/authorizerdev/authorizer-go"
+	"github.com/gin-gonic/gin"
+)
+
+func AuthorizeMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		/**
+		  for open routes you can add condition here and just return with c.Next()
+		  so that it does not validate token for those routes
+		*/
+
+		authHeader := c.Request.Header.Get("Authorization")
+		tokenSplit := strings.Split(authHeader, " ")
+
+		defaultHeaders := map[string]string{}
+		authorizerClient, err := authorizer.NewAuthorizerClient("YOUR_CLIENT_ID", "YOUR_AUHTORIZER_URL", "OPTIONAL_REDIRECT_URL", defaultHeaders)
+		if err != nil {
+			// unauthorized
+			c.AbortWithStatusJSON(401, "unauthorized")
+			return
+		}
+
+		if len(tokenSplit) < 2 || tokenSplit[1] == "" {
+			// unauthorized
+			c.AbortWithStatusJSON(401, "unauthorized")
+			return
+		}
+
+		res, err := authorizerClient.ValidateJWTToken(&authorizer.ValidateJWTTokenInput{
+			TokenType: authorizer.TokenTypeIDToken,
+			Token:     tokenSplit[1],
+		})
+		if err != nil {
+			// unauthorized
+			c.AbortWithStatusJSON(401, "unauthorized")
+			return
+		}
+
+		if !res.IsValid {
+			// unauthorized
+			c.AbortWithStatusJSON(401, "unauthorized")
+			return
+		}
+
+		c.Next()
+	}
+}
+
+func main() {
+	router := gin.New()
+	router.Use(AuthorizeMiddleware())
+
+	router.GET("/ping", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"message": "pong",
+		})
+	})
+
+	router.Run(":8090")
+}
+```
+
+**CURL command to test go-gin server created in example**
+
+Copy JWT ID token from login response of authorizer `login` mutation / social media login and replace `JWT_TOKEN` below
+
+```bash
+curl --location --request GET 'http://localhost:8090/ping' \
+--header 'Authorization: Bearer JWT_TOKEN'
+```
