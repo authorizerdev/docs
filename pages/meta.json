@@ -5,6 +5,7 @@
   "deployment": "Deployments",
   "authorizer-js": "authorizer-js",
   "authorizer-react": "authorizer-react",
+  "authorizer-svelte": "authorizer-svelte",
   "authorizer-go": "authorizer-go",
   "integrations": "Integrations",
   "contributing": "Contributing"
