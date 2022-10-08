@@ -94,7 +94,7 @@ If session exists following keys are returned.
 **Sample Usage**
 
 ```js
-const res = await authRef.authorize({
+const res = await authRef.getToken({
   response_type: 'code',
   response_mode: 'query',
 })
