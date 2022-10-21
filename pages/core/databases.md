@@ -71,6 +71,17 @@
 
 > Note: New environment variable is introduced - `DATABASE_NAME`: as database name, is not part of connection URL in case of arangodb and mongodb.
 
+- [DynamoDB](https://aws.amazon.com/dynamodb/)
+
+  Sample Config
+
+  ```
+  DATABASE_TYPE=dynamodb
+  AWS_REGION=ap-south-1
+  AWS_ACCESS_KEY_ID=YOUR_ACCESS_KEY
+  AWS_SECRET_ACCESS_KEY=YOUR_SECRET
+  ```
+
 ## Tables / collections created and used by Authorizer
 
 - `authorizer_users` - store the basic user information
