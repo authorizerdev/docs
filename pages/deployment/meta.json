@@ -3,7 +3,8 @@
   "heroku": "Heroku",
   "railway": "Railway.app",
   "render": "Render",
-  "binary": "Binaries",
   "kubernetes": "Kubernetes",
-  "flydotio": "Fly.io"
+  "helm-chart": "Helm Chart",
+  "flydotio": "Fly.io",
+  "binary": "Binaries"
 }
