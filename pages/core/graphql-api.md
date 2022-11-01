@@ -193,9 +193,10 @@ It returns `ValidateJWTTokenResponse` type with the following keys.
 
 **Response**
 
-| Key        | Description                                        |
-| ---------- | -------------------------------------------------- |
-| `is_valid` | Boolean indicating if given token was valid or not |
+| Key        | Description                                                |
+| ---------- | ---------------------------------------------------------- |
+| `is_valid` | Boolean indicating if given token was valid or not         |
+| `claims`   | JSON object of the claims in token. [authorizer >= 1.1.23] |
 
 **Sample Query**
 
