@@ -53,7 +53,7 @@ If you want to test for all the databases that authorizer supports you will have
 
 Setup mongodb & arangodb using Docker
 
-```
+```bash
 docker run --name mongodb -d -p 27017:27017 mongo
 docker run --name arangodb -d -p 8529:8529 -e ARANGO_ROOT_PASSWORD=root arangodb/arangodb:3.8.4
 ```
@@ -76,7 +76,7 @@ make test
 
 For manually testing using graphql playground, you can paste following queries and mutations in your playground and test it
 
-```gql
+```graphql
 mutation Signup {
   signup(
     params: {

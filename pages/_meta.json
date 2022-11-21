@@ -8,5 +8,6 @@
   "authorizer-svelte": "authorizer-svelte",
   "authorizer-go": "authorizer-go",
   "integrations": "Integrations",
-  "contributing": "Contributing"
+  "contributing": "Contributing",
+  "changelog": "Releases"
 }

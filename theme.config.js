@@ -1,12 +1,13 @@
 export default {
-  github: 'https://github.com/authorizerdev/docs/',
+  project: { link: 'https://github.com/authorizerdev/docs/' },
   docsRepositoryBase: 'https://github.com/authorizerdev/docs/blob/main',
   titleSuffix: ' – Authorizer',
+  unstable_flexsearch: true,
   logo: (
     <>
       <img src="/images/logo.png" alt="logo" style={{ height: 35 }} />
       <span
-        className="ml-2 mr-2 font-bold hidden md:inline authorizer-logo"
+        className="mx-2 font-bold md:inline authorizer-logo"
         style={{
           fontSize: '1.5rem',
           letterSpacing: '0.1rem',
@@ -73,11 +74,13 @@ export default {
       />
     </>
   ),
-  search: true,
-  prevLinks: true,
-  nextLinks: true,
-  footer: true,
-  footerEditLink: 'Edit this page on GitHub',
-  footerText: <>{new Date().getFullYear()} © Authorizer.dev.</>,
+  navigation: true,
+  editLink: { text: 'Edit this page on GitHub' },
+  footer: { text: <>{new Date().getFullYear()} © Authorizer.dev.</> },
   unstable_faviconGlyph: '👋',
+  chat: { link: 'https://discord.gg/UdSTnTccWB' },
+  sidebar: {
+    defaultMenuCollapsed: true,
+    subtitle: ({ title }) => <>{title}</>,
+  },
 }

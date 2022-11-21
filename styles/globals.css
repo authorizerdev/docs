@@ -1,3 +1,34 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 .authorizer-logo {
   font-family: 'Major Mono Display', 'monospace';
 }
+
+/* TODO: Changelog Releases */
+/* .dark article h2 {
+  border-color: hsl(
+    var(--nextra-primary-hue) 100% 94% / var(--tw-border-opacity)
+  );
+  --tw-border-opacity: 0.1;
+}
+
+article h2 {
+  margin-top: 2.5rem;
+  font-size: 1.875rem;
+  font-weight: 600;
+  border-bottom-width: 1px;
+  padding-bottom: 0.25rem;
+}
+
+article h1,
+article h2 {
+  letter-spacing: -0.015em;
+}
+
+ul {
+  list-style: unset !important
+
+} */
+
