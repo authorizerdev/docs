@@ -42,7 +42,6 @@ It allows perform authentication via builtin login page.
 This end point has following query parameters
 
 **Query String Params**
-
 | Key              | Description                                                                                                                                                                                                      | Required |
 | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
 | `client_id`      | Your client_id                                                                                                                                                                                                   | true     |

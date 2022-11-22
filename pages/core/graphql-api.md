@@ -8,52 +8,51 @@ You can play with GraphQL API using the GraphQL playground that comes with your 
 
 Table of Contents
 
-- [Queries](#queries)
-
-  - [`meta`](#meta)
-  - [`session`](#session)
-  - [`is_valid_jwt`](#is_valid_jwt)
-  - [`profile`](#profile)
-  - [`validate_jwt_token`](#validate_jwt_token)
-  - [`_users`](#_users)
-  - [`_verification_requests`](#_verification_requests)
-  - [`_admin_session`](#_admin_session)
-  - [`_env`](#_env)
-  - [`_webhook`](#_webhook)
-  - [`_webhooks`](#_webhooks)
-  - [`_webhook_logs`](#_webhook_logs)
-  - [`_email_templates`](#_email_templates)
-
-- [Mutations](#mutations)
-  - [`signup`](#signup)
-  - [`login`](#login)
-  - [`magic_link_login`](#magic_link_login)
-  - [`logout`](#logout)
-  - [`update_profile`](#update_profile)
-  - [`verify_email`](#verify_email)
-  - [`resend_verify_email`](#resend_verify_email)
-  - [`forgot_password`](#forgot_password)
-  - [`reset_password`](#reset_password)
-  - [`revoke`](#revoke)
-  - [`verify_otp`](#verify_otp)
-  - [`resend_otp`](#resend_otp)
-  - [`_admin_signup`](#_admin_signup)
-  - [`_admin_login`](#_admin_login)
-  - [`_admin_logout`](#_admin_logout)
-  - [`_update_env`](#_update_env)
-  - [`_update_user`](#_update_user)
-  - [`_delete_user`](#_delete_user)
-  - [`_invite_members`](#_invite_members)
-  - [`_revoke_access`](#_revoke_access)
-  - [`_enable_access`](#_enable_access)
-  - [`_generate_jwt_keys`](#_generate_jwt_keys)
-  - [`_test_endpoint`](#_test_endpoint)
-  - [`_add_webhook`](#_add_webhook)
-  - [`_update_webhook`](#_update_webhook)
-  - [`_delete_webhook`](#_delete_webhook)
-  - [`_add_email_template`](#_add_email_template)
-  - [`_update_email_template`](#_update_email_template)
-  - [`_delete_email_template`](#_delete_email_template)
+- [GraphQL API](#graphql-api)
+  - [Queries](#queries)
+    - [`meta`](#meta)
+    - [`session`](#session)
+    - [`is_valid_jwt`](#is_valid_jwt)
+    - [`profile`](#profile)
+    - [`validate_jwt_token`](#validate_jwt_token)
+    - [`_users`](#_users)
+    - [`_verification_requests`](#_verification_requests)
+    - [`_admin_session`](#_admin_session)
+    - [`_env`](#_env)
+    - [`_webhook`](#_webhook)
+    - [`_webhooks`](#_webhooks)
+    - [`_webhook_logs`](#_webhook_logs)
+    - [`_email_templates`](#_email_templates)
+  - [Mutations](#mutations)
+    - [`signup`](#signup)
+    - [`login`](#login)
+    - [`magic_link_login`](#magic_link_login)
+    - [`logout`](#logout)
+    - [`update_profile`](#update_profile)
+    - [`verify_email`](#verify_email)
+    - [`resend_verify_email`](#resend_verify_email)
+    - [`forgot_password`](#forgot_password)
+    - [`reset_password`](#reset_password)
+    - [`revoke`](#revoke)
+    - [`verify_otp`](#verify_otp)
+    - [`resend_otp`](#resend_otp)
+    - [`_admin_signup`](#_admin_signup)
+    - [`_admin_login`](#_admin_login)
+    - [`_admin_logout`](#_admin_logout)
+    - [`_update_env`](#_update_env)
+    - [`_update_user`](#_update_user)
+    - [`_delete_user`](#_delete_user)
+    - [`_invite_members`](#_invite_members)
+    - [`_revoke_access`](#_revoke_access)
+    - [`_enable_access`](#_enable_access)
+    - [`_generate_jwt_keys`](#_generate_jwt_keys)
+    - [`_test_endpoint`](#_test_endpoint)
+    - [`_add_webhook`](#_add_webhook)
+    - [`_update_webhook`](#_update_webhook)
+    - [`_delete_webhook`](#_delete_webhook)
+    - [`_add_email_template`](#_add_email_template)
+    - [`_update_email_template`](#_update_email_template)
+    - [`_delete_email_template`](#_delete_email_template)
 
 ## Queries
 
@@ -75,7 +74,6 @@ It returns `Meta` type with the following possible values
 | `is_sign_up_enabled`              | It gives information if sign up is enabled or not             |
 
 **Sample Query**
-
 ```graphql
 query {
   meta {
@@ -137,6 +135,8 @@ query {
   }
 }
 ```
+
+### `is_valid_jwt`
 
 ### `profile`
 
@@ -348,7 +348,7 @@ query {
     DATABASE_URL
     DATABASE_NAME
     CLIENT_ID
-	  CLIENT_SECRET
+   CLIENT_SECRET
     ...
   }
 }

@@ -1,4 +1,4 @@
-# kubernetes
+# Kubernetes
 
 > Helm chart for Authorizer deployment is coming soon.
 
@@ -25,7 +25,7 @@ Copy following into `authorizer.yml` file and update the required variables
 
 > Note: Replace your domain, database strings and other environment variables. For more environment variables check [here](/core/env)
 
-```yml
+```yaml
 ---
 apiVersion: apps/v1
 kind: Deployment
