@@ -1,8 +1,8 @@
 {
   "index": "Getting Started",
-  "heroku": "Heroku",
   "railway": "Railway.app",
   "render": "Render",
+  "heroku": "Heroku",
   "kubernetes": "Kubernetes",
   "helm-chart": "Helm Chart",
   "flydotio": "Fly.io",
