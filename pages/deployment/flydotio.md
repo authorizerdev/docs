@@ -1,12 +1,24 @@
-# Deploy on [Fly.io](https://fly.io)
+# Deploy Authorizer on Fly.io
 
-## Create Instance
+## Introduction
 
-Deploy production ready Authorizer instance using [fly.io](https://fly.io) with Postgres and Redis for free.
+This guide explains how to deploy a ready-to-use Authorizer instance on Fly.io.
 
-### Prerequisites
+[Fly.io](https://fly.io) is a platform for running full stack apps and databases close to your users.
+
+Fly.io also provide custom domain configuration and free SSL using Let's Encrypt via the CLI.
+
+## Requirements
+
+To follow along, you need to complete the steps below:
+
+- A [Fly account](https://fly.io). If you don't have one, you can visit the link above and click on "Sign In" in the top right corner to log in either with your GitHub or email.
 
 - [Fly CLI](https://fly.io/docs/app-guides/run-a-private-dns-over-https-service/#install-fly-cli)
+
+## Deploy an Authorizer Instance
+
+Deploy production ready Authorizer instance using [fly.io](https://fly.io) with Postgres and Redis for free.
 
 ### Step 1: Login to Fly.io
 
@@ -33,7 +45,7 @@ Follow the wizard to set the application name, region, etc. You will find new fi
 
 ![Authorizer at Fly.io](/images/fly-01.png)
 
-### Step 4: Setup Postgres instance
+### Step 3: Setup Postgres instance
 
 Fly.io provide free tier Postgres with limited resource. Consider to use larger Posgres instance when using at production.
 Read more details about Postgres at Fly [here](https://fly.io/docs/reference/postgres/).
@@ -53,11 +65,11 @@ To connecting the Postgres database with the app, we need to attach by using thi
 flyctl postgres attach --postgres-app <POSTGRES_APP_NAME>
 ```
 
-### Step 5: Setup Redis instance
+### Step 4: Setup Redis instance
 
 To spin up a Redis instance, please follow [this official documentation](https://fly.io/docs/reference/redis/).
 
-### Step 6: Configure `fly.toml` file
+### Step 5: Configure `fly.toml` file
 
 Add this part to fly.toml file:
 
@@ -128,7 +140,7 @@ auto_rollback = true
     timeout = "2s"
 ```
 
-### Step 7: Configure Authorizer Environment
+### Step 6: Configure Authorizer Environment
 
 ```sh
 flyctl secrets set \
@@ -148,7 +160,7 @@ flyctl secrets set \
 
 Refer to [Environment Variables](/core/env) section to see all variables.
 
-### Step 8: Deploy
+### Step 7: Deploy
 
 Finally, deploy the app by execute this command:
 
