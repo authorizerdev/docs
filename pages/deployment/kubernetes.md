@@ -1,6 +1,6 @@
 # Kubernetes
 
-> Helm chart for Authorizer deployment is coming soon.
+> We also support [Helm chart](/deployment/helm-chart) for deplyment of Authorizer instance.
 
 You can use [docker image](https://hub.docker.com/repository/docker/lakhansamani/authorizer) to deploy with following configuration. It includes
 
