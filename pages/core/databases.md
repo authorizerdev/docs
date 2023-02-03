@@ -64,7 +64,7 @@
 
   ```
     DATABASE_TYPE=scylladb
-    DATABASE_HOST="192.168.0.1,192.168.0.2,192.168.0.3"
+    DATABASE_HOST ="192.168.0.1,192.168.0.2,192.168.0.3"
     DATABASE_USERNAME="scylladb"
     DATABASE_PASSWORD="*********"
   ```
@@ -82,6 +82,20 @@
   AWS_SECRET_ACCESS_KEY=YOUR_SECRET
   ```
 
+- [Couchbase](https://www.couchbase.com/)
+
+  Sample Config
+
+  ```
+  DATABASE_TYPE=couchbase
+  DATABASE_URL="couchbase://127.0.0.1"
+  DATABASE_USERNAME="scylladb"
+  DATABASE_PASSWORD="*********"
+  COUCHBASE_BUCKET="authorizer" // if not specified authorizer is default value
+  COUCHBASE_BUCKET_RAM_QUOTA=1000 // if not specified 1000 MB is the default value
+  COUCHBASE_SCOPE="_default" // if not specified _default scope is used.
+  ```
+
 ## Tables / collections created and used by Authorizer
 
 - `authorizer_users` - store the basic user information
@@ -96,3 +110,7 @@ Currently, Authorizer Supports two in-memory stores
 
 - [Redis](https://redis.io/) - persisted as long as a Redis server is on / user logs out.
 - In-memory - stores in the memory of the current machine. Not recommended for production as machine memory might be less. Also, data it saves data till the system stops / restarts.
+
+```
+
+```
