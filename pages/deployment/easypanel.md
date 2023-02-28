@@ -14,19 +14,13 @@ To follow along, you need a [Easypanel installation](https://easypanel.io/). If 
 
 Deploy production ready Authorizer instance using [easypanel.io](https://easypanel.io/docs/templates/authorizer) with postgres and redis
 
-Click the button below to deploy an Authorizer instance to Railway quickly.
+Click the button below to deploy an Authorizer instance to Easypanel quickly.
 
 <br />
 
 <a target="_blank" href="https://easypanel.io/docs/templates/authorizer"><img src="https://easypanel.io/img/deploy-on-easypanel-40.svg" alt="Deploy on Easypanel"/></a>
 
 Follow the below steps after clicking the button:
-
-Before getting started on below steps make sure you have given permission to railway for further deployments as it will create a repository in your github account.
-
-<br/>
-
-<img src="https://easypanel.io/img/deploy-on-easypanel-40-outline.svg" />
 
 ## Setup Instance
 
