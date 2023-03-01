@@ -9,3 +9,4 @@ You can self host Authorizer instance using various deployment options
 - [Helm Chart](/deployment/helm-chart)
 - [Fly.io](/deployment/flydotio)
 - [Binary](/deployment/binary)
+- [Easypanel](/deployment/easypanel)
