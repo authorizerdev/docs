@@ -62,7 +62,7 @@ Choose `Development` configuration to use free instance of Postgres.
 To connecting the Postgres database with the app, we need to attach by using this command:
 
 ```sh
-flyctl postgres attach --postgres-app <POSTGRES_APP_NAME>
+flyctl postgres attach <POSTGRES_APP_NAME>
 ```
 
 ### Step 4: Setup Redis instance
