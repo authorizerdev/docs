@@ -15,7 +15,7 @@ Table of Contents
     - [`profile`](#profile)
     - [`validate_jwt_token`](#validate_jwt_token)
     - [`_users`](#_users)
-    - [`_user`](#user)
+    - [`_user`](#_user)
     - [`_verification_requests`](#_verification_requests)
     - [`_admin_session`](#_admin_session)
     - [`_env`](#_env)
