@@ -12,10 +12,10 @@ Table of Contents
   - [Queries](#queries)
     - [`meta`](#meta)
     - [`session`](#session)
-    - [`is_valid_jwt`](#is_valid_jwt)
     - [`profile`](#profile)
     - [`validate_jwt_token`](#validate_jwt_token)
     - [`_users`](#_users)
+    - [`_user`](#user)
     - [`_verification_requests`](#_verification_requests)
     - [`_admin_session`](#_admin_session)
     - [`_env`](#_env)
@@ -74,6 +74,7 @@ It returns `Meta` type with the following possible values
 | `is_sign_up_enabled`              | It gives information if sign up is enabled or not             |
 
 **Sample Query**
+
 ```graphql
 query {
   meta {
@@ -135,8 +136,6 @@ query {
   }
 }
 ```
-
-### `is_valid_jwt`
 
 ### `profile`
 
@@ -207,6 +206,42 @@ query {
   }
 }
 ```
+
+### `_user`
+
+Query to get a specific user by either id or email.
+
+> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer.admin` as http only cookie.
+
+```json
+{
+  "x-authorizer-admin-secret": "ADMIN_SECRET"
+}
+```
+
+It requires either of following parameters
+
+**Request Param**
+
+| Key     | Description            | Required |
+| ------- | ---------------------- | -------- |
+| `id`    | Identifier of the user | false    |
+| `email` | User's email address   | false    |
+
+**Sample Query**
+
+```graphql
+query {
+  _user(params: {
+    id: '123-123123-1231231'
+  }) {
+    id
+    email
+  }
+}
+```
+
+It returns the whole `User` object mentioned in [profile](#profile) query section
 
 ### `_users`
 
