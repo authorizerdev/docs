@@ -14,6 +14,7 @@ Table of Contents
     - [`session`](#session)
     - [`profile`](#profile)
     - [`validate_jwt_token`](#validate_jwt_token)
+    - [`validate_session`](#validate_session)
     - [`_users`](#_users)
     - [`_user`](#_user)
     - [`_verification_requests`](#_verification_requests)
@@ -201,7 +202,39 @@ It returns `ValidateJWTTokenResponse` type with the following keys.
 
 ```graphql
 query {
-  validate_jwt_token(token_type: "access_token", token: "some jwt token") {
+  validate_jwt_token(params: {
+    token_type: "access_token", token: "some jwt token"
+  }) {
+    is_valid
+  }
+}
+```
+
+### `validate_session`
+
+Query to validate the browser session. This query needs input `params` of type `ValidateSessionInput`
+
+**Request Parameters**
+| Key | Description | Required |
+| ------------ | -------------------------------------------------------------------------------------------------------- | -------- |
+| `cookie` | Browser cookie. Either browser http cookie is present or this parameter should be present | `false` |
+| `roles` | Array of roles to validate session for | `false` |
+
+It returns `ValidateSessionResponse` type with the following keys.
+
+**Response**
+
+| Key        | Description                                                |
+| ---------- | ---------------------------------------------------------- |
+| `is_valid` | Boolean indicating if given session/cookie was valid or not         |
+
+**Sample Query**
+
+```graphql
+query {
+  validate_session(params: {
+    cookie: ""
+  }) {
     is_valid
   }
 }
