@@ -20,6 +20,7 @@
 - [revokeToken](#--revoketoken)
 - [logout](#--logout)
 - [validateJWTToken](#--validatejwttoken)
+- [validateSession](#--validatesession)
 - [verifyOtp](#--verifyOtp)
 - [resendOtp](#--resendOtp)
 
@@ -528,6 +529,31 @@ It expects the JSON object as parameter with following parameters
 const res = await authRef.validateJWTToken({
   token_type: `access_token`
   token: `some jwt token string`
+})
+```
+
+## - `validateSession`
+
+Function to validate cookie / browser session.
+
+It expects the JSON object as parameter with following parameters
+
+| Key          | Description                                                                                              | Required |
+| ------------ | -------------------------------------------------------------------------------------------------------- | -------- |
+| `cookie` | browser session cookie value. If not present it will need coookie present in header as https cookie          | `false`  |
+| `roles`      | Array of roles to validate jwt token for                                                                 | `false`  |
+
+**Response**
+
+| Key        | Description                                        |
+| ---------- | -------------------------------------------------- |
+| `is_valid` | Boolean indicating if given token was valid or not |
+
+**Sample Usage**
+
+```js
+const res = await authRef.validateSession({
+  cookie: ``
 })
 ```
 
