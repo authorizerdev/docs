@@ -194,15 +194,16 @@ This mutation returns `AuthResponse` type with following keys
 
 **Response**
 
-| Key                      | Description                                                                                                                                       |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `message`                | Success / Error message from server                                                                                                               |
-| `should_show_otp_screen` | Boolean value for frontend application to show otp input screen                                                                                   |
-| `access_token`           | accessToken that frontend application can use for further authorized requests                                                                     |
-| `expires_in`             | timestamp when the current token is going to expire, so that frontend can request for new access token                                            |
-| `id_token`               | JWT token holding the user information                                                                                                            |
-| `refresh_token`          | When scope includes `offline_access`, Long living token is returned which can be used to get new access tokens. This is rotated with each request |
-| `user`                   | User object with its profile keys mentioned [above](#--getprofile).                                                                               |
+| Key                             | Description                                                                                                                                       |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `message`                       | Success / Error message from server                                                                                                               |
+| `should_show_email_otp_screen`  | Boolean value for frontend application to show otp input for email based login screen                                                             |
+| `should_show_mobile_otp_screen` | Boolean value for frontend application to show otp input for mobile based login screen                                                            |
+| `access_token`                  | accessToken that frontend application can use for further authorized requests                                                                     |
+| `expires_in`                    | timestamp when the current token is going to expire, so that frontend can request for new access token                                            |
+| `id_token`                      | JWT token holding the user information                                                                                                            |
+| `refresh_token`                 | When scope includes `offline_access`, Long living token is returned which can be used to get new access tokens. This is rotated with each request |
+| `user`                          | User object with its profile keys mentioned [above](#--getprofile).                                                                               |
 
 **Sample Usage**
 
@@ -538,10 +539,10 @@ Function to validate cookie / browser session.
 
 It expects the JSON object as parameter with following parameters
 
-| Key          | Description                                                                                              | Required |
-| ------------ | -------------------------------------------------------------------------------------------------------- | -------- |
-| `cookie` | browser session cookie value. If not present it will need coookie present in header as https cookie          | `false`  |
-| `roles`      | Array of roles to validate jwt token for                                                                 | `false`  |
+| Key      | Description                                                                                         | Required |
+| -------- | --------------------------------------------------------------------------------------------------- | -------- |
+| `cookie` | browser session cookie value. If not present it will need coookie present in header as https cookie | `false`  |
+| `roles`  | Array of roles to validate jwt token for                                                            | `false`  |
 
 **Response**
 
@@ -553,7 +554,7 @@ It expects the JSON object as parameter with following parameters
 
 ```js
 const res = await authRef.validateSession({
-  cookie: ``
+  cookie: ``,
 })
 ```
 
@@ -563,10 +564,13 @@ Function to verify OTP sent to the user when they login.
 
 It accepts JSON object as a parameter with following keys
 
-| Key     | Description                                        | Required |
-| ------- | -------------------------------------------------- | -------- |
-| `email` | Email address of user                              | true     |
-| `otp`   | OTP (One Time Password) sent to user email address | true     |
+| Key            | Description                                        | Required |
+| -------------- | -------------------------------------------------- | -------- |
+| `email`        | Email address of user                              | false    |
+| `phone_number` | Phone number of user                               | false    |
+| `otp`          | OTP (One Time Password) sent to user email address | true     |
+
+Either `email` or `phone_number` is required
 
 Following is the response for `verifyOtp` function
 
@@ -574,7 +578,8 @@ Following is the response for `verifyOtp` function
 | Key | Description |
 | ---------------------- | ------------------------------------------------------------------------------------------------------ |
 | `message` | Error / Success message from server |
-| `should_show_otp_screen` | Boolean value for frontend application to show otp input screen |
+| `should_show_email_otp_screen` | Boolean value for frontend application to show otp input for email based login screen |
+| `should_show_mobile_otp_screen` | Boolean value for frontend application to show otp input for mobile based login screen |
 | `access_token` | accessToken that frontend application can use for further authorized requests |
 | `expires_in` | timestamp when the current token is going to expire, so that frontend can request for new access token |
 | `id_token` | JWT token holding the user information |
@@ -596,9 +601,12 @@ Function to resend OTP to the user.
 
 It accepts JSON object as a parameter with following keys
 
-| Key     | Description           | Required |
-| ------- | --------------------- | -------- |
-| `email` | Email address of user | true     |
+| Key            | Description           | Required |
+| -------------- | --------------------- | -------- |
+| `email`        | Email address of user | false    |
+| `phone_number` | Phone number of user  | false    |
+
+Either `email` or `phone_number` is required
 
 Following is the response for `resendOtp` function
 
