@@ -6,5 +6,6 @@
   "kubernetes": "Kubernetes",
   "helm-chart": "Helm Chart",
   "flydotio": "Fly.io",
-  "binary": "Binaries"
+  "binary": "Binaries",
+  "koyeb": "Koyeb"
 }
