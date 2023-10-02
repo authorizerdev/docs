@@ -13,8 +13,8 @@
   "dependencies": {
     "markdown-to-jsx": "6.11.4",
     "next": "^12.3.3",
-    "nextra": "^2.13.1",
-    "nextra-theme-docs": "^2.13.1",
+    "nextra": "2.0.0-beta.25",
+    "nextra-theme-docs": "2.0.0-beta.25",
     "react": "^17.0.1",
     "react-dom": "^17.0.1"
   },
