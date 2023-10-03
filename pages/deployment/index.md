@@ -10,3 +10,4 @@ You can self host Authorizer instance using various deployment options
 - [Fly.io](/deployment/flydotio)
 - [Binary](/deployment/binary)
 - [Easypanel](/deployment/easypanel)
+- [Koyeb](/deployment/koyeb)
