@@ -1,8 +1,11 @@
 export default {
   project: { link: 'https://github.com/authorizerdev/docs/' },
   docsRepositoryBase: 'https://github.com/authorizerdev/docs/blob/main',
-  titleSuffix: ' – Authorizer',
-  unstable_flexsearch: true,
+  useNextSeoProps() {
+    return {
+      titleTemplate: '%s – Authorizer'
+    }
+  },
   logo: (
     <>
       <img src="/images/logo.png" alt="logo" style={{ height: 35 }} />
@@ -77,10 +80,8 @@ export default {
   navigation: true,
   editLink: { text: 'Edit this page on GitHub' },
   footer: { text: <>{new Date().getFullYear()} © Authorizer.dev.</> },
-  unstable_faviconGlyph: '👋',
   chat: { link: 'https://discord.gg/UdSTnTccWB' },
   sidebar: {
-    defaultMenuCollapsed: true,
-    subtitle: ({ title }) => <>{title}</>,
+    titleComponent: ({ title }) => <>{title}</>,
   },
 }
