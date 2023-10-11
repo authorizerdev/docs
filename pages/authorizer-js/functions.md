@@ -96,8 +96,8 @@ If session exists following keys are returned.
 
 ```js
 const res = await authRef.getToken({
-  response_type: 'code',
-  response_mode: 'query',
+  grant_type: 'refresh_token',
+  refresh_token: 'your refresh_token from login (should store in memmory such as store, variables)',
 })
 ```
 
@@ -122,6 +122,7 @@ It accepts JSON object as a parameter with following keys
 | `birthdate`        | birthdate of user                                                        | false    |
 | `phone_number`     | phone number of user                                                     | false    |
 | `redirect_uri`     | URL where user should be redirected after login                          | false    |
+| `scope`            | List of openID scopes. If not present default scopes ['openid', 'email', 'profile', 'offline_access'] is used | false    |
 
 Following is the response for `signup` function
 
@@ -143,6 +144,7 @@ const res = await authRef.signup({
   email: 'foo@bar.com',
   password: 'test',
   confirm_password: 'test',
+  scope: ['offline_access'], // for refresh token
 })
 ```
 
