@@ -17,6 +17,71 @@ Deploy production ready Authorizer instance using one click deployment options a
 
 For more information check [docs](https://docs.authorizer.dev/getting-started/)
 
+## Deploy Authorizer Using Source Code
+
+This guide helps you practice using Authorizer to evaluate it before you use it in a production environment. It includes instructions for installing the Authorizer server in local or standalone mode.
+
+#### Install using source code
+
+#### Prerequisites
+
+- OS: Linux or macOS or windows
+- Go: [Golang](https://golang.org/dl/) >= v1.15
+
+#### Project Setup
+
+1. Fork the [authorizer](https://github.com/authorizerdev/authorizer) repository (**Skip this step if you have access to repo**)
+2. Clone repo: `git clone https://github.com/authorizerdev/authorizer.git` or use the forked url from step 1
+3. Change directory to authorizer: `cd authorizer`
+4. Create Env file `cp .env.sample .env`. Check all the supported env [here](https://docs.authorizer.dev/core/env/)
+5. Build Dashboard `make build-dashboard`
+6. Build App `make build-app`
+7. Build Server `make clean && make`
+   > Note: if you don't have [`make`](https://www.ibm.com/docs/en/aix/7.2?topic=concepts-make-command), you can `cd` into `server` dir and build using the `go build` command. In that case you will have to build `dashboard` & `app` manually using `npm run build` on both dirs.
+8. Run binary `./build/server`
+
+## Deploy Authorizer using binaries
+
+Deploy / Try Authorizer using binaries. With each [Authorizer Release](https://github.com/authorizerdev/authorizer/releases)
+binaries are baked with required deployment files and bundled. You can download a specific version of it for the following operating systems:
+
+- Mac OSX
+- Linux
+
+#### Download and unzip bundle
+
+- Download the Bundle for the specific OS from the [release page](https://github.com/authorizerdev/authorizer/releases)
+
+> Note: For windows, we recommend running using docker image to run authorizer.
+
+- Unzip using following command
+
+  - Mac / Linux
+
+  ```sh
+  tar -zxf AUTHORIZER_VERSION -c authorizer
+  ```
+
+- Change directory to `authorizer`
+
+  ```sh
+  cd authorizer
+  ```
+
+#### Step 3: Start Authorizer
+
+- Run following command to start authorizer
+
+  - For Mac / Linux users
+
+  ```sh
+  ./build/server
+  ```
+
+> Note: For mac users, you might have to give binary the permission to execute. Here is the command you can use to grant permission `xattr -d com.apple.quarantine build/server`
+
+
+
 ## Setup Instance
 
 - Open authorizer instance endpoint in browser
