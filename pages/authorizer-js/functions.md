@@ -21,9 +21,9 @@
 - [logout](#--logout)
 - [validateJWTToken](#--validatejwttoken)
 - [validateSession](#--validatesession)
-- [verifyOtp](#--verifyOtp)
-- [resendOtp](#--resendOtp)
-- [deactivateAccount](#--deactivateAccount)
+- [verifyOtp](#--verifyotp)
+- [resendOtp](#--resendotp)
+- [deactivateAccount](#--deactivateaccount)
 
 These functions can be invoked using the `Authorizer` instance:
 
