@@ -37,6 +37,7 @@ Table of Contents
     - [`revoke`](#revoke)
     - [`verify_otp`](#verify_otp)
     - [`resend_otp`](#resend_otp)
+    - [`deactivate_account`](#deactivate_account)
     - [`_admin_signup`](#_admin_signup)
     - [`_admin_login`](#_admin_login)
     - [`_admin_logout`](#_admin_logout)
@@ -143,7 +144,7 @@ query {
 
 Query to get the `profile` information of a user. It returns `User` type with the following keys.
 
-> Note: this is authorized route, so Authorization Header with bearer access token must be present.
+> Note: this is authorized route, so Authorization Header with bearer access token must be present or HTTPs cookie should be present.
 
 | Key                     | Description                                                  |
 | ----------------------- | ------------------------------------------------------------ |
@@ -1016,6 +1017,30 @@ mutation {
   }
 }
 ```
+
+### `deactivate_account`
+
+Mutation to deactiavte the user account `deactivate_account`. It returns `Response` type with the following keys.
+
+> Note: this is authorized route, so Authorization Header with bearer access token must be present or HTTPs cookie should be present.
+
+**Response**
+
+| Key       | Description                         |
+| --------- | ----------------------------------- |
+| `message` | Success / Error message from server |
+
+**Sample Mutation**
+
+```graphql
+mutation {
+  deactivate_account {
+    message
+  }
+}
+```
+
+---
 
 ### `_admin_signup`
 

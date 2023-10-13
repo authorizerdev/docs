@@ -23,6 +23,7 @@
 - [validateSession](#--validatesession)
 - [verifyOtp](#--verifyOtp)
 - [resendOtp](#--resendOtp)
+- [deactivateAccount](#--deactivateAccount)
 
 These functions can be invoked using the `Authorizer` instance:
 
@@ -95,9 +96,17 @@ If session exists following keys are returned.
 **Sample Usage**
 
 ```js
+// for web apps
+const res = await authRef.getToken({
+  response_type: 'code',
+  response_mode: 'query',
+})
+
+// for mobile applications / desktop apps
 const res = await authRef.getToken({
   grant_type: 'refresh_token',
-  refresh_token: 'your refresh_token from login (should store in memmory such as store, variables)',
+  refresh_token:
+    'your refresh_token from login (should store in memmory such as store, variables)',
 })
 ```
 
@@ -107,21 +116,21 @@ Function to sign-up user using email and password.
 
 It accepts JSON object as a parameter with following keys
 
-| Key                | Description                                                              | Required |
-| ------------------ | ------------------------------------------------------------------------ | -------- |
-| `email`            | Email address of user                                                    | true     |
-| `password`         | Password that user wants to set                                          | true     |
-| `confirm_password` | Value same as password to make sure that its user and not robot          | true     |
-| `given_name`       | First name of the user                                                   | false    |
-| `family_name`      | Last name of the user                                                    | false    |
-| `picture`          | Profile picture URL                                                      | false    |
-| `roles`            | Array of string with valid roles. Defaults to `[user]` if not configured | false    |
-| `middle_name`      | middle name of user                                                      | false    |
-| `nickname`         | nick name of user                                                        | false    |
-| `gender`           | gender of user                                                           | false    |
-| `birthdate`        | birthdate of user                                                        | false    |
-| `phone_number`     | phone number of user                                                     | false    |
-| `redirect_uri`     | URL where user should be redirected after login                          | false    |
+| Key                | Description                                                                                                   | Required |
+| ------------------ | ------------------------------------------------------------------------------------------------------------- | -------- |
+| `email`            | Email address of user                                                                                         | true     |
+| `password`         | Password that user wants to set                                                                               | true     |
+| `confirm_password` | Value same as password to make sure that its user and not robot                                               | true     |
+| `given_name`       | First name of the user                                                                                        | false    |
+| `family_name`      | Last name of the user                                                                                         | false    |
+| `picture`          | Profile picture URL                                                                                           | false    |
+| `roles`            | Array of string with valid roles. Defaults to `[user]` if not configured                                      | false    |
+| `middle_name`      | middle name of user                                                                                           | false    |
+| `nickname`         | nick name of user                                                                                             | false    |
+| `gender`           | gender of user                                                                                                | false    |
+| `birthdate`        | birthdate of user                                                                                             | false    |
+| `phone_number`     | phone number of user                                                                                          | false    |
+| `redirect_uri`     | URL where user should be redirected after login                                                               | false    |
 | `scope`            | List of openID scopes. If not present default scopes ['openid', 'email', 'profile', 'offline_access'] is used | false    |
 
 Following is the response for `signup` function
@@ -254,7 +263,7 @@ const user = await authRef.getProfile({
 
 ## - `updateProfile`
 
-Function to update profile of user.
+Function to update profile of user. This function makes an authorized request, hence if it is used from the browser the HTTP cookie is sent if user has logged in else you need to pass headers object.
 
 It accepts 2 JSON object as its parameters.
 
@@ -293,7 +302,7 @@ const res = await authRef.updateProfile(
   },
   {
     Authorization: `Bearer some_token`,
-  }
+  },
 )
 ```
 
@@ -452,7 +461,7 @@ const res = await authRef.getSession(
   {
     Authorization: `Bearer some_token`,
   },
-  'admin'
+  'admin',
 )
 ```
 
@@ -622,5 +631,33 @@ Following is the response for `resendOtp` function
 ```js
 const res = await authRef.resendOtp({
   email: 'foo@bar.com',
+})
+```
+
+## - `deactivateAccount`
+
+Function to deactivate user account. This function makes an authorized request, hence if it is used from the browser the HTTP cookie is sent if user has logged in else you need to pass headers object.
+
+It accepts 1 JSON object as its parameters.
+
+1. headers - To pass Authorization header
+
+Here is sample of `headers` object
+
+| Key             | Description                                                                            | Required |
+| --------------- | -------------------------------------------------------------------------------------- | -------- |
+| `Authorization` | Authorization header passed to the server. It needs `Bearer access_token` as its value | true     |
+
+**Response**
+
+| Key       | Description                         |
+| --------- | ----------------------------------- |
+| `message` | Success / Error message from server |
+
+**Sample Usage**
+
+```js
+const res = await authRef.deactivateAccount({
+  Authorization: `Bearer some_token`,
 })
 ```
