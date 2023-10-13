@@ -11,18 +11,18 @@
   "author": "Shu Ding",
   "license": "MIT",
   "dependencies": {
-    "markdown-to-jsx": "6.11.4",
-    "next": "^12.3.3",
-    "nextra": "2.0.0-beta.25",
-    "nextra-theme-docs": "2.0.0-beta.25",
-    "react": "^17.0.1",
-    "react-dom": "^17.0.1"
+    "markdown-to-jsx": "7.3.2",
+    "next": "^13.5.4",
+    "nextra": "^2.13.1",
+    "nextra-theme-docs": "^2.13.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {
-    "autoprefixer": "^10.4.13",
-    "postcss": "^8.4.19",
-    "prettier": "^2.0.5",
-    "tailwindcss": "3.1.6"
+    "autoprefixer": "^10.4.16",
+    "postcss": "^8.4.31",
+    "prettier": "^3.0.3",
+    "tailwindcss": "^3.3.3"
   },
   "prettier": {
     "semi": false,
