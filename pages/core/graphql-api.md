@@ -129,7 +129,7 @@ It returns `AuthResponse` type with the following keys.
 query {
   session(params: { roles: ["admin"] }) {
     message
-    accessToken
+    access_token
     expires_in
     user {
       id
@@ -685,7 +685,7 @@ mutation {
       picture
       roles
     }
-    accessToken
+    access_token
     expires_in
     message
   }
@@ -823,7 +823,7 @@ mutation {
       family_name
       picture
     }
-    accessToken
+    access_token
     expires_in
     message
   }
@@ -980,7 +980,7 @@ mutation {
       picture
       roles
     }
-    accessToken
+    access_token
     expires_in
     message
   }
