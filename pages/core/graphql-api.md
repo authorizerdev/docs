@@ -146,25 +146,28 @@ Query to get the `profile` information of a user. It returns `User` type with th
 
 > Note: this is authorized route, so Authorization Header with bearer access token must be present or HTTPs cookie should be present.
 
-| Key                     | Description                                                  |
-| ----------------------- | ------------------------------------------------------------ |
-| `id`                    | user unique identifier                                       |
-| `email`                 | email address of user                                        |
-| `given_name`            | first name of user                                           |
-| `family_name`           | last name of user                                            |
-| `signup_methods`        | methods using which user have signed up, eg: `google,github` |
-| `email_verified`        | timestamp at which the email address was verified            |
-| `picture`               | profile picture URL                                          |
-| `roles`                 | List of roles assigned to user                               |
-| `middle_name`           | middle name of user                                          |
-| `nickname`              | nick name of user                                            |
-| `preferred_username`    | preferred username (defaults to email currently)             |
-| `gender`                | gender of user                                               |
-| `birthdate`             | birthdate of user                                            |
-| `phone_number`          | phone number of user                                         |
-| `phone_number_verified` | if phone number is verified                                  |
-| `created_at`            | timestamp at which the user entry was created                |
-| `updated_at`            | timestamp at which the user entry was updated                |
+| Key                            | Description                                                  |
+| ------------------------------ | ------------------------------------------------------------ |
+| `id`                           | user unique identifier                                       |
+| `email`                        | email address of user                                        |
+| `given_name`                   | first name of user                                           |
+| `family_name`                  | last name of user                                            |
+| `signup_methods`               | methods using which user have signed up, eg: `google,github` |
+| `email_verified`               | timestamp at which the email address was verified            |
+| `picture`                      | profile picture URL                                          |
+| `roles`                        | List of roles assigned to user                               |
+| `middle_name`                  | middle name of user                                          |
+| `nickname`                     | nick name of user                                            |
+| `preferred_username`           | preferred username (defaults to email currently)             |
+| `gender`                       | gender of user                                               |
+| `birthdate`                    | birthdate of user                                            |
+| `phone_number`                 | phone number of user                                         |
+| `phone_number_verified`        | if phone number is verified                                  |
+| `created_at`                   | timestamp at which the user entry was created                |
+| `updated_at`                   | timestamp at which the user entry was updated                |
+| `app_data`                     | extra information with respect to your application           |
+| `revoked_timestamp`            | timestamp at which the user access was revoked               |
+| `is_multi_factor_auth_enabled` | identifies if multifactor auth is enabled for user           |
 
 **Sample Query**
 
@@ -599,13 +602,13 @@ _email_templates(params: {limit: 10, page: 1}) {
 
 ### `signup`
 
-A mutation to signup users using email and password. It accepts `params` of type `SignUpInput` with following keys as parameter
+A mutation to signup users using email and password. It accepts `params` of type `SignUpInput` with following keys as parameter. Either `email` or `phone_number` is required to singup
 
 **Request Params**
 
 | Key                | Description                                                                                 | Required |
 | ------------------ | ------------------------------------------------------------------------------------------- | -------- |
-| `email`            | Email address of user                                                                       | true     |
+| `email`            | Email address of user                                                                       | false    |
 | `password`         | Password that user wants to set                                                             | true     |
 | `confirm_password` | Value same as password to make sure that its user and not robot                             | true     |
 | `given_name`       | First name of the user                                                                      | false    |
@@ -647,16 +650,18 @@ mutation {
 
 ### `login`
 
-A mutation to login users using email and password. It accepts `params` of type `LoginInput` with following keys as parameter
+A mutation to login users using email and password. It accepts `params` of type `LoginInput` with following keys as parameter.
+Either `email` or `phone_number` is required to login
 
 **Request Params**
 
-| Key        | Description                                                                                 | Required |
-| ---------- | ------------------------------------------------------------------------------------------- | -------- |
-| `email`    | Email address of user                                                                       | true     |
-| `password` | Password that user wants to set                                                             | true     |
-| `roles`    | Roles to login with                                                                         | false    |
-| `scope`    | List of openID scopes. If not present default scopes ['openid', 'email', 'profile'] is used | false    |
+| Key            | Description                                                                                 | Required |
+| -------------- | ------------------------------------------------------------------------------------------- | -------- |
+| `email`        | Email address of user                                                                       | false    |
+| `phone_number` | Phone number of user                                                                        | false    |
+| `password`     | Password that user wants to set                                                             | true     |
+| `roles`        | Roles to login with                                                                         | false    |
+| `scope`        | List of openID scopes. If not present default scopes ['openid', 'email', 'profile'] is used | false    |
 
 This mutation returns `AuthResponse` type with following keys
 
