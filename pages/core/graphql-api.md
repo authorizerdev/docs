@@ -38,6 +38,7 @@ Table of Contents
     - [`verify_otp`](#verify_otp)
     - [`resend_otp`](#resend_otp)
     - [`verify_totp`](#verify_totp)
+    - [`deactivate_account`](#deactivate_account)
     - [`_admin_signup`](#_admin_signup)
     - [`_admin_login`](#_admin_login)
     - [`_admin_logout`](#_admin_logout)
@@ -129,7 +130,7 @@ It returns `AuthResponse` type with the following keys.
 query {
   session(params: { roles: ["admin"] }) {
     message
-    accessToken
+    access_token
     expires_in
     user {
       id
@@ -144,27 +145,30 @@ query {
 
 Query to get the `profile` information of a user. It returns `User` type with the following keys.
 
-> Note: this is authorized route, so Authorization Header with bearer access token must be present.
+> Note: this is authorized route, so Authorization Header with bearer access token must be present or HTTPs cookie should be present.
 
-| Key                     | Description                                                  |
-| ----------------------- | ------------------------------------------------------------ |
-| `id`                    | user unique identifier                                       |
-| `email`                 | email address of user                                        |
-| `given_name`            | first name of user                                           |
-| `family_name`           | last name of user                                            |
-| `signup_methods`        | methods using which user have signed up, eg: `google,github` |
-| `email_verified`        | timestamp at which the email address was verified            |
-| `picture`               | profile picture URL                                          |
-| `roles`                 | List of roles assigned to user                               |
-| `middle_name`           | middle name of user                                          |
-| `nickname`              | nick name of user                                            |
-| `preferred_username`    | preferred username (defaults to email currently)             |
-| `gender`                | gender of user                                               |
-| `birthdate`             | birthdate of user                                            |
-| `phone_number`          | phone number of user                                         |
-| `phone_number_verified` | if phone number is verified                                  |
-| `created_at`            | timestamp at which the user entry was created                |
-| `updated_at`            | timestamp at which the user entry was updated                |
+| Key                            | Description                                                  |
+| ------------------------------ | ------------------------------------------------------------ |
+| `id`                           | user unique identifier                                       |
+| `email`                        | email address of user                                        |
+| `given_name`                   | first name of user                                           |
+| `family_name`                  | last name of user                                            |
+| `signup_methods`               | methods using which user have signed up, eg: `google,github` |
+| `email_verified`               | timestamp at which the email address was verified            |
+| `picture`                      | profile picture URL                                          |
+| `roles`                        | List of roles assigned to user                               |
+| `middle_name`                  | middle name of user                                          |
+| `nickname`                     | nick name of user                                            |
+| `preferred_username`           | preferred username (defaults to email currently)             |
+| `gender`                       | gender of user                                               |
+| `birthdate`                    | birthdate of user                                            |
+| `phone_number`                 | phone number of user                                         |
+| `phone_number_verified`        | if phone number is verified                                  |
+| `created_at`                   | timestamp at which the user entry was created                |
+| `updated_at`                   | timestamp at which the user entry was updated                |
+| `app_data`                     | extra information with respect to your application           |
+| `revoked_timestamp`            | timestamp at which the user access was revoked               |
+| `is_multi_factor_auth_enabled` | identifies if multifactor auth is enabled for user           |
 
 **Sample Query**
 
@@ -599,13 +603,13 @@ _email_templates(params: {limit: 10, page: 1}) {
 
 ### `signup`
 
-A mutation to signup users using email and password. It accepts `params` of type `SignUpInput` with following keys as parameter
+A mutation to signup users using email and password. It accepts `params` of type `SignUpInput` with following keys as parameter. Either `email` or `phone_number` is required to singup
 
 **Request Params**
 
 | Key                | Description                                                                                 | Required |
 | ------------------ | ------------------------------------------------------------------------------------------- | -------- |
-| `email`            | Email address of user                                                                       | true     |
+| `email`            | Email address of user                                                                       | false    |
 | `password`         | Password that user wants to set                                                             | true     |
 | `confirm_password` | Value same as password to make sure that its user and not robot                             | true     |
 | `given_name`       | First name of the user                                                                      | false    |
@@ -647,16 +651,18 @@ mutation {
 
 ### `login`
 
-A mutation to login users using email and password. It accepts `params` of type `LoginInput` with following keys as parameter
+A mutation to login users using email and password. It accepts `params` of type `LoginInput` with following keys as parameter.
+Either `email` or `phone_number` is required to login
 
 **Request Params**
 
-| Key        | Description                                                                                 | Required |
-| ---------- | ------------------------------------------------------------------------------------------- | -------- |
-| `email`    | Email address of user                                                                       | true     |
-| `password` | Password that user wants to set                                                             | true     |
-| `roles`    | Roles to login with                                                                         | false    |
-| `scope`    | List of openID scopes. If not present default scopes ['openid', 'email', 'profile'] is used | false    |
+| Key            | Description                                                                                 | Required |
+| -------------- | ------------------------------------------------------------------------------------------- | -------- |
+| `email`        | Email address of user                                                                       | false    |
+| `phone_number` | Phone number of user                                                                        | false    |
+| `password`     | Password that user wants to set                                                             | true     |
+| `roles`        | Roles to login with                                                                         | false    |
+| `scope`        | List of openID scopes. If not present default scopes ['openid', 'email', 'profile'] is used | false    |
 
 This mutation returns `AuthResponse` type with following keys
 
@@ -672,8 +678,8 @@ This mutation returns `AuthResponse` type with following keys
 | `id_token`                      | JWT token holding the user information                                                                                                       |
 | `refresh_token`                 | When scope includes `offline_access`, Long living token is returned which can be used to get new access tokens. This is rotated with each request |
 | `user`                          | User object with its profile keys mentioned [above](#--profile).                                                                             |
-| `totp_base64_url`                 | If totp enabled, will get base64 url for QR code, which can be scanned on google authenticator
-|`totp_token`                      | Will get this token for totp which need to passed in verify_totp mutation
+| `totp_base64_url`                 | If totp enabled, will get base64 url for QR code, which can be scanned on google authenticator|
+|`totp_token`                      | Will get this token for totp which need to passed in verify_totp mutation|
 
 **Sample Mutation**
 
@@ -687,7 +693,7 @@ mutation {
       picture
       roles
     }
-    accessToken
+    access_token
     expires_in
     message
   }
@@ -825,7 +831,7 @@ mutation {
       family_name
       picture
     }
-    accessToken
+    access_token
     expires_in
     message
   }
@@ -982,7 +988,7 @@ mutation {
       picture
       roles
     }
-    accessToken
+    access_token
     expires_in
     message
   }
@@ -1056,12 +1062,36 @@ mutation {
       picture
       roles
     }
-    accessToken
+    access_token
     expires_in
     message
   }
 }
 ```
+
+### `deactivate_account`
+
+Mutation to deactiavte the user account `deactivate_account`. It returns `Response` type with the following keys.
+
+> Note: this is authorized route, so Authorization Header with bearer access token must be present or HTTPs cookie should be present.
+
+**Response**
+
+| Key       | Description                         |
+| --------- | ----------------------------------- |
+| `message` | Success / Error message from server |
+
+**Sample Mutation**
+
+```graphql
+mutation {
+  deactivate_account {
+    message
+  }
+}
+```
+
+---
 
 ### `_admin_signup`
 
