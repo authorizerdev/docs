@@ -654,6 +654,9 @@ mutation {
 A mutation to login users using email and password. It accepts `params` of type `LoginInput` with following keys as parameter.
 Either `email` or `phone_number` is required to login
 
+> Note: To enable MFA, go to dashboard and enable MFA for user. By default, TOTP MFA will be enabled. If SMTP deatils are provided then Mail OTP can also be enabled. One can only enable one MFA at a time.
+> For TOTP verification use `verify_totp` mutation, and for verifying mail OTP use `verify_otp` mutation.  
+
 **Request Params**
 
 | Key            | Description                                                                                 | Required |
@@ -668,18 +671,18 @@ This mutation returns `AuthResponse` type with following keys
 
 **Response**
 
-| Key                             | Description                                                                                                                                  |
-| ------------------------------- |----------------------------------------------------------------------------------------------------------------------------------------------|
-| `message`                       | Success / Error message from server                                                                                                          |
-| `should_show_email_otp_screen`  | Boolean value for frontend application to show otp input for email based login screen                                                        |
-| `should_show_mobile_otp_screen` | Boolean value for frontend application to show otp input for mobile based login screen                                                       |
-| `access_token`                  | accessToken that frontend application can use for further authorized requests                                                                |
-| `expires_in`                    | timestamp when the current token is going to expire, so that frontend can request for new access token                                       |
-| `id_token`                      | JWT token holding the user information                                                                                                       |
+| Key                             | Description                                                                                                                                       |
+| ------------------------------- |---------------------------------------------------------------------------------------------------------------------------------------------------|
+| `message`                       | Success / Error message from server                                                                                                               |
+| `should_show_email_otp_screen`  | Boolean value for frontend application to show otp input for email based login screen                                                             |
+| `should_show_mobile_otp_screen` | Boolean value for frontend application to show otp input for mobile based login screen                                                            |
+| `access_token`                  | accessToken that frontend application can use for further authorized requests                                                                     |
+| `expires_in`                    | timestamp when the current token is going to expire, so that frontend can request for new access token                                            |
+| `id_token`                      | JWT token holding the user information                                                                                                            |
 | `refresh_token`                 | When scope includes `offline_access`, Long living token is returned which can be used to get new access tokens. This is rotated with each request |
-| `user`                          | User object with its profile keys mentioned [above](#--profile).                                                                             |
-| `totp_base64_url`                 | If totp enabled, will get base64 url for QR code, which can be scanned on google authenticator|
-|`totp_token`                      | Will get this token for totp which need to passed in verify_totp mutation|
+| `user`                          | User object with its profile keys mentioned [above](#--profile).                                                                                  |
+| `totp_base64_url`                 | If totp enabled, will get base64 url for QR code, which can be scanned on google authenticator                                                    |
+|`totp_token`                      | this token is for totp which need to passed in verify_totp mutation along with totp from your authenticator                                       |
 
 **Sample Mutation**
 
@@ -1042,13 +1045,14 @@ This mutation returns `AuthResponse` type with following keys
 **Response**
 
 | Key                             | Description                                                                                                                                       |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ------------------------------- |---------------------------------------------------------------------------------------------------------------------------------------------------|
 | `message`                       | Success / Error message from server                                                                                                               |
 | `access_token`                  | accessToken that frontend application can use for further authorized requests                                                                     |
 | `expires_in`                    | timestamp when the current token is going to expire, so that frontend can request for new access token                                            |
 | `id_token`                      | JWT token holding the user information                                                                                                            |
 | `refresh_token`                 | When scope includes `offline_access`, Long living token is returned which can be used to get new access tokens. This is rotated with each request |
 | `user`                          | User object with its profile keys mentioned [above](#profile).                                                                                    |
+| `recovery_code`                 | One will get a recovery code when signed in first time using TOTP.                                                                                |
 
 **Sample Mutation**
 
