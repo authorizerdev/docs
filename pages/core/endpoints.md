@@ -51,6 +51,7 @@ This end point has following query parameters
 | `state`          | Unique state identifier that is used to make sure request is not interrupted                                                                                                                                     | true     |
 | `scope`          | Space separated list of openID scopes. If not present default scopes `openid email profile` is used                                                                                                              | false    |
 | `response_mode`  | Response is required in which format. Supports 2 forms `query` (returns redirect url with response in query string) and `web_message` (returns html page with data embedded in JS). Default its value is `query` | false    |
+| `screen_hint`  | Specifies a hint to the authorization server about the desired user interaction screen. When set to `signup` the authorization server will redirect the user to the signup page of the authentication provider | false    |
 
 Response is typically a web page with code / token details or redirection to expected url with token as query params
 
