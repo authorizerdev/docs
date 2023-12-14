@@ -96,6 +96,7 @@ binaries are baked with required deployment files and bundled. You can download 
 - For having verified users, you will need an SMTP server with an email address and password using which system can send emails. The system will send a verification link to an email address. Once an email is verified then, only able to access it.
   > Note: One can always disable the email verification to allow open sign up, which is not recommended for production as anyone can use anyone's email address 😅
 - For persisting user sessions, you will need Redis URL (not in case of railway app). If you do not configure a Redis server, sessions will be persisted until the instance is up or not restarted. For better response time on authorization requests/middleware, we recommend deploying Redis on the same infra/network as your authorizer server.
+- The authorizer dashboard only works when accessing from a domain with HTTPS, because else https cookies wont be set and it will not work.
 
 ## Integrating into your website
 
