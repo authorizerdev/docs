@@ -7,6 +7,12 @@ It supports:
 - [CommonJS(cjs)](https://flaviocopes.com/commonjs/) build for NodeJS version that don't support ES Modules
 - [ESM (ES Modules)](https://hacks.mozilla.org/2018/03/es-modules-a-cartoon-deep-dive/) build for modern javascript standard, i.e. ES Modules
 
+# Migration Guide from 1.x -> 2.x
+
+`2.x` version of `@authorizerdev/authorizer-js` has a uniform response structure that will help your applications to get right error codes and success response. Methods here have `{data, errors}` as response objects for methods of this library.
+
+For `1.x` version of this library you can get only data in response and error would be thrown so you had to handle that in catch.
+
 Here is a quick guide on getting started with [`@authorizerdev/authorizer-js`](/authorizer-js/getting-started) package.
 
 ## Step 1: Get Authorizer Instance
@@ -76,11 +82,11 @@ const authRef = new Authorizer({
   })
 
   async function onLoad() {
-    const res = await authorizerRef.authorize({
+    const {data, errors} = await authorizerRef.authorize({
       response_type: 'code',
       use_refresh_token: false,
     })
-    if (res && res.access_token) {
+    if (data && data.access_token) {
       // you can use user information here, eg:
       const user = await authorizerRef.getProfile({
         Authorization: `Bearer ${res.access_token}`,

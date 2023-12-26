@@ -2,6 +2,14 @@
 
 [`@authorizerdev/authorizer-js`](https://www.npmjs.com/package/@authorizerdev/authorizer-js) SDK comes with bunch of utility functions, that you can use to perform various operations without worrying about the API details.
 
+# Migration Guide from 1.x -> 2.x
+
+`2.x` version of `@authorizerdev/authorizer-js` has a uniform response structure that will help your applications to get right error codes and success response. Methods here have `{data, errors}` as response objects for methods of this library.
+
+For `1.x` version of this library you can get only data in response and error would be thrown so you had to handle that in catch.
+
+---
+
 **Table of Contents**
 
 - [authorize](#--authorize)
@@ -51,7 +59,7 @@ It accepts JSON object as a parameter with following keys
 | `response_mode`     | Response is required in which format. Supports 2 forms `query` (returns redirect url with response in query string) and `web_message` (returns html page with data embedded in JS). Default its value is `query` | false    |
 | `use_refresh_token` | Whether to include refresh token in response or not                                                                                                                                                              | false    |
 
-If session exists following keys are returned.
+If session exists following keys are returned in `data` object.
 
 **Response**
 | Key | Description |
@@ -64,7 +72,7 @@ If session exists following keys are returned.
 **Sample Usage**
 
 ```js
-const res = await authRef.authorize({
+const { data, errors } = await authRef.authorize({
   response_type: 'code',
   response_mode: 'query',
 })
@@ -83,7 +91,7 @@ It accepts JSON object as a parameter with following keys
 | `code`          | Code returned form authorize request is sent to make sure it is follow up of same request                                    | false    |
 | `refresh_token` | Refresh token used to get the new access token. Required in case of `refresh_token` grant type                               | false    |
 
-If session exists following keys are returned.
+If session exists following keys are returned in the `data` object.
 
 **Response**
 | Key | Description |
@@ -97,13 +105,13 @@ If session exists following keys are returned.
 
 ```js
 // for web apps
-const res = await authRef.getToken({
+const { data, errors } = await authRef.getToken({
   response_type: 'code',
   response_mode: 'query',
 })
 
 // for mobile applications / desktop apps
-const res = await authRef.getToken({
+const { data, errors } = await authRef.getToken({
   grant_type: 'refresh_token',
   refresh_token:
     'your refresh_token from login (should store in memmory such as store, variables)',
@@ -114,7 +122,7 @@ const res = await authRef.getToken({
 
 Function to sign-up user using email and password.
 
-It accepts JSON object as a parameter with following keys
+It accepts JSON object as a parameter with the following keys
 
 | Key                | Description                                                                                                   | Required |
 | ------------------ | ------------------------------------------------------------------------------------------------------------- | -------- |
@@ -133,7 +141,7 @@ It accepts JSON object as a parameter with following keys
 | `redirect_uri`     | URL where user should be redirected after login                                                               | false    |
 | `scope`            | List of openID scopes. If not present default scopes ['openid', 'email', 'profile', 'offline_access'] is used | false    |
 
-Following is the response for `signup` function
+Following is the response for the `signup` in the `data` object
 
 **Response**
 
@@ -145,11 +153,17 @@ Following is the response for `signup` function
 | `id_token`      | JWT token holding the user information                                                                                                                              |
 | `refresh_token` | When scope includes `offline_access`, Long living token is returned which can be used to get new access tokens. This is rotated with each request                   |
 | `user`          | User object with its profile keys mentioned [above](#--getprofile). This is only returned if `DISABLE_EMAIL_NOTIFICATION` is set to `true` in environment variables |
+| `should_show_email_otp_screen` | Is set to true if email based multi factor authentication is enabled |
+| `should_show_mobile_otp_screen` | Is set to true if mobiled based multi factor authentication is enabled |
+| `should_show_totp_screen` | Is set to true if totp based multi factor authentication is enabled |
+| `authenticator_scanner_image` | If totp registration is pending it sends base64 encoded image string that can be rendered by totp app scanners like Google Authentication |
+| `authenticator_secret` |  If totp registration is pending, then this secret can be used for registration instead of image on authenticator apps |
+| `authenticator_recovery_codes` | If totp registration is pending, then recovery codes are sent using which totp can be accessed again |
 
 **Sample Usage**
 
 ```js
-const res = await authRef.signup({
+const { data, errors } = await authRef.signup({
   email: 'foo@bar.com',
   password: 'test',
   confirm_password: 'test',
@@ -161,7 +175,7 @@ const res = await authRef.signup({
 
 Function to login user using email and password.
 
-It accepts JSON object as a parameter with following keys
+It accepts JSON object as a parameter with the following keys
 
 | Key        | Description                                                                                                            | Required |
 | ---------- | ---------------------------------------------------------------------------------------------------------------------- | -------- |
@@ -170,7 +184,7 @@ It accepts JSON object as a parameter with following keys
 | `roles`    | Roles of user that he/she wants to login with. It accepts array of string. Defaults to `[user]` role if not configured | false    |
 | `scope`    | List of openID scopes. If not present default scopes ['openid', 'email', 'profile'] is used                            | false    |
 
-Following is the response for `login` function
+Following is the response for `login` in the `data` object
 
 **Response**
 | Key | Description |
@@ -181,11 +195,18 @@ Following is the response for `login` function
 | `id_token` | JWT token holding the user information |
 | `refresh_token` | When scope includes `offline_access`, Long living token is returned which can be used to get new access tokens. This is rotated with each request |
 | `user` | User object with all the basic profile information |
+| `should_show_email_otp_screen` | Is set to true if email based multi factor authentication is enabled |
+| `should_show_mobile_otp_screen` | Is set to true if mobiled based multi factor authentication is enabled |
+| `should_show_totp_screen` | Is set to true if totp based multi factor authentication is enabled |
+| `authenticator_scanner_image` | If totp registration is pending it sends base64 encoded image string that can be rendered by totp app scanners like Google Authentication |
+| `authenticator_secret` |  If totp registration is pending, then this secret can be used for registration instead of image on authenticator apps |
+| `authenticator_recovery_codes` | If totp registration is pending, then recovery codes are sent using which totp can be accessed again |
+
 
 **Sample Usage**
 
 ```js
-const res = await authRef.login({
+const { data, errors } = await authRef.login({
   email: 'foo@bar.com',
   password: 'test',
 })
@@ -201,7 +222,7 @@ It accepts JSON object as a parameter with following keys
 | ------- | ----------------------------- | -------- |
 | `token` | Token sent for verifying user | true     |
 
-This mutation returns `AuthResponse` type with following keys
+This mutation returns `AuthResponse` type with the following keys in the `data` object
 
 **Response**
 
@@ -215,11 +236,17 @@ This mutation returns `AuthResponse` type with following keys
 | `id_token`                      | JWT token holding the user information                                                                                                            |
 | `refresh_token`                 | When scope includes `offline_access`, Long living token is returned which can be used to get new access tokens. This is rotated with each request |
 | `user`                          | User object with its profile keys mentioned [above](#--getprofile).                                                                               |
+| `should_show_email_otp_screen` | Is set to true if email based multi factor authentication is enabled |
+| `should_show_mobile_otp_screen` | Is set to true if mobiled based multi factor authentication is enabled |
+| `should_show_totp_screen` | Is set to true if totp based multi factor authentication is enabled |
+| `authenticator_scanner_image` | If totp registration is pending it sends base64 encoded image string that can be rendered by totp app scanners like Google Authentication |
+| `authenticator_secret` |  If totp registration is pending, then this secret can be used for registration instead of image on authenticator apps |
+| `authenticator_recovery_codes` | If totp registration is pending, then recovery codes are sent using which totp can be accessed again |
 
 **Sample Usage**
 
 ```js
-const res = await authRef.verifyEmail({
+const { data, errors } = await authRef.verifyEmail({
   token: `some_token`,
 })
 ```
@@ -233,6 +260,8 @@ It accepts the optional JSON object as parameter, you can pass the HTTP Headers 
 | Key             | Description                                                                            | Required |
 | --------------- | -------------------------------------------------------------------------------------- | -------- |
 | `Authorization` | Authorization header passed to the server. It needs `Bearer access_token` as its value | true     |
+
+It returns the following keys in response `data` object
 
 **Response**
 
@@ -253,10 +282,10 @@ It accepts the optional JSON object as parameter, you can pass the HTTP Headers 
 
 ```js
 // from browser if HTTP cookie is present
-const user = await authRef.getProfile()
+const { data, errors } = await authRef.getProfile()
 
 // from NodeJS / if HTTP cookie is not used
-const user = await authRef.getProfile({
+const { data, errors } = await authRef.getProfile({
   Authorization: `Bearer ${token}`,
 })
 ```
@@ -287,6 +316,8 @@ Here is sample of `headers` object
 | --------------- | -------------------------------------------------------------------------------------- | -------- |
 | `Authorization` | Authorization header passed to the server. It needs `Bearer access_token` as its value | true     |
 
+It returns the following keys in response `data` object
+
 **Response**
 
 | Key       | Description                         |
@@ -296,7 +327,7 @@ Here is sample of `headers` object
 **Sample Usage**
 
 ```js
-const res = await authRef.updateProfile(
+const { data, errors } = await authRef.updateProfile(
   {
     given_name: `bob`,
   },
@@ -315,7 +346,7 @@ Step 2: Reset password.
 
 This function is Step 1 process.
 
-It accepts JSON object as parameter with following keys
+It accepts JSON object as parameter with the following keys
 
 > Note: You will need a SMTP server with an email address and password configured as [authorizer environment](/core/env/) using which system can send emails.
 
@@ -323,16 +354,19 @@ It accepts JSON object as parameter with following keys
 | ------- | -------------------------------------------- | -------- |
 | `email` | Email for which password needs to be changed | true     |
 
+It returns the following keys in response `data` object
+
 **Response**
 
 | Key       | Description                         |
 | --------- | ----------------------------------- |
 | `message` | Success / Error message from server |
+| `should_show_mobile_otp_screen` | Show OTP screen if mobile login is used |
 
 **Sample Usage**
 
 ```js
-const res = await authRef.forgotPassword({
+const { data, errors } = await authRef.forgotPassword({
   email: 'foo@bar.com',
 })
 ```
@@ -347,6 +381,8 @@ It accepts JSON object as a parameter with following keys
 | ------- | --------------------------------- | -------- |
 | `token` | Token sent to the user in step 1. | true     |
 
+It returns the following keys in response `data` object
+
 **Response**
 
 | Key       | Description                         |
@@ -356,7 +392,7 @@ It accepts JSON object as a parameter with following keys
 **Sample Usage**
 
 ```js
-const res = await authRef.resetPassword({
+const { data, errors } = await authRef.resetPassword({
   token: `some_token`,
 })
 ```
@@ -391,6 +427,8 @@ Function to perform password less login.
 | `scope`        | List of openID scopes. If not present default scopes ['openid', 'email', 'profile'] is used | false    |
 | `redirect_uri` | URL where user should be redirected after login                                             | false    |
 
+It returns the following keys in response `data` object
+
 **Response**
 
 | Key       | Description                         |
@@ -400,7 +438,7 @@ Function to perform password less login.
 **Sample Usage**
 
 ```js
-const res = await authRef.magicLinkLogin({
+const { data, errors } = await authRef.magicLinkLogin({
   email: 'foo@bar.com',
 })
 ```
@@ -408,6 +446,8 @@ const res = await authRef.magicLinkLogin({
 ## - `getMetadata`
 
 Function to get meta information about your authorizer instance. eg, version, configurations, etc
+
+It returns the following keys in response `data` object
 
 **Response**
 
@@ -425,7 +465,7 @@ Function to get meta information about your authorizer instance. eg, version, co
 **Sample Usage**
 
 ```js
-const res await authRef.getMetadata()
+const { data, errors } await authRef.getMetadata()
 ```
 
 ## - `getSession`
@@ -438,6 +478,8 @@ It accepts the optional JSON object as parameter, you can pass the HTTP Headers 
 | --------------- | ------------------------------------------------------------------------------------ | -------- |
 | `Authorization` | Authorization header passed to the server. It needs `Bearer some_token` as its value | false    |
 
+It returns the following keys in response `data` object
+
 **Response**
 
 | Key            | Description                                                                                            |
@@ -446,18 +488,24 @@ It accepts the optional JSON object as parameter, you can pass the HTTP Headers 
 | `access_token` | accessToken that frontend application can use for further authorized requests                          |
 | `expires_in`   | timestamp when the current token is going to expire, so that frontend can request for new access token |
 | `user`         | User object with all the basic profile information                                                     |
+| `should_show_email_otp_screen` | Is set to true if email based multi factor authentication is enabled |
+| `should_show_mobile_otp_screen` | Is set to true if mobiled based multi factor authentication is enabled |
+| `should_show_totp_screen` | Is set to true if totp based multi factor authentication is enabled |
+| `authenticator_scanner_image` | If totp registration is pending it sends base64 encoded image string that can be rendered by totp app scanners like Google Authentication |
+| `authenticator_secret` |  If totp registration is pending, then this secret can be used for registration instead of image on authenticator apps |
+| `authenticator_recovery_codes` | If totp registration is pending, then recovery codes are sent using which totp can be accessed again |
 
 **Sample Usage**
 
 ```js
 // from browser with HTTP Cookie
-const res = await authRef.getSession()
+const { data, errors } = await authRef.getSession()
 
 // role validation with http cookie
-const res = await authRef.getSession(null, 'admin')
+const { data, errors } = await authRef.getSession(null, 'admin')
 
 // from NodeJS / if HTTP cookie is not used
-const res = await authRef.getSession(
+const { data, errors } = await authRef.getSession(
   {
     Authorization: `Bearer some_token`,
   },
@@ -475,6 +523,8 @@ Function to revoke refresh token. It accepts json object as its parameter with f
 | --------------- | --------------------------- | -------- |
 | `refresh_token` | Refresh token to be revoked | true     |
 
+It returns the following keys in response `data` object
+
 **Response**
 
 | Key       | Description     |
@@ -484,7 +534,7 @@ Function to revoke refresh token. It accepts json object as its parameter with f
 **Sample Usage**
 
 ```js
-const res = await authRef.revokeToken({
+const { data, errors } = await authRef.revokeToken({
   refresh_token: 'foo',
 })
 ```
@@ -499,6 +549,8 @@ It accepts the optional JSON object as parameter, you can pass the HTTP Headers 
 | --------------- | ------------------------------------------------------------------------------------ | -------- |
 | `Authorization` | Authorization header passed to the server. It needs `Bearer some_token` as its value | false    |
 
+It returns the following keys in response `data` object
+
 **Response**
 
 | Key       | Description                         |
@@ -509,10 +561,10 @@ It accepts the optional JSON object as parameter, you can pass the HTTP Headers 
 
 ```js
 // from browser with HTTP Cookie
-const res = await authRef.logout()
+const { data, errors } = await authRef.logout()
 
 // from NodeJS / if HTTP cookie is not used
-const res = await authRef.logout({
+const { data, errors } = await authRef.logout({
   Authorization: `Bearer some_token`,
 })
 ```
@@ -529,6 +581,8 @@ It expects the JSON object as parameter with following parameters
 | `token`      | Jwt token string                                                                                         | `true`   |
 | `roles`      | Array of roles to validate jwt token for                                                                 | `false`  |
 
+It returns the following keys in response `data` object
+
 **Response**
 
 | Key        | Description                                        |
@@ -538,7 +592,7 @@ It expects the JSON object as parameter with following parameters
 **Sample Usage**
 
 ```js
-const res = await authRef.validateJWTToken({
+const { data, errors } = await authRef.validateJWTToken({
   token_type: `access_token`
   token: `some jwt token string`
 })
@@ -555,6 +609,8 @@ It expects the JSON object as parameter with following parameters
 | `cookie` | browser session cookie value. If not present it will need coookie present in header as https cookie | `false`  |
 | `roles`  | Array of roles to validate jwt token for                                                            | `false`  |
 
+It returns the following keys in response `data` object
+
 **Response**
 
 | Key        | Description                                        |
@@ -564,7 +620,7 @@ It expects the JSON object as parameter with following parameters
 **Sample Usage**
 
 ```js
-const res = await authRef.validateSession({
+const { data, errors } = await authRef.validateSession({
   cookie: ``,
 })
 ```
@@ -583,24 +639,28 @@ It accepts JSON object as a parameter with following keys
 
 Either `email` or `phone_number` is required
 
-Following is the response for `verifyOtp` function
+It returns the following keys in response `data` object
 
 **Response**
 | Key | Description |
 | ---------------------- | ------------------------------------------------------------------------------------------------------ |
 | `message` | Error / Success message from server |
-| `should_show_email_otp_screen` | Boolean value for frontend application to show otp input for email based login screen |
-| `should_show_mobile_otp_screen` | Boolean value for frontend application to show otp input for mobile based login screen |
 | `access_token` | accessToken that frontend application can use for further authorized requests |
 | `expires_in` | timestamp when the current token is going to expire, so that frontend can request for new access token |
 | `id_token` | JWT token holding the user information |
 | `refresh_token` | When scope includes `offline_access`, Long living token is returned which can be used to get new access tokens. This is rotated with each request |
 | `user` | User object with all the basic profile information |
+| `should_show_email_otp_screen` | Is set to true if email based multi factor authentication is enabled |
+| `should_show_mobile_otp_screen` | Is set to true if mobiled based multi factor authentication is enabled |
+| `should_show_totp_screen` | Is set to true if totp based multi factor authentication is enabled |
+| `authenticator_scanner_image` | If totp registration is pending it sends base64 encoded image string that can be rendered by totp app scanners like Google Authentication |
+| `authenticator_secret` |  If totp registration is pending, then this secret can be used for registration instead of image on authenticator apps |
+| `authenticator_recovery_codes` | If totp registration is pending, then recovery codes are sent using which totp can be accessed again |
 
 **Sample Usage**
 
 ```js
-const res = await authRef.verifyOtp({
+const { data, errors } = await authRef.verifyOtp({
   email: 'foo@bar.com',
   otp: 'AB123C',
 })
@@ -619,7 +679,7 @@ It accepts JSON object as a parameter with following keys
 
 Either `email` or `phone_number` is required
 
-Following is the response for `resendOtp` function
+It returns the following keys in response `data` object
 
 **Response**
 | Key | Description |
@@ -629,7 +689,7 @@ Following is the response for `resendOtp` function
 **Sample Usage**
 
 ```js
-const res = await authRef.resendOtp({
+const { data, errors } = await authRef.resendOtp({
   email: 'foo@bar.com',
 })
 ```
@@ -648,6 +708,8 @@ Here is sample of `headers` object
 | --------------- | -------------------------------------------------------------------------------------- | -------- |
 | `Authorization` | Authorization header passed to the server. It needs `Bearer access_token` as its value | true     |
 
+It returns the following keys in response `data` object
+
 **Response**
 
 | Key       | Description                         |
@@ -657,7 +719,7 @@ Here is sample of `headers` object
 **Sample Usage**
 
 ```js
-const res = await authRef.deactivateAccount({
+const { data, errors } = await authRef.deactivateAccount({
   Authorization: `Bearer some_token`,
 })
 ```
