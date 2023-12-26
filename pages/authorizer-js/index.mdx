@@ -82,7 +82,7 @@ const authRef = new Authorizer({
   })
 
   async function onLoad() {
-    const {data, errors} = await authorizerRef.authorize({
+    const { data, errors } = await authorizerRef.authorize({
       response_type: 'code',
       use_refresh_token: false,
     })

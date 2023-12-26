@@ -145,20 +145,20 @@ Following is the response for the `signup` in the `data` object
 
 **Response**
 
-| Key             | Description                                                                                                                                                         |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `message`       | Success / Error message from server                                                                                                                                 |
-| `access_token`  | accessToken that frontend application can use for further authorized requests                                                                                       |
-| `expires_in`    | timestamp when the current token is going to expire, so that frontend can request for new access token                                                              |
-| `id_token`      | JWT token holding the user information                                                                                                                              |
-| `refresh_token` | When scope includes `offline_access`, Long living token is returned which can be used to get new access tokens. This is rotated with each request                   |
-| `user`          | User object with its profile keys mentioned [above](#--getprofile). This is only returned if `DISABLE_EMAIL_NOTIFICATION` is set to `true` in environment variables |
-| `should_show_email_otp_screen` | Is set to true if email based multi factor authentication is enabled |
-| `should_show_mobile_otp_screen` | Is set to true if mobiled based multi factor authentication is enabled |
-| `should_show_totp_screen` | Is set to true if totp based multi factor authentication is enabled |
-| `authenticator_scanner_image` | If totp registration is pending it sends base64 encoded image string that can be rendered by totp app scanners like Google Authentication |
-| `authenticator_secret` |  If totp registration is pending, then this secret can be used for registration instead of image on authenticator apps |
-| `authenticator_recovery_codes` | If totp registration is pending, then recovery codes are sent using which totp can be accessed again |
+| Key                             | Description                                                                                                                                                         |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `message`                       | Success / Error message from server                                                                                                                                 |
+| `access_token`                  | accessToken that frontend application can use for further authorized requests                                                                                       |
+| `expires_in`                    | timestamp when the current token is going to expire, so that frontend can request for new access token                                                              |
+| `id_token`                      | JWT token holding the user information                                                                                                                              |
+| `refresh_token`                 | When scope includes `offline_access`, Long living token is returned which can be used to get new access tokens. This is rotated with each request                   |
+| `user`                          | User object with its profile keys mentioned [above](#--getprofile). This is only returned if `DISABLE_EMAIL_NOTIFICATION` is set to `true` in environment variables |
+| `should_show_email_otp_screen`  | Is set to true if email based multi factor authentication is enabled                                                                                                |
+| `should_show_mobile_otp_screen` | Is set to true if mobiled based multi factor authentication is enabled                                                                                              |
+| `should_show_totp_screen`       | Is set to true if totp based multi factor authentication is enabled                                                                                                 |
+| `authenticator_scanner_image`   | If totp registration is pending it sends base64 encoded image string that can be rendered by totp app scanners like Google Authentication                           |
+| `authenticator_secret`          | If totp registration is pending, then this secret can be used for registration instead of image on authenticator apps                                               |
+| `authenticator_recovery_codes`  | If totp registration is pending, then recovery codes are sent using which totp can be accessed again                                                                |
 
 **Sample Usage**
 
@@ -199,9 +199,8 @@ Following is the response for `login` in the `data` object
 | `should_show_mobile_otp_screen` | Is set to true if mobiled based multi factor authentication is enabled |
 | `should_show_totp_screen` | Is set to true if totp based multi factor authentication is enabled |
 | `authenticator_scanner_image` | If totp registration is pending it sends base64 encoded image string that can be rendered by totp app scanners like Google Authentication |
-| `authenticator_secret` |  If totp registration is pending, then this secret can be used for registration instead of image on authenticator apps |
+| `authenticator_secret` | If totp registration is pending, then this secret can be used for registration instead of image on authenticator apps |
 | `authenticator_recovery_codes` | If totp registration is pending, then recovery codes are sent using which totp can be accessed again |
-
 
 **Sample Usage**
 
@@ -236,12 +235,12 @@ This mutation returns `AuthResponse` type with the following keys in the `data` 
 | `id_token`                      | JWT token holding the user information                                                                                                            |
 | `refresh_token`                 | When scope includes `offline_access`, Long living token is returned which can be used to get new access tokens. This is rotated with each request |
 | `user`                          | User object with its profile keys mentioned [above](#--getprofile).                                                                               |
-| `should_show_email_otp_screen` | Is set to true if email based multi factor authentication is enabled |
-| `should_show_mobile_otp_screen` | Is set to true if mobiled based multi factor authentication is enabled |
-| `should_show_totp_screen` | Is set to true if totp based multi factor authentication is enabled |
-| `authenticator_scanner_image` | If totp registration is pending it sends base64 encoded image string that can be rendered by totp app scanners like Google Authentication |
-| `authenticator_secret` |  If totp registration is pending, then this secret can be used for registration instead of image on authenticator apps |
-| `authenticator_recovery_codes` | If totp registration is pending, then recovery codes are sent using which totp can be accessed again |
+| `should_show_email_otp_screen`  | Is set to true if email based multi factor authentication is enabled                                                                              |
+| `should_show_mobile_otp_screen` | Is set to true if mobiled based multi factor authentication is enabled                                                                            |
+| `should_show_totp_screen`       | Is set to true if totp based multi factor authentication is enabled                                                                               |
+| `authenticator_scanner_image`   | If totp registration is pending it sends base64 encoded image string that can be rendered by totp app scanners like Google Authentication         |
+| `authenticator_secret`          | If totp registration is pending, then this secret can be used for registration instead of image on authenticator apps                             |
+| `authenticator_recovery_codes`  | If totp registration is pending, then recovery codes are sent using which totp can be accessed again                                              |
 
 **Sample Usage**
 
@@ -358,9 +357,9 @@ It returns the following keys in response `data` object
 
 **Response**
 
-| Key       | Description                         |
-| --------- | ----------------------------------- |
-| `message` | Success / Error message from server |
+| Key                             | Description                             |
+| ------------------------------- | --------------------------------------- |
+| `message`                       | Success / Error message from server     |
 | `should_show_mobile_otp_screen` | Show OTP screen if mobile login is used |
 
 **Sample Usage**
@@ -482,18 +481,18 @@ It returns the following keys in response `data` object
 
 **Response**
 
-| Key            | Description                                                                                            |
-| -------------- | ------------------------------------------------------------------------------------------------------ |
-| `message`      | Error / Success message from server                                                                    |
-| `access_token` | accessToken that frontend application can use for further authorized requests                          |
-| `expires_in`   | timestamp when the current token is going to expire, so that frontend can request for new access token |
-| `user`         | User object with all the basic profile information                                                     |
-| `should_show_email_otp_screen` | Is set to true if email based multi factor authentication is enabled |
-| `should_show_mobile_otp_screen` | Is set to true if mobiled based multi factor authentication is enabled |
-| `should_show_totp_screen` | Is set to true if totp based multi factor authentication is enabled |
-| `authenticator_scanner_image` | If totp registration is pending it sends base64 encoded image string that can be rendered by totp app scanners like Google Authentication |
-| `authenticator_secret` |  If totp registration is pending, then this secret can be used for registration instead of image on authenticator apps |
-| `authenticator_recovery_codes` | If totp registration is pending, then recovery codes are sent using which totp can be accessed again |
+| Key                             | Description                                                                                                                               |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `message`                       | Error / Success message from server                                                                                                       |
+| `access_token`                  | accessToken that frontend application can use for further authorized requests                                                             |
+| `expires_in`                    | timestamp when the current token is going to expire, so that frontend can request for new access token                                    |
+| `user`                          | User object with all the basic profile information                                                                                        |
+| `should_show_email_otp_screen`  | Is set to true if email based multi factor authentication is enabled                                                                      |
+| `should_show_mobile_otp_screen` | Is set to true if mobiled based multi factor authentication is enabled                                                                    |
+| `should_show_totp_screen`       | Is set to true if totp based multi factor authentication is enabled                                                                       |
+| `authenticator_scanner_image`   | If totp registration is pending it sends base64 encoded image string that can be rendered by totp app scanners like Google Authentication |
+| `authenticator_secret`          | If totp registration is pending, then this secret can be used for registration instead of image on authenticator apps                     |
+| `authenticator_recovery_codes`  | If totp registration is pending, then recovery codes are sent using which totp can be accessed again                                      |
 
 **Sample Usage**
 
@@ -654,7 +653,7 @@ It returns the following keys in response `data` object
 | `should_show_mobile_otp_screen` | Is set to true if mobiled based multi factor authentication is enabled |
 | `should_show_totp_screen` | Is set to true if totp based multi factor authentication is enabled |
 | `authenticator_scanner_image` | If totp registration is pending it sends base64 encoded image string that can be rendered by totp app scanners like Google Authentication |
-| `authenticator_secret` |  If totp registration is pending, then this secret can be used for registration instead of image on authenticator apps |
+| `authenticator_secret` | If totp registration is pending, then this secret can be used for registration instead of image on authenticator apps |
 | `authenticator_recovery_codes` | If totp registration is pending, then recovery codes are sent using which totp can be accessed again |
 
 **Sample Usage**
