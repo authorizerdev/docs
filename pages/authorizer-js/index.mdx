@@ -89,12 +89,12 @@ const authRef = new Authorizer({
     if (data && data.access_token) {
       // you can use user information here, eg:
       const user = await authorizerRef.getProfile({
-        Authorization: `Bearer ${res.access_token}`,
+        Authorization: `Bearer ${data.access_token}`,
       })
       const userSection = document.getElementById('user')
       const logoutSection = document.getElementById('logout-section')
       logoutSection.classList.toggle('hide')
-      userSection.innerHTML = `Welcome, ${user.email}`
+      userSection.innerHTML = `Welcome, ${user.data.email}`
     }
   }
   onLoad()
