@@ -24,7 +24,7 @@ Here is the complete list of state variables and functions that are returned by 
 ### Sample Usage
 
 ```jsx
-import {useAuthorizer} from '@authorizerdev/authorizer-react`
+import {useAuthorizer} from '@authorizerdev/authorizer-react'
 
 const Component = () => {
 
