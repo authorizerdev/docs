@@ -7,5 +7,6 @@
   "helm-chart": "Helm Chart",
   "flydotio": "Fly.io",
   "binary": "Binaries",
-  "koyeb": "Koyeb"
+  "koyeb": "Koyeb",
+  "alibaba-cloud" : "Alibaba Cloud"
 }
