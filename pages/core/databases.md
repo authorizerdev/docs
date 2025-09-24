@@ -56,7 +56,7 @@
     DATABASE_CA_CERT="Base64 encoded CA cert"
   ```
 
-  > Note for CassandraDB: If you are using cloud provider like [DataStax](https://www.datastax.com/products/datastax-astra), they don't allow creating `keyspace`. So please make sure you have `keyspace` named `authorizer` created from their [GUI](https://docs.datastax.com/en/astra/docs/datastax-astra-faq.html#_i_am_trying_to_create_a_keyspace_in_the_cql_shell_and_i_am_running_into_an_error_how_do_i_fix_this).
+  > Note for CassandraDB: If you are using Astra DB, [CQL for Astra DB](https://docs.datastax.com/en/astra-db-serverless/cql/develop-with-cql.html) doesn't allow `CREATE KEYSPACE`, so you must [create a keyspace](https://docs.datastax.com/en/astra-db-serverless/databases/manage-keyspaces.html) named `authorizer` before applying the `cassandradb` configuration.
 
 - [ScyllaDB](https://www.scylladb.com/)
 
