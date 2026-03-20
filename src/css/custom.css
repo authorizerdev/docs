@@ -1,0 +1,30 @@
+/**
+ * Any CSS included here will be global. The classic template
+ * bundles Infima by default. Infima is a CSS framework designed to
+ * work well for content-centric websites.
+ */
+
+/* Authorizer brand colors - blue (#3B82F6) */
+:root {
+  --ifm-color-primary: #3B82F6;
+  --ifm-color-primary-dark: #1D6FF3;
+  --ifm-color-primary-darker: #0F63EE;
+  --ifm-color-primary-darkest: #0B50C4;
+  --ifm-color-primary-light: #5995F8;
+  --ifm-color-primary-lighter: #6BA1F8;
+  --ifm-color-primary-lightest: #9DC0FB;
+  --ifm-code-font-size: 95%;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+}
+
+/* For readability concerns, you should choose a lighter palette in dark mode. */
+[data-theme='dark'] {
+  --ifm-color-primary: #5995F8;
+  --ifm-color-primary-dark: #3B82F6;
+  --ifm-color-primary-darker: #2B77F5;
+  --ifm-color-primary-darkest: #0B5BEB;
+  --ifm-color-primary-light: #77A8FA;
+  --ifm-color-primary-lighter: #87B3FA;
+  --ifm-color-primary-lightest: #B9D3FD;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+}

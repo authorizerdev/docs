@@ -1,0 +1,89 @@
+{
+  "docsSidebar": [
+    "introduction",
+    {
+      "type": "category",
+      "label": "Getting Started",
+      "collapsed": false,
+      "items": [
+        "getting-started/index"
+      ]
+    },
+    {
+      "type": "category",
+      "label": "Core",
+      "items": [
+        "core/index",
+        "core/env",
+        "core/cli",
+        "core/databases",
+        "core/endpoints",
+        "core/graphql-api",
+        "core/email"
+      ]
+    },
+    {
+      "type": "category",
+      "label": "Deployment",
+      "items": [
+        "deployment/index",
+        "deployment/binary",
+        "deployment/kubernetes",
+        "deployment/helm-chart",
+        "deployment/heroku",
+        "deployment/render",
+        "deployment/railway",
+        "deployment/flydotio",
+        "deployment/easypanel",
+        "deployment/alibaba-cloud",
+        "deployment/koyeb"
+      ]
+    },
+    {
+      "type": "category",
+      "label": "Integrations",
+      "items": [
+        "integrations/hasura",
+        "integrations/react-native",
+        "integrations/gatsbyjs"
+      ]
+    },
+    "contributing"
+  ],
+  "sdksSidebar": [
+    {
+      "type": "category",
+      "label": "authorizer-js",
+      "collapsed": false,
+      "items": [
+        "sdks/authorizer-js/index",
+        "sdks/authorizer-js/functions"
+      ]
+    },
+    {
+      "type": "category",
+      "label": "authorizer-react",
+      "items": [
+        "sdks/authorizer-react/index",
+        "sdks/authorizer-react/components",
+        "sdks/authorizer-react/hooks"
+      ]
+    },
+    {
+      "type": "category",
+      "label": "authorizer-go",
+      "items": [
+        "sdks/authorizer-go/index",
+        "sdks/authorizer-go/example"
+      ]
+    },
+    {
+      "type": "category",
+      "label": "authorizer-svelte",
+      "items": [
+        "sdks/authorizer-svelte/index",
+        "sdks/authorizer-svelte/components"
+      ]
+    }
+  ]
+}
