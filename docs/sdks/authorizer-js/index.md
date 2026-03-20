@@ -12,7 +12,7 @@ It supports:
 - [CommonJS(cjs)](https://flaviocopes.com/commonjs/) build for NodeJS version that don't support ES Modules
 - [ESM (ES Modules)](https://hacks.mozilla.org/2018/03/es-modules-a-cartoon-deep-dive/) build for modern javascript standard, i.e. ES Modules
 
-Here is a quick guide on getting started with [`@authorizerdev/authorizer-js`](/docs/sdks/authorizer-js) package.
+Here is a quick guide on getting started with [`@authorizerdev/authorizer-js`](/sdks/authorizer-js) package.
 
 ## Step 1: Get Authorizer Instance
 
@@ -72,7 +72,7 @@ const authRef = new Authorizer({
 <script src="https://unpkg.com/@authorizerdev/authorizer-js/lib/authorizer.min.js"></script>
 ```
 
-- Step 2: Use the library to instantiate `Authorizer` instance and access [various methods](/docs/sdks/authorizer-js/functions)
+- Step 2: Use the library to instantiate `Authorizer` instance and access [various methods](/sdks/authorizer-js/functions)
 
 ```html
 <script type="text/javascript">

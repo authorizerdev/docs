@@ -19,7 +19,7 @@ title: Functions
 - [getProfile](#--getprofile)
 - [updateProfile](#--updateprofile)
 - [forgotPassword](#--forgotpassword)
-- [resetPassword](#--resetPassword)
+- [resetPassword](#--resetpassword)
 - [oauthLogin](#--oauthlogin)
 - [magicLinkLogin](#--magiclinklogin)
 - [getMetadata](#--getmetadata)
@@ -346,7 +346,7 @@ This function is Step 1 process.
 
 It accepts JSON object as parameter with the following keys
 
-> Note: You will need a SMTP server with an email address and password configured as [authorizer environment](../../core/env) using which system can send emails.
+> Note: You will need a SMTP server with an email address and password configured as [authorizer environment](/1.x/core/env) using which system can send emails.
 
 | Key     | Description                                  | Required |
 | ------- | -------------------------------------------- | -------- |
@@ -416,7 +416,7 @@ await authRef.oauthLogin('google', 'admin')
 
 Function to perform password less login.
 
-> Note: You will need a SMTP server with an email address and password configured as [authorizer environment](../../core/env) using which system can send emails.
+> Note: You will need a SMTP server with an email address and password configured as [authorizer environment](/1.x/core/env) using which system can send emails.
 
 | Key            | Description                                                                                 | Required |
 | -------------- | ------------------------------------------------------------------------------------------- | -------- |

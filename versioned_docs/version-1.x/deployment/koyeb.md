@@ -53,7 +53,7 @@ In the "Environment variables" section, modify the value of the `DATABASE_URL` v
 
 - Open authorizer instance endpoint in browser.
 - Sign up as an admin with a secure password.
-- Configure environment variables from authorizer dashboard. Check [env docs](/core/env) for more information.
+- Configure environment variables from authorizer dashboard. Check [env docs](/1.x/core/env) for more information.
 
 > Note: `DATABASE_URL`, `DATABASE_TYPE` and `DATABASE_NAME` are only configurable via platform envs
 

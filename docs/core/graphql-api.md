@@ -13,7 +13,7 @@ You can play with GraphQL API using the GraphQL playground that comes with your 
 
 Table of Contents
 
-- [GraphQL API](#graphql-api)
+- [GraphQL API](#queries)
   - [Queries](#queries)
     - [`meta`](#meta)
     - [`session`](#session)

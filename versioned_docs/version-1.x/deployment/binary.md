@@ -35,7 +35,7 @@ binaries are baked with required deployment files and bundled. You can download 
 
 ### Step 2: Configure environment variables
 
-Required environment variables are pre-configured in `.env` file. But based on the production requirements, please configure more environment variables. You can refer to [environment variables docs](/core/env) for more information.
+Required environment variables are pre-configured in `.env` file. But based on the production requirements, please configure more environment variables. You can refer to [environment variables docs](/1.x/core/env) for more information.
 
 ### Step 3: Start Authorizer
 

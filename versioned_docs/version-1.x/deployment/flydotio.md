@@ -163,7 +163,7 @@ flyctl secrets set \
 
 > Don't forget to replace the values.
 
-Refer to [Environment Variables](/core/env) section to see all variables.
+Refer to [Environment Variables](/1.x/core/env) section to see all variables.
 
 ### Step 7: Deploy
 

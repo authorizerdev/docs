@@ -29,7 +29,7 @@ Follow the below steps after clicking the button:
 
 - Open authorizer instance endpoint in browser
 - Sign up as an admin with a secure password
-- Configure environment variables from environment tab. Check env [docs](/core/env) for more information
+- Configure environment variables from environment tab. Check env [docs](/1.x/core/env) for more information
 
 > Note: `ENV`, `DATABASE_URL`, `DATABASE_TYPE` and `REDIS_URL` are configured automatically
 

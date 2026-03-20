@@ -13,7 +13,7 @@ You can play with GraphQL API using the GraphQL playground that comes with your 
 
 Table of Contents
 
-- [GraphQL API](#graphql-api)
+- [GraphQL API](#queries)
   - [Queries](#queries)
     - [`meta`](#meta)
     - [`session`](#session)
@@ -640,7 +640,7 @@ This mutation returns `AuthResponse` type with following keys
 | `should_show_mobile_otp_screen` | Boolean value for frontend application to show otp input for mobile based login screen                                                                                              |
 | `access_token`                  | Token that can be used for further authorized requests. This is only returned if `DISABLE_EMAIL_NOTIFICATION` is set to `true` in environment variables                             |
 | `expires_in`                    | Timestamp when the access Token will expire so that frontend can request new token. This is only returned if `DISABLE_EMAIL_NOTIFICATION` is set to `true` in environment variables |
-| `user`                          | User object with its profile keys mentioned [above](#--profile). This is only returned if `DISABLE_EMAIL_NOTIFICATION` is set to `true` in environment variables                    |
+| `user`                          | User object with its profile keys mentioned [above](#profile). This is only returned if `DISABLE_EMAIL_NOTIFICATION` is set to `true` in environment variables                    |
 
 **Sample Mutation**
 
@@ -685,7 +685,7 @@ This mutation returns `AuthResponse` type with following keys
 | `expires_in`                    | timestamp when the current token is going to expire, so that frontend can request for new access token                                            |
 | `id_token`                      | JWT token holding the user information                                                                                                            |
 | `refresh_token`                 | When scope includes `offline_access`, Long living token is returned which can be used to get new access tokens. This is rotated with each request |
-| `user`                          | User object with its profile keys mentioned [above](#--profile).                                                                                  |
+| `user`                          | User object with its profile keys mentioned [above](#profile).                                                                                  |
 | `totp_base64_url`                 | If totp enabled, will get base64 url for QR code, which can be scanned on google authenticator                                                    |
 |`totp_token`                      | this token is for totp which need to passed in verify_totp mutation along with totp from your authenticator                                       |
 
@@ -826,7 +826,7 @@ This mutation returns `AuthResponse` type with following keys
 | `expires_in`                    | timestamp when the current token is going to expire, so that frontend can request for new access token                                            |
 | `id_token`                      | JWT token holding the user information                                                                                                            |
 | `refresh_token`                 | When scope includes `offline_access`, Long living token is returned which can be used to get new access tokens. This is rotated with each request |
-| `user`                          | User object with its profile keys mentioned [above](#--profile).                                                                                  |
+| `user`                          | User object with its profile keys mentioned [above](#profile).                                                                                  |
 
 **Sample Mutation**
 

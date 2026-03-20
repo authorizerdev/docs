@@ -28,7 +28,7 @@ In your kubernetes cluster install nginx using helm chart. Here are the [docs](h
 
 Copy following into `authorizer.yml` file and update the required variables
 
-> Note: Replace your domain, database strings and other environment variables. For more environment variables check [here](/core/env)
+> Note: Replace your domain, database strings and other environment variables. For more environment variables check [here](/1.x/core/env)
 
 ```yaml
 ---

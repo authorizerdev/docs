@@ -216,7 +216,7 @@ const ForgotPasswordPage = () => {
 
 ## `AuthorizerResetPassword`
 
-A component that can be used to reset the password. This component can be used in the page, which is configured with the backend as `RESET_PASSWORD_URL`, check [environment variables](/docs/core/server-config) for more details. This component validates the token in the URL sent via email to the user and helps resetting the password.
+A component that can be used to reset the password. This component can be used in the page, which is configured with the backend as `RESET_PASSWORD_URL`, check [environment variables](/core/server-config) for more details. This component validates the token in the URL sent via email to the user and helps resetting the password.
 
 ### Props
 

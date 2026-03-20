@@ -39,7 +39,7 @@ This guide helps you practice using Authorizer to evaluate it before you use it 
 1. Fork the [authorizer](https://github.com/authorizerdev/authorizer) repository (**Skip this step if you have access to repo**)
 2. Clone repo: `git clone https://github.com/authorizerdev/authorizer.git` or use the forked url from step 1
 3. Change directory to authorizer: `cd authorizer`
-4. Create Env file `cp .env.sample .env`. Check all the supported env [here](https://docs.authorizer.dev/core/env/)
+4. Create Env file `cp .env.sample .env`. Check all the supported env [here](https://docs.authorizer.dev/1.x/core/env/)
 5. Build Dashboard `make build-dashboard`
 6. Build App `make build-app`
 7. Build Server `make clean && make`
@@ -90,7 +90,7 @@ binaries are baked with required deployment files and bundled. You can download 
 
 - Open authorizer instance endpoint in browser
 - Sign up as an admin with a secure password
-- Configure environment variables from authorizer dashboard. Check env [docs](/core/env) for more information
+- Configure environment variables from authorizer dashboard. Check env [docs](/1.x/core/env) for more information
 
 > Note: `DATABASE_URL`, `DATABASE_TYPE` and `DATABASE_NAME` are only configurable via platform envs
 
