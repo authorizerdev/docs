@@ -20,6 +20,7 @@ const sidebars: SidebarsConfig = {
         'core/databases',
         'core/endpoints',
         'core/graphql-api',
+        'core/oauth2-oidc',
         'core/email',
       ],
     },
