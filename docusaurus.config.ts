@@ -188,6 +188,10 @@ const config: Config = {
           },
         },
         blog: false,
+        gtag: {
+          trackingID: process.env.GOOGLE_ANALYTICS_ID || 'G-XXXXXXXXXX',
+          anonymizeIP: true,
+        },
         theme: {
           customCss: './src/css/custom.css',
         },
