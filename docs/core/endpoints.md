@@ -27,6 +27,18 @@ Endpoints supported by Authorizer
 
 `POST /graphql` - GraphQl endpoint for all the [GraphQL queries and mutations](../core/graphql-api)
 
+## `/healthz`
+
+`GET /healthz` - Liveness probe. Returns `{"status":"ok"}` with HTTP 200 if the database is reachable, or HTTP 503 with `{"status":"unhealthy"}` otherwise.
+
+## `/readyz`
+
+`GET /readyz` - Readiness probe. Returns `{"status":"ready"}` with HTTP 200 if the system is ready, or HTTP 503 with `{"status":"not ready"}` otherwise.
+
+## `/metrics`
+
+`GET /metrics` - Prometheus-compatible metrics endpoint. See [Metrics & Monitoring](../core/metrics-monitoring) for details.
+
 ## `/verify_email`
 
 `GET /verify_email?token=TOKEN` - Endpoint to verify email address
