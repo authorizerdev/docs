@@ -213,9 +213,26 @@ Other supported providers follow the same pattern:
 
 ---
 
-## 8. Admin and GraphQL security flags
+## 8. Rate limiting
+
+```bash
+./build/server \
+  --rate-limit-rps=10 \
+  --rate-limit-burst=20
+```
+
+- **`--rate-limit-rps`**: maximum sustained requests per second per IP (default `10`). Set to `0` to disable.
+- **`--rate-limit-burst`**: maximum burst size per IP (default `20`).
+
+Rate limiting is always enabled by default. When `--redis-url` is set, limits are shared across replicas via Redis. See [Rate Limiting](./rate-limiting) for full details.
+
+---
+
+## 9. Admin and GraphQL security flags
 
 New in v2:
+
+
 
 ```bash
 ./build/server \
@@ -229,7 +246,7 @@ New in v2:
 
 ---
 
-## 9. Discovering all flags
+## 10. Discovering all flags
 
 To list all available flags and their defaults, run:
 
