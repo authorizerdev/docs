@@ -22,6 +22,7 @@ const sidebars: SidebarsConfig = {
         'core/graphql-api',
         'core/oauth2-oidc',
         'core/email',
+        'core/rate-limiting',
         'core/metrics-monitoring',
       ],
     },
