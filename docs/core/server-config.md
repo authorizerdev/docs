@@ -20,13 +20,15 @@ If you are migrating from v1, first skim the high-level [Migration v1 to v2](../
   --http-port=8080 \
   --host=0.0.0.0 \
   --metrics-port=8081 \
+  --metrics-host=127.0.0.1 \
   --log-level=info
 ```
 
 - **`--env`**: environment name (for example `production`, `development`).
 - **`--http-port`**: HTTP listen port (default `8080`).
-- **`--host`**: bind address (default `0.0.0.0`).
-- **`--metrics-port`**: metrics/health port (default `8081`).
+- **`--host`**: bind address for the **main** HTTP server (default `0.0.0.0`).
+- **`--metrics-port`**: port for the dedicated **`/metrics`** listener (default `8081`; **must differ** from `--http-port`). Health probes stay on the HTTP port.
+- **`--metrics-host`**: bind address for that **dedicated** metrics listener only (default `127.0.0.1`). The main app can listen on all interfaces while metrics stay on loopback. For Docker/Kubernetes scraping from another container/pod, set **`--metrics-host=0.0.0.0`** and keep the metrics port on an internal network only (never on a public load balancer).
 - **`--log-level`**: one of `debug`, `info`, `warn`, `error`, `fatal`, `panic`.
 
 ---
@@ -171,7 +173,7 @@ In v2, the `_generate_jwt_keys` mutation is deprecated and returns an error; con
   --smtp-sender-email=auth@example.com \
   --smtp-sender-name="Auth Team" \
   --smtp-local-name=authorizer \
-  --skip-tls-verification=false
+  --smtp-skip-tls-verification=false
 ```
 
 ### Twilio (SMS OTP)
@@ -217,12 +219,14 @@ Other supported providers follow the same pattern:
 
 ```bash
 ./build/server \
-  --rate-limit-rps=10 \
-  --rate-limit-burst=20
+  --rate-limit-rps=30 \
+  --rate-limit-burst=20 \
+  --rate-limit-fail-closed=false
 ```
 
-- **`--rate-limit-rps`**: maximum sustained requests per second per IP (default `10`). Set to `0` to disable.
+- **`--rate-limit-rps`**: maximum sustained requests per second per IP (default `30`). Set to `0` to disable.
 - **`--rate-limit-burst`**: maximum burst size per IP (default `20`).
+- **`--rate-limit-fail-closed`**: when `true`, a failing rate-limit backend returns `503` instead of allowing the request (default `false`, fail-open).
 
 Rate limiting is always enabled by default. When `--redis-url` is set, limits are shared across replicas via Redis. See [Rate Limiting](./rate-limiting) for full details.
 

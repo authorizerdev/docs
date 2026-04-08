@@ -18,7 +18,7 @@ curl http://localhost:8080/healthz
 # {"status":"ok"}
 ```
 
-Returns `503` with `{"status":"unhealthy","error":"..."}` when the database is unreachable.
+Returns `503` with `{"status":"unhealthy","error":"storage unavailable"}` when the database is unreachable (details are logged server-side only).
 
 ### `/readyz` - Readiness Probe
 
@@ -29,15 +29,26 @@ curl http://localhost:8080/readyz
 # {"status":"ready"}
 ```
 
-Returns `503` with `{"status":"not ready","error":"..."}` when the system is not ready to serve traffic.
+Returns `503` with `{"status":"not ready","error":"storage unavailable"}` when the system is not ready to serve traffic (details are logged server-side only).
 
 ### `/metrics` - Prometheus Metrics
 
 Serves all metrics in Prometheus exposition format.
 
+**`/metrics` is never on the main HTTP server.** It is always served by a **separate minimal HTTP server** that runs in parallel with the main Gin app (same pattern as running distinct app and metrics listeners). By default `--http-port` is `8080` and `--metrics-port` is `8081`; **`--http-port` and `--metrics-port` must differ** or the process exits at startup.
+
+The metrics listener is **not** reachable from other machines by default: **`--metrics-host` defaults to `127.0.0.1`**, so only loopback can scrape unless you change it (see below).
+
 ```bash
-curl http://localhost:8080/metrics
+curl http://127.0.0.1:8081/metrics
 ```
+
+#### Bind address and security
+
+- **Single host / node-exporter style:** Keep defaults (`127.0.0.1` + `--metrics-port`). Run Prometheus (or an agent) **on the same host** and scrape `127.0.0.1:8081`, or use a reverse proxy that forwards from an internal network to that socket.
+- **Docker / Kubernetes / another machine scrapes the pod:** Set **`--metrics-host=0.0.0.0`** (or the pod IP interface you use) so the metrics port accepts connections on the container network. **Do not** put the metrics port on a public ingress or internet-facing load balancer; use a **ClusterIP** Service (or internal Docker network) and scrape from inside the cluster only.
+
+For **Docker `EXPOSE` vs `-p` / Compose `ports:`** and Kubernetes **pod vs Service** exposure, see [Docker deployment](../deployment/docker#docker-ports-exposure) and [Kubernetes deployment](../deployment/kubernetes#k8s-ports-services).
 
 ## Available Metrics
 
@@ -47,6 +58,8 @@ curl http://localhost:8080/metrics
 |--------|------|--------|-------------|
 | `authorizer_http_requests_total` | Counter | `method`, `path`, `status` | Total HTTP requests received |
 | `authorizer_http_request_duration_seconds` | Histogram | `method`, `path` | HTTP request latency in seconds |
+
+For routes that do not match a registered Gin pattern, `path` is recorded as `unmatched` (not the raw URL), to keep Prometheus cardinality bounded.
 
 ### Authentication Metrics
 
@@ -81,6 +94,7 @@ curl http://localhost:8080/metrics
 | Metric | Type | Labels | Description |
 |--------|------|--------|-------------|
 | `authorizer_security_events_total` | Counter | `event`, `reason` | Security-sensitive events for alerting |
+| `authorizer_client_id_header_missing_total` | Counter | — | Requests with no `X-Authorizer-Client-ID` header (allowed for some routes) |
 
 **Security event examples:**
 
@@ -97,6 +111,8 @@ curl http://localhost:8080/metrics
 |--------|------|--------|-------------|
 | `authorizer_graphql_errors_total` | Counter | `operation` | GraphQL responses containing errors (HTTP 200 with errors) |
 | `authorizer_graphql_request_duration_seconds` | Histogram | `operation` | GraphQL operation latency |
+
+The `operation` label is **`anonymous`** for unnamed operations, or **`op_` + a short SHA-256 prefix** of the operation name so client-controlled names cannot create unbounded time series.
 
 GraphQL APIs return HTTP 200 even when the response contains errors. These metrics capture those application-level errors that would otherwise be invisible to HTTP-level monitoring.
 
@@ -115,7 +131,8 @@ scrape_configs:
   - job_name: 'authorizer'
     scrape_interval: 15s
     static_configs:
-      - targets: ['authorizer:8080']
+      # In Docker/K8s, use --metrics-host=0.0.0.0 so the scraper can reach the pod/container; scrape via internal DNS/service.
+      - targets: ['authorizer:8081']  # default --metrics-port; same host only: use 127.0.0.1:8081
 ```
 
 For Kubernetes with service discovery:
@@ -131,7 +148,7 @@ scrape_configs:
         action: keep
       - source_labels: [__meta_kubernetes_pod_ip]
         target_label: __address__
-        replacement: '$1:8080'
+        replacement: '$1:8081'  # metrics port; ensure deployment sets --metrics-host=0.0.0.0 for in-cluster scrape
 ```
 
 ## Grafana Dashboard
@@ -230,8 +247,8 @@ make dev
 curl http://localhost:8080/healthz
 curl http://localhost:8080/readyz
 
-# 3. View raw metrics
-curl http://localhost:8080/metrics
+# 3. View raw metrics (default: loopback + metrics port)
+curl http://127.0.0.1:8081/metrics
 
 # 4. Generate some auth events via GraphQL
 curl -X POST http://localhost:8080/graphql \
@@ -239,9 +256,9 @@ curl -X POST http://localhost:8080/graphql \
   -d '{"query":"mutation { login(params: {email: \"test@example.com\", password: \"wrong\"}) { message } }"}'
 
 # 5. Check metrics again — look for auth and security counters
-curl -s http://localhost:8080/metrics | grep authorizer_auth
-curl -s http://localhost:8080/metrics | grep authorizer_security
-curl -s http://localhost:8080/metrics | grep authorizer_graphql
+curl -s http://127.0.0.1:8081/metrics | grep authorizer_auth
+curl -s http://127.0.0.1:8081/metrics | grep authorizer_security
+curl -s http://127.0.0.1:8081/metrics | grep authorizer_graphql
 
 # 6. Run integration tests
 TEST_DBS="sqlite" go test -p 1 -v -run "TestMetrics|TestHealth|TestReady|TestAuthEvent|TestAdminLoginMetrics|TestGraphQLError" ./internal/integration_tests/
@@ -251,6 +268,7 @@ TEST_DBS="sqlite" go test -p 1 -v -run "TestMetrics|TestHealth|TestReady|TestAut
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `--metrics-port` | `8081` | Port for dedicated metrics server (reserved for future use) |
+| `--metrics-port` | `8081` | Port for the dedicated Prometheus `/metrics` listener (**must differ** from `--http-port`) |
+| `--metrics-host` | `127.0.0.1` | Bind address for that dedicated listener only (use `0.0.0.0` for in-cluster or cross-container scrape; never expose on the public internet without a proxy and auth) |
 
-Currently all endpoints (`/healthz`, `/readyz`, `/metrics`) are served on the main HTTP port alongside the application routes.
+`/healthz`, `/readyz`, and `/health` stay on the **main HTTP** port (`--host`:`--http-port`). `/metrics` is **only** on the dedicated listener (`--metrics-host`:`--metrics-port`).

@@ -15,7 +15,7 @@ Every incoming request is tracked by client IP address. Each IP is allowed a sus
 
 **Multi-replica:** When Redis is configured (`--redis-url`), rate limits are shared across all replicas using an atomic Redis sliding-window counter (Lua script). This ensures consistent enforcement regardless of which replica handles the request.
 
-> **Fail-open behavior:** If Redis becomes temporarily unavailable, the rate limiter allows requests through rather than blocking legitimate users. Auth availability takes priority over rate limiting.
+> **Fail-open behavior (default):** If Redis becomes temporarily unavailable, the rate limiter allows requests through rather than blocking legitimate users. Auth availability takes priority over rate limiting. Set **`--rate-limit-fail-closed=true`** if you prefer **`503`** responses when the rate-limit backend errors (stricter, can block traffic during Redis outages).
 
 ---
 
@@ -23,12 +23,13 @@ Every incoming request is tracked by client IP address. Each IP is allowed a sus
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `--rate-limit-rps` | `10` | Maximum sustained requests per second per IP |
+| `--rate-limit-rps` | `30` | Maximum sustained requests per second per IP |
 | `--rate-limit-burst` | `20` | Maximum burst size per IP (allows short spikes above the sustained rate) |
+| `--rate-limit-fail-closed` | `false` | If `true`, rate-limit backend errors return **503** instead of allowing the request |
 
 ```bash
 ./build/server \
-  --rate-limit-rps=10 \
+  --rate-limit-rps=30 \
   --rate-limit-burst=20
 ```
 
@@ -71,8 +72,6 @@ The following endpoints are **not** rate limited because they are infrastructure
 | `/health` | Kubernetes liveness probe |
 | `/healthz` | Kubernetes liveness probe |
 | `/readyz` | Kubernetes readiness probe |
-| `/metrics` | Prometheus scrape endpoint |
-| `/playground` | GraphQL playground (dev tool) |
 | `/.well-known/openid-configuration` | OIDC discovery (cacheable, spec-required) |
 | `/.well-known/jwks.json` | JWKS endpoint (cacheable, spec-required) |
 | `/app/*` | Static frontend assets (login UI) |
@@ -80,6 +79,8 @@ The following endpoints are **not** rate limited because they are infrastructure
 
 All other endpoints are rate limited, including:
 
+- **`/metrics`** is not on the main HTTP router; it is on a **dedicated** listener with **no** Gin middleware (use a reasonable `scrape_interval` anyway).
+- `/playground` (GraphQL playground)
 - `/graphql` (all auth mutations: signup, login, reset password, etc.)
 - `/oauth/token` (token exchange)
 - `/oauth/revoke` (token revocation)
@@ -117,7 +118,7 @@ For deployments with multiple Authorizer replicas, configure Redis to ensure rat
 ```bash
 ./build/server \
   --redis-url=redis://user:pass@redis-host:6379/0 \
-  --rate-limit-rps=10 \
+  --rate-limit-rps=30 \
   --rate-limit-burst=20
 ```
 
@@ -142,7 +143,7 @@ services:
       - --database-type=postgres
       - --database-url=postgres://user:pass@db:5432/authorizer
       - --redis-url=redis://redis:6379
-      - --rate-limit-rps=10
+      - --rate-limit-rps=30
       - --rate-limit-burst=20
       - --client-id=YOUR_CLIENT_ID
       - --client-secret=YOUR_CLIENT_SECRET

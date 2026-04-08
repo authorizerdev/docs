@@ -217,7 +217,10 @@ Use these v2 **CLI flags** instead of v1 env or dashboard config. Flag names use
 | `PORT`               | `--http-port` (default: 8080) |
 | Host                 | `--host` (default: 0.0.0.0) |
 | Metrics port         | `--metrics-port` (default: 8081) |
+| Metrics bind         | `--metrics-host` (default: `127.0.0.1`) for the dedicated metrics listener |
 | `LOG_LEVEL`          | `--log-level` |
+
+**`GET /metrics` is always** on the dedicated metrics listener at **`--metrics-host`:`--metrics-port`** (default **loopback**); **`--http-port` and `--metrics-port` must differ**. Health probes remain on the HTTP port. For in-cluster Prometheus, set **`--metrics-host=0.0.0.0`** and scrape over the private network.
 
 ### Database
 

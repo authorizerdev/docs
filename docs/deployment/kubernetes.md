@@ -18,7 +18,8 @@ If you are migrating from v1, compare with [Kubernetes](../deployment/kubernetes
 - Container image for **Authorizer v2** built with:
 
 ```dockerfile
-ENTRYPOINT ["./build/server"]
+# Official image listens on 8080 (HTTP) and 8081 (metrics); see Dockerfile EXPOSE comments.
+ENTRYPOINT ["./authorizer"]
 CMD []
 ```
 
@@ -54,6 +55,9 @@ spec:
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
+              name: http
+            - containerPort: 8081
+              name: metrics
           env:
             - name: DATABASE_URL
               valueFrom:
@@ -78,6 +82,11 @@ spec:
           args:
             - "--env=production"
             - "--http-port=8080"
+            - "--metrics-port=8081"
+            - "--metrics-host=0.0.0.0"
+            - "--rate-limit-rps=30"
+            - "--rate-limit-burst=20"
+            - "--rate-limit-fail-closed=false"
             - "--database-type=postgres"
             - "--database-url=$(DATABASE_URL)"
             - "--client-id=$(CLIENT_ID)"
@@ -128,6 +137,35 @@ spec:
 ```
 
 > **Note:** Use Kubernetes `Secret` resources for sensitive values and reference them via `env` + `args` as shown.
+
+### Ports: `containerPort`, Services, and Ingress {#k8s-ports-services}
+
+- Declare **both** `containerPort: 8080` and **`8081`** on the pod so the API contract matches the image (`EXPOSE 8080 8081` in the Dockerfile). This is documentation for humans and tooling; it does not by itself expose traffic to the internet.
+- The **`Service`** that backs your **Ingress** (or cloud load balancer) should forward **only** the app port (**80 → 8080** in the example above). **Do not** add `8081` to that same public-facing `Service` or `Ingress`.
+- For Prometheus, scrape **`8081`** via the **pod network** or a **separate ClusterIP `Service`** (below). Set **`--metrics-host=0.0.0.0`** in `args` so the metrics listener accepts connections from other pods; without it, metrics stay on container loopback and in-cluster scrapes will fail.
+
+**Summary:** expose **both** ports on the **Pod**; expose **only HTTP (8080)** to clients via Ingress/LB; keep **metrics (8081)** internal to the cluster.
+
+### Metrics (Prometheus)
+
+The app serves **`/metrics` on a second HTTP listener** on port **`8081`**. In Kubernetes, **`--metrics-host=0.0.0.0`** is usually required so Prometheus can scrape the pod IP. **Do not** put port `8081` on an internet-facing `Ingress`. Use a `ServiceMonitor`, PodMonitor, or a dedicated **ClusterIP** `Service` and scrape config only. If Prometheus runs on the **same host** as a bare binary (not K8s), you can keep the default **`127.0.0.1`** for metrics instead.
+
+Optional internal `Service` for metrics (ClusterIP only):
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: authorizer-v2-metrics
+spec:
+  selector:
+    app: authorizer-v2
+  ports:
+    - port: 8081
+      targetPort: metrics
+      name: metrics
+  type: ClusterIP
+```
 
 Apply the manifest:
 

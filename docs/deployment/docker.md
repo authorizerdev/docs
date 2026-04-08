@@ -26,6 +26,25 @@ Then open `http://localhost:8080/app` for the built-in login UI.
 
 ---
 
+## Ports: `EXPOSE`, publishing, and metrics {#docker-ports-exposure}
+
+The image **`EXPOSE`s `8080` and `8081`**. That only **documents** which ports the application may listen on; it does **not** open them on the Docker host. You choose what to publish with `-p` or Compose `ports:`.
+
+| Port | Role | Typical use |
+|------|------|-------------|
+| **8080** | Main HTTP (API, UI, `/healthz`, `/readyz`) | **Yes** — map to the host or front with a reverse proxy / load balancer. |
+| **8081** | Prometheus **`/metrics`** (separate listener) | **Depends** — see below. |
+
+**Recommended defaults**
+
+- **`docker run` (single container, no in-Docker Prometheus):** publish **only `8080`** (e.g. `-p 8080:8080`). Metrics stay on **`127.0.0.1:8081`** inside the container; that is enough if you scrape from an agent on the **same host** using the container’s network namespace, or you do not need metrics yet.
+- **Docker Compose / Swarm with Prometheus as another service:** add **`--metrics-host=0.0.0.0`** so `8081` accepts connections on the **internal** compose network. Prefer **not** adding `"8081:8081"` under `ports:` (avoids exposing metrics on the host). Prometheus should use a service DNS name like `http://authorizer:8081/metrics` on the internal network only.
+- **Public internet:** never publish **8081** to a public address. Keep metrics on loopback or an internal network; use auth/network policy at the edge if you must expose a scrape path.
+
+**Health checks:** the image `HEALTHCHECK` calls **`http://127.0.0.1:8080/healthz`** on the main server only, so liveness works even when metrics are loopback-only.
+
+---
+
 ## Using with PostgreSQL
 
 ```bash
