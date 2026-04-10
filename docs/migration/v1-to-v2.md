@@ -347,6 +347,64 @@ To see all flags and defaults:
 ./build/server --help
 ```
 
+### Breaking changes — April 2026 security batch
+
+If you are upgrading **across** the April 2026 security release (any
+release on or after that date), two existing flags now have stricter
+behaviour. Both will cause silent regressions if you don't address them
+during the upgrade:
+
+#### `--admin-secret` is now required
+
+In earlier v2 releases, `--admin-secret` defaulted to the literal string
+`password` if you forgot to set it. That default is gone. The server
+now exits at startup with a fatal error when the flag is empty or
+missing:
+
+```
+FATAL: --admin-secret is required and must not be empty.
+```
+
+**Action required:** set `--admin-secret` to any non-empty value before
+restarting. The strength of the secret is your responsibility — the
+server only enforces non-emptiness.
+
+```bash
+./build/server --admin-secret="$(openssl rand -hex 32)" ...
+```
+
+#### `--trusted-proxies` defaults to none
+
+Per-IP rate limiting, audit logs, Prometheus metrics, and CSRF
+same-origin checks now read the client IP from `RemoteAddr` by default
+and **ignore** `X-Forwarded-For`. This closes a spoofing hole where any
+client could pretend to be a different IP by sending a forged
+`X-Forwarded-For` header.
+
+If your Authorizer instance is **directly exposed to the internet** (no
+proxy in front), you don't need to do anything — the new default is
+correct.
+
+If your Authorizer instance is **behind a reverse proxy** (nginx, AWS
+ALB, Cloudflare, an ingress controller, etc.), you must opt in by
+listing the proxy network in CIDR form. Otherwise, every request will
+appear to come from the proxy IP and per-IP rate limiting will trip on
+its first burst:
+
+```bash
+# Behind nginx on the same host
+./build/server --trusted-proxies=127.0.0.1/32,::1/128 ...
+
+# Inside a Kubernetes cluster
+./build/server --trusted-proxies=10.0.0.0/8 ...
+
+# Behind Cloudflare
+./build/server --trusted-proxies=$(cat cloudflare-ips.txt | paste -sd, -) ...
+```
+
+See the new [Security Hardening](../core/security#trusted-proxies) page
+for the full topology table and flag reference.
+
 ---
 
 ## 4. Deprecated GraphQL API Behavior

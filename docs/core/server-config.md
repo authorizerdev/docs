@@ -80,8 +80,18 @@ These flags replace v1 env such as `CLIENT_ID`, `CLIENT_SECRET`, and app behavio
 
 - **`--client-id`** (required): instance/client identifier.
 - **`--client-secret`** (required): secret used for token-related operations.
-- **`--admin-secret`**: super admin secret for admin operations.
-- **`--allowed-origins`**: comma-separated list of allowed origins (default `*`).
+- **`--admin-secret`** (**required, non-empty**): super-admin secret for admin
+  operations. **Breaking change as of April 2026**: there is no default any
+  more — empty causes the server to exit at startup. Pick any non-empty value;
+  the strength of the secret is your responsibility. See [Security Hardening](./security#admin-authentication).
+- **`--allowed-origins`**: comma-separated list of allowed origins (default
+  `*`). A startup warning is logged when the value contains `*` — set an
+  explicit allowlist for production. See [CORS, CSRF and origin enforcement](./security#cors-csrf-and-origin-enforcement).
+- **`--trusted-proxies`** (default empty): comma-separated CIDRs of reverse
+  proxies whose `X-Forwarded-For` should be honoured. **Breaking change as of
+  April 2026**: defaults to none — operators behind a proxy must set this
+  explicitly or rate limiting and audit logs will key on the proxy IP. See
+  [Trusted proxies](./security#trusted-proxies).
 
 Organization / UI:
 
@@ -152,11 +162,18 @@ Or for asymmetric keys:
   --jwt-public-key="$(cat /path/to/public.key)"
 ```
 
-Additional flag:
+Additional flags:
 
 - **`--custom-access-token-script`**: path/string for custom token augmentation logic (advanced use only).
+- **`--refresh-token-expires-in`** (default `2592000`, 30 days): refresh-token
+  lifetime in seconds. Previously hardcoded — now operator-configurable.
 
 In v2, the `_generate_jwt_keys` mutation is deprecated and returns an error; configure keys **only via flags**.
+
+> **Note on key rotation:** `--jwt-secret` is also used to encrypt TOTP shared
+> secrets at rest and to HMAC OTPs. Rotating it will lock out every user with
+> an enrolled TOTP authenticator until they re-enrol. See
+> [OTP and TOTP at rest](./security#otp-and-totp-at-rest).
 
 ---
 
@@ -236,21 +253,61 @@ Rate limiting is always enabled by default. When `--redis-url` is set, limits ar
 
 New in v2:
 
-
-
 ```bash
 ./build/server \
   --disable-admin-header-auth=true \
-  --enable-graphql-introspection=false
+  --enable-graphql-introspection=false \
+  --graphql-max-complexity=300 \
+  --graphql-max-depth=15 \
+  --graphql-max-aliases=30 \
+  --graphql-max-body-bytes=1048576
 ```
 
 - **`--disable-admin-header-auth`**: when `true`, the server ignores `X-Authorizer-Admin-Secret` and only honors the secure admin cookie.
   **Recommended for production.**
 - **`--enable-graphql-introspection`**: disable in locked-down environments.
+- **`--graphql-max-complexity`** (default `300`): max total complexity score per operation.
+- **`--graphql-max-depth`** (default `15`): max selection-set nesting depth.
+- **`--graphql-max-aliases`** (default `30`): max aliased fields per operation (defends against alias amplification).
+- **`--graphql-max-body-bytes`** (default `1048576`, 1 MiB): max GraphQL request body size.
+
+`GET /graphql` is no longer accepted — clients must POST. Rejections are
+counted in the `authorizer_graphql_limit_rejections_total` Prometheus
+metric, labelled by limit kind. See
+[GraphQL hardening](./security#graphql-hardening) for details.
 
 ---
 
-## 10. Discovering all flags
+## 9. Security headers
+
+```bash
+./build/server \
+  --enable-hsts=true \
+  --disable-csp=false
+```
+
+- **`--enable-hsts`** (default `false`): emit `Strict-Transport-Security`. Only enable behind TLS — turning HSTS on without TLS will lock browsers out for a year.
+- **`--disable-csp`** (default `false`): disable the default `Content-Security-Policy` header. CSP is on by default.
+
+The defaults are conservative and documented at
+[Security response headers](./security#security-response-headers).
+
+---
+
+## 10. Full security reference
+
+See the dedicated [Security Hardening](./security) page for:
+
+- The complete list of security CLI flags introduced in April 2026
+- Trusted-proxy configuration for various deployment topologies
+- CSRF, CORS, OAuth flow, and webhook SSRF protections (all automatic)
+- OTP and TOTP at-rest hardening, including the rolling-deploy note
+  for multi-replica clusters
+- Login error normalization and user-enumeration defences
+
+---
+
+## 11. Discovering all flags
 
 To list all available flags and their defaults, run:
 
