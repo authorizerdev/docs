@@ -97,8 +97,24 @@ curl http://localhost:8080/metrics
 |--------|------|--------|-------------|
 | `authorizer_graphql_errors_total` | Counter | `operation` | GraphQL responses containing errors (HTTP 200 with errors) |
 | `authorizer_graphql_request_duration_seconds` | Histogram | `operation` | GraphQL operation latency |
+| `authorizer_graphql_limit_rejections_total` | Counter | `limit` | Operations rejected for exceeding a configured query limit |
 
 GraphQL APIs return HTTP 200 even when the response contains errors. These metrics capture those application-level errors that would otherwise be invisible to HTTP-level monitoring.
+
+The `limit` label on `authorizer_graphql_limit_rejections_total` is one of:
+
+| Value | What was exceeded | Tunable via |
+|---|---|---|
+| `depth` | Selection-set nesting depth | `--graphql-max-depth` |
+| `complexity` | Total complexity score | `--graphql-max-complexity` |
+| `alias` | Total aliased fields per operation | `--graphql-max-aliases` |
+| `body_size` | HTTP request body size | `--graphql-max-body-bytes` |
+
+A sustained non-zero rate on any label usually means either an
+exploration attempt or a legitimate operation that needs the limit
+raised. Alert at the rate that distinguishes the two for your traffic
+profile. See [GraphQL hardening](./security#graphql-hardening) for the
+limits themselves.
 
 ### Infrastructure Metrics
 

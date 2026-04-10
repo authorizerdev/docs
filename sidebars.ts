@@ -17,6 +17,7 @@ const sidebars: SidebarsConfig = {
       items: [
         'core/index',
         'core/server-config',
+        'core/security',
         'core/databases',
         'core/endpoints',
         'core/graphql-api',
