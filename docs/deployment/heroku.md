@@ -35,6 +35,20 @@ For Authorizer v2, configure the following required variables in your Heroku app
 | `CLIENT_ID` | `123456` |
 | `CLIENT_SECRET` | `secret` |
 
+### Optional: metrics bind address and rate limits
+
+The [authorizer-heroku](https://github.com/authorizerdev/authorizer-heroku) Dockerfile passes these **Config Vars** through to the binary (shell defaults match Authorizer):
+
+| Variable | Maps to | Default | Notes |
+| -------- | ------- | ------- | ----- |
+| `METRICS_HOST` | `--metrics-host` | `127.0.0.1` | `0.0.0.0` only if an internal scraper must reach `METRICS_PORT`; do not publish metrics publicly. |
+| `METRICS_PORT` | `--metrics-port` | `8081` | |
+| `RATE_LIMIT_RPS` | `--rate-limit-rps` | `30` | `0` disables per-IP limiting. |
+| `RATE_LIMIT_BURST` | `--rate-limit-burst` | `20` | |
+| `RATE_LIMIT_FAIL_CLOSED` | `--rate-limit-fail-closed` | `false` | `true` → **503** on rate-limit backend errors. |
+
+Use `REDIS_URL` for shared sessions and rate limits across dynos ([rate limiting](../core/rate-limiting)).
+
 Update the Procfile or startup command to pass CLI flags:
 
 ```

@@ -41,6 +41,20 @@ Set the following required environment variables:
 | `CLIENT_ID` | `123456` |
 | `CLIENT_SECRET` | `secret` |
 
+### Optional: metrics bind address and rate limits
+
+The [authorizer-render](https://github.com/authorizerdev/authorizer-render) image expands these variables to CLI flags:
+
+| Variable | Maps to | Default |
+| -------- | ------- | ------- |
+| `METRICS_HOST` | `--metrics-host` | `127.0.0.1` |
+| `METRICS_PORT` | `--metrics-port` | `8081` |
+| `RATE_LIMIT_RPS` | `--rate-limit-rps` | `30` |
+| `RATE_LIMIT_BURST` | `--rate-limit-burst` | `20` |
+| `RATE_LIMIT_FAIL_CLOSED` | `--rate-limit-fail-closed` | `false` |
+
+See [Metrics & monitoring](../core/metrics-monitoring) and [Rate limiting](../core/rate-limiting). Add `REDIS_URL` if you run more than one instance.
+
 Update the start command to pass CLI flags:
 
 ```bash

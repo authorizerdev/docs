@@ -188,10 +188,18 @@ const config: Config = {
           },
         },
         blog: false,
-        gtag: {
-          trackingID: process.env.GOOGLE_ANALYTICS_ID || 'G-XXXXXXXXXX',
-          anonymizeIP: true,
-        },
+        // Only register gtag when a real tracking ID is supplied.
+        // The plugin loads the gtag script with whatever trackingID
+        // it receives — passing a placeholder like 'G-XXXXXXXXXX'
+        // causes the script load to fail (or be blocked locally by
+        // ad-blockers) and then every page-view call throws
+        // "window.gtag is not a function" at runtime.
+        gtag: process.env.GOOGLE_ANALYTICS_ID
+          ? {
+              trackingID: process.env.GOOGLE_ANALYTICS_ID,
+              anonymizeIP: true,
+            }
+          : undefined,
         theme: {
           customCss: './src/css/custom.css',
         },

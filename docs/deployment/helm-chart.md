@@ -104,6 +104,17 @@ helm install \
 | `redis.storageClassName` | Storage class name for Redis PVC | - |
 | `redis.storage` | Size of Redis PVC | `5Gi` |
 
+### HTTP, metrics, and rate limiting
+
+| Name | Description | Default |
+| ---- | ----------- | ------- |
+| `authorizer.http_port` | Main HTTP listen port (`--http-port`); must differ from `metrics_port` | `8080` |
+| `authorizer.metrics_port` | Dedicated `/metrics` listener port (`--metrics-port`) | `8081` |
+| `authorizer.metrics_host` | Bind address for `/metrics` (`--metrics-host`); `0.0.0.0` for in-cluster Prometheus | `0.0.0.0` |
+| `authorizer.rate_limit_rps` | Per-IP sustained RPS (`--rate-limit-rps`); `0` disables | `30` |
+| `authorizer.rate_limit_burst` | Per-IP burst size (`--rate-limit-burst`) | `20` |
+| `authorizer.rate_limit_fail_closed` | On Redis/rate-limit errors, return 503 (`--rate-limit-fail-closed`) | `false` |
+
 ### Couchbase
 
 | Name | Description | Default |

@@ -37,7 +37,7 @@ Endpoints supported by Authorizer
 
 ## `/metrics`
 
-`GET /metrics` - Prometheus-compatible metrics endpoint. See [Metrics & Monitoring](../core/metrics-monitoring) for details.
+`GET /metrics` — Prometheus-compatible metrics. **Always** served on a **separate listener** at **`--metrics-host`:`--metrics-port`** (defaults **`127.0.0.1:8081`**); never on the main HTTP port (`--http-port` must differ). See [Metrics & Monitoring](../core/metrics-monitoring) for details.
 
 ## `/verify_email`
 
