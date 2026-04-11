@@ -283,6 +283,7 @@ Use these v2 **CLI flags** instead of v1 env or dashboard config. Flag names use
 | v1                                        | v2 CLI flag |
 | ----------------------------------------- | ----------- |
 | `APP_COOKIE_SECURE`, `ADMIN_COOKIE_SECURE` | `--app-cookie-secure`, `--admin-cookie-secure` |
+| _(new in v2)_ | `--app-cookie-same-site` (values: `none`, `lax`, `strict`; default: `none`) |
 
 ### JWT
 
