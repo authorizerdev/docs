@@ -2,6 +2,12 @@ import {themes as prismThemes} from 'prism-react-renderer';
 import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
+const SITE_URL = 'https://docs.authorizer.dev';
+/** Same artwork as authorizer.dev — Open Graph / X / LinkedIn link previews */
+const OG_IMAGE_URL = `${SITE_URL}/img/authorizer-og.png`;
+const OG_IMAGE_WIDTH = '1734';
+const OG_IMAGE_HEIGHT = '907';
+
 const config: Config = {
   title: 'Authorizer',
   tagline: 'Open-source authentication and authorization solution for your applications',
@@ -11,7 +17,7 @@ const config: Config = {
     v4: true,
   },
 
-  url: 'https://docs.authorizer.dev',
+  url: SITE_URL,
   baseUrl: '/',
 
   organizationName: 'authorizerdev',
@@ -60,14 +66,43 @@ const config: Config = {
       tagName: 'meta',
       attributes: {
         property: 'og:url',
-        content: 'https://docs.authorizer.dev',
+        content: SITE_URL,
       },
     },
     {
       tagName: 'meta',
       attributes: {
         property: 'og:image',
-        content: 'https://docs.authorizer.dev/img/logo.png',
+        content: OG_IMAGE_URL,
+      },
+    },
+    {
+      tagName: 'meta',
+      attributes: {
+        property: 'og:image:width',
+        content: OG_IMAGE_WIDTH,
+      },
+    },
+    {
+      tagName: 'meta',
+      attributes: {
+        property: 'og:image:height',
+        content: OG_IMAGE_HEIGHT,
+      },
+    },
+    {
+      tagName: 'meta',
+      attributes: {
+        property: 'og:image:type',
+        content: 'image/png',
+      },
+    },
+    {
+      tagName: 'meta',
+      attributes: {
+        property: 'og:image:alt',
+        content:
+          'Authorizer — open-source authentication and authorization',
       },
     },
     {
@@ -109,7 +144,15 @@ const config: Config = {
       tagName: 'meta',
       attributes: {
         name: 'twitter:image',
-        content: 'https://docs.authorizer.dev/img/logo.png',
+        content: OG_IMAGE_URL,
+      },
+    },
+    {
+      tagName: 'meta',
+      attributes: {
+        name: 'twitter:image:alt',
+        content:
+          'Authorizer — open-source authentication and authorization',
       },
     },
     {
@@ -123,7 +166,7 @@ const config: Config = {
       tagName: 'meta',
       attributes: {
         name: 'twitter:url',
-        content: 'https://docs.authorizer.dev',
+        content: SITE_URL,
       },
     },
     {
@@ -208,7 +251,7 @@ const config: Config = {
   ],
 
   themeConfig: {
-    image: 'img/logo.png',
+    image: 'img/authorizer-og.png',
     metadata: [
       {name: 'theme-color', content: '#3B82F6'},
       {name: 'msapplication-TileColor', content: '#ffffff'},
