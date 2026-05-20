@@ -267,6 +267,30 @@ query {
 }
 ```
 
+### `my_permissions`
+
+Query the flat list of `(resource, scope)` pairs the calling principal has been granted. Requires a valid session or bearer token.
+
+**Response**
+
+| Key        | Description                              |
+| ---------- | ---------------------------------------- |
+| `resource` | Resource name granted to the principal.  |
+| `scope`    | Scope name granted on that resource.     |
+
+**Sample Query**
+
+```graphql
+query {
+  my_permissions {
+    resource
+    scope
+  }
+}
+```
+
+See [Authorization (FGA)](./authorization) for the full model.
+
 ### `_user`
 
 Query to get a specific user by either id or email.
@@ -1646,3 +1670,61 @@ mutation {
   }
 }
 ```
+
+### Authorization (admin)
+
+Manage the FGA policy graph. All require super-admin authentication (cookie or `X-Authorizer-Admin-Secret`). See [Authorization (FGA)](./authorization) for the conceptual model.
+
+#### `_add_resource` / `_update_resource` / `_delete_resource` / `_list_resources`
+
+Manage **resources** (the nouns the application protects).
+
+```graphql
+mutation { _add_resource(params: { name: "docs" }) { id name } }
+mutation { _update_resource(params: { id: "<id>", name: "documents" }) { id name } }
+mutation { _delete_resource(params: { id: "<id>" }) { message } }
+query    { _list_resources(params: { pagination: { limit: 25, page: 1 } }) {
+  pagination { total limit page }
+  resources  { id name }
+} }
+```
+
+#### `_add_scope` / `_update_scope` / `_delete_scope` / `_list_scopes`
+
+Manage **scopes** (verbs / actions). Same input/output shape as resources.
+
+#### `_add_policy` / `_update_policy` / `_delete_policy` / `_list_policies`
+
+Manage **policies** (principal selectors).
+
+```graphql
+mutation {
+  _add_policy(params: {
+    name: "user-role-can-read",
+    type: "role",
+    targets: [{ target_type: "role", target_value: "user" }],
+    logic:  "positive",
+    decision_strategy: "affirmative"
+  }) { id name }
+}
+```
+
+`type` accepts `role`, `user`, or `attribute`. `target_value` for `role` policies must be a configured role (see `--roles`). `target_value` for `user` policies is the user's **ID** (not email).
+
+#### `_add_permission` / `_update_permission` / `_delete_permission` / `_list_permissions`
+
+Bind a resource + scopes + policies into a single permission row.
+
+```graphql
+mutation {
+  _add_permission(params: {
+    name: "docs-read",
+    resource_id: "<resource-id>",
+    scope_ids:   ["<read-scope-id>"],
+    policy_ids:  ["<policy-id>"],
+    decision_strategy: "affirmative"
+  }) { id name }
+}
+```
+
+`decision_strategy` is one of `affirmative` (default), `consensus`, or `unanimous`. See [Authorization §6](./authorization#6-decision-strategies).
