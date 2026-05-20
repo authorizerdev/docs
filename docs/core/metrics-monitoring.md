@@ -132,6 +132,42 @@ raised. Alert at the rate that distinguishes the two for your traffic
 profile. See [GraphQL hardening](./security#graphql-hardening) for the
 limits themselves.
 
+### Authorization Metrics
+
+| Metric | Type | Labels | Description |
+|--------|------|--------|-------------|
+| `authorizer_required_permissions_checks_total` | Counter | `endpoint`, `outcome` | Per-endpoint outcome of `required_permissions` on session APIs. |
+| `authorizer_authz_checks_total` | Counter | `result` | Every `CheckPermission` call. `result=allowed\|denied\|unmatched\|error`. |
+| `authorizer_authz_unmatched_total` | Counter | — | `CheckPermission` calls that found no permission row for `(resource, scope)`. |
+| `authorizer_authz_check_duration_seconds` | Histogram | — | End-to-end `CheckPermission` latency. |
+
+**`required_permissions_checks_total` labels:**
+
+| Label | Values |
+| ----- | ------ |
+| `endpoint` | `session`, `validate_session`, `validate_jwt_token` |
+| `outcome`  | `granted` (all listed permissions allowed) · `denied` (one or more denied) · `not_requested` (caller omitted the field) · `error` (CheckPermission errored — DB/validation) |
+
+**Use cases:**
+
+- `outcome="denied"` rising on a given endpoint = either a policy gap or an attacker probe. Cross-check with `authorizer_authz_unmatched_total` (gap) versus `authorizer_authz_checks_total{result="denied"}` (policy deny).
+- `outcome="error"` should sit at zero. Any non-zero rate is an infra problem — alert on it.
+- `outcome="not_requested"` is the FGA *adoption gap* — share of calls not yet opting into permission gating.
+
+```promql
+# Adoption: share of calls per endpoint that still don't pass required_permissions
+sum by (endpoint) (rate(authorizer_required_permissions_checks_total{outcome="not_requested"}[5m]))
+  /
+sum by (endpoint) (rate(authorizer_required_permissions_checks_total[5m]))
+```
+
+```promql
+# Alert candidate: required_permissions errors over 5 minutes
+sum(rate(authorizer_required_permissions_checks_total{outcome="error"}[5m])) > 0
+```
+
+See [Authorization (FGA)](./authorization) for the underlying model.
+
 ### Infrastructure Metrics
 
 | Metric | Type | Labels | Description |
@@ -249,6 +285,15 @@ groups:
           severity: warning
         annotations:
           summary: "Elevated GraphQL error rate"
+
+      - alert: AuthzRequiredPermissionsErrors
+        expr: sum(rate(authorizer_required_permissions_checks_total{outcome="error"}[5m])) > 0
+        for: 5m
+        labels:
+          severity: page
+        annotations:
+          summary: "required_permissions checks are failing with errors"
+          description: "Authorizer's FGA evaluator is returning errors on required_permissions checks. Storage or validation failure is likely. Inspect server logs."
 ```
 
 ## Manual Testing
