@@ -74,7 +74,7 @@ go run main.go \
 ## Option B: Docker
 
 ```bash
-docker run -p 8080:8080 lakhansamani/authorizer:latest \
+docker run -p 8080:8080 quay.io/authorizer/authorizer:latest \
   --database-type=sqlite \
   --database-url=test.db \
   --jwt-type=HS256 \
@@ -87,7 +87,7 @@ docker run -p 8080:8080 lakhansamani/authorizer:latest \
 With PostgreSQL:
 
 ```bash
-docker run -p 8080:8080 lakhansamani/authorizer:latest \
+docker run -p 8080:8080 quay.io/authorizer/authorizer:latest \
   --database-type=postgres \
   --database-url="postgres://user:pass@host:5432/authorizer" \
   --jwt-type=HS256 \
@@ -144,7 +144,7 @@ See [Kubernetes deployment](../deployment/kubernetes) for full manifests and [He
 | Railway | [Deploy on Railway](https://railway.app/new/template/nwXp1C?referralCode=FEF4uT) |
 | Heroku | [Deploy to Heroku](https://heroku.com/deploy?template=https://github.com/authorizerdev/authorizer-heroku) |
 | Render | [Deploy to Render](https://render.com/deploy?repo=https://github.com/authorizerdev/authorizer-render) |
-| Koyeb | [Deploy to Koyeb](https://app.koyeb.com/deploy?name=authorizer&type=docker&image=docker.io/lakhansamani/authorizer&env[PORT]=8000&env[DATABASE_TYPE]=postgres&env[DATABASE_URL]=CHANGE_ME&ports=8000;http;/) |
+| Koyeb | [Deploy to Koyeb](https://app.koyeb.com/deploy?name=authorizer&type=docker&image=quay.io/authorizer/authorizer&env[PORT]=8000&env[DATABASE_TYPE]=postgres&env[DATABASE_URL]=CHANGE_ME&ports=8000;http;/) |
 
 See the [Deployment](../deployment/) section for detailed guides for each platform.
 

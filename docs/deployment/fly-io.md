@@ -63,7 +63,7 @@ kill_timeout = 5
 processes = []
 
 [build]
-image = "lakhansamani/authorizer:latest"
+image = "quay.io/authorizer/authorizer:latest"
 
 [experimental]
 cmd = [

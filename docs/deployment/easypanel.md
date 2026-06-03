@@ -44,4 +44,4 @@ After deployment, update the start command to include the required v2 CLI flags:
 
 ## Update Instance
 
-Update the Docker image version in your EasyPanel configuration to the desired version from [GitHub Releases](https://github.com/authorizerdev/authorizer/releases) or [Docker Hub](https://hub.docker.com/r/lakhansamani/authorizer).
+Update the Docker image version in your EasyPanel configuration to the desired version from [GitHub Releases](https://github.com/authorizerdev/authorizer/releases) or [Quay](https://quay.io/repository/authorizer/authorizer).

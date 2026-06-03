@@ -12,7 +12,7 @@ Run Authorizer using Docker with the v2 **CLI-only configuration model**.
 ## Quick Start
 
 ```bash
-docker run -p 8080:8080 lakhansamani/authorizer:latest \
+docker run -p 8080:8080 quay.io/authorizer/authorizer:latest \
   --database-type=sqlite \
   --database-url=test.db \
   --jwt-type=HS256 \
@@ -48,7 +48,7 @@ The image **`EXPOSE`s `8080` and `8081`**. That only **documents** which ports t
 ## Using with PostgreSQL
 
 ```bash
-docker run -p 8080:8080 lakhansamani/authorizer:latest \
+docker run -p 8080:8080 quay.io/authorizer/authorizer:latest \
   --database-type=postgres \
   --database-url="postgres://user:pass@host:5432/authorizer" \
   --jwt-type=HS256 \
@@ -68,7 +68,7 @@ Create a `docker-compose.yml`:
 version: "3.8"
 services:
   authorizer:
-    image: lakhansamani/authorizer:latest
+    image: quay.io/authorizer/authorizer:latest
     ports:
       - "8080:8080"
     command:
@@ -114,7 +114,7 @@ services:
       - "6379:6379"
 
   authorizer:
-    image: lakhansamani/authorizer:latest
+    image: quay.io/authorizer/authorizer:latest
     ports:
       - "8080:8080"
     depends_on:
@@ -149,7 +149,7 @@ docker run -p 8080:8080 \
   -e ADMIN_SECRET=admin \
   -e CLIENT_ID=123456 \
   -e CLIENT_SECRET=secret \
-  lakhansamani/authorizer:latest \
+  quay.io/authorizer/authorizer:latest \
     --database-type="$DATABASE_TYPE" \
     --database-url="$DATABASE_URL" \
     --jwt-type=HS256 \

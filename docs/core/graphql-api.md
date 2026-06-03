@@ -109,10 +109,11 @@ This query can take a optional input `params` of type `SessionQueryInput` which 
 
 **Request Params**
 
-| Key     | Description                                                                                 | Required |
-| ------- | ------------------------------------------------------------------------------------------- | -------- |
-| `roles` | Array of string with valid roles                                                            | false    |
-| `scope` | List of openID scopes. If not present default scopes ['openid', 'email', 'profile'] is used | false    |
+| Key                    | Description                                                                                                                                                                  | Required |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| `roles`                | Array of string with valid roles                                                                                                                                             | false    |
+| `scope`                | List of openID scopes. If not present default scopes ['openid', 'email', 'profile'] is used                                                                                  | false    |
+| `required_permissions` | Array of `{resource, scope}` pairs evaluated with AND semantics against the caller's principal. Any deny or unmatched pair returns `unauthorized`. See [Authorization (FGA)](./authorization). | false    |
 
 It returns `AuthResponse` type with the following keys.
 
@@ -133,7 +134,12 @@ It returns `AuthResponse` type with the following keys.
 
 ```graphql
 query {
-  session(params: { roles: ["admin"] }) {
+  session(params: {
+    roles: ["admin"],
+    required_permissions: [
+      { resource: "dashboard", scope: "view" }
+    ]
+  }) {
     message
     access_token
     expires_in
@@ -194,11 +200,12 @@ query {
 Query to validate the given jwt token. This query needs input `params` of type `ValidateJWTTokenInput`
 
 **Request Parameters**
-| Key | Description | Required |
-| ------------ | -------------------------------------------------------------------------------------------------------- | -------- |
-| `token_type` | Type of token that needs to be validated. It can be one of `access_token`, `refresh_token` or `id_token` | `true` |
-| `token` | Jwt token string | `true` |
-| `roles` | Array of roles to validate jwt token for | `false` |
+| Key                    | Description                                                                                                                                                                  | Required |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| `token_type`           | Type of token that needs to be validated. One of `access_token`, `refresh_token`, `id_token`.                                                                                | `true`   |
+| `token`                | JWT string                                                                                                                                                                   | `true`   |
+| `roles`                | Array of roles to validate the JWT token for                                                                                                                                 | `false`  |
+| `required_permissions` | Array of `{resource, scope}` pairs evaluated with AND semantics against the JWT's principal. Any deny or unmatched pair returns `unauthorized`. See [Authorization (FGA)](./authorization). | `false`  |
 
 It returns `ValidateJWTTokenResponse` type with the following keys.
 
@@ -213,10 +220,15 @@ It returns `ValidateJWTTokenResponse` type with the following keys.
 
 ```graphql
 query {
-  validate_jwt_token(
-    params: { token_type: "access_token", token: "some jwt token" }
-  ) {
+  validate_jwt_token(params: {
+    token_type: "access_token",
+    token: "some jwt token",
+    required_permissions: [
+      { resource: "docs", scope: "read" }
+    ]
+  }) {
     is_valid
+    claims
   }
 }
 ```
@@ -226,10 +238,11 @@ query {
 Query to validate the browser session. This query needs input `params` of type `ValidateSessionInput`
 
 **Request Parameters**
-| Key | Description | Required |
-| ------------ | -------------------------------------------------------------------------------------------------------- | -------- |
-| `cookie` | Browser cookie. Either browser http cookie is present or this parameter should be present | `false` |
-| `roles` | Array of roles to validate session for | `false` |
+| Key                    | Description                                                                                                                                                                  | Required |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| `cookie`               | Browser cookie. Either the browser HTTP cookie is present or this parameter must be supplied.                                                                                | `false`  |
+| `roles`                | Array of roles to validate session for                                                                                                                                       | `false`  |
+| `required_permissions` | Array of `{resource, scope}` pairs evaluated with AND semantics against the cookie's principal. Any deny or unmatched pair returns `unauthorized`. See [Authorization (FGA)](./authorization). | `false`  |
 
 It returns `ValidateSessionResponse` type with the following keys.
 
@@ -243,11 +256,40 @@ It returns `ValidateSessionResponse` type with the following keys.
 
 ```graphql
 query {
-  validate_session(params: { cookie: "" }) {
+  validate_session(params: {
+    cookie: "",
+    required_permissions: [
+      { resource: "docs", scope: "write" }
+    ]
+  }) {
     is_valid
   }
 }
 ```
+
+### `permissions`
+
+Query the flat list of `(resource, scope)` pairs the calling principal has been granted. Requires a valid session or bearer token.
+
+**Response**
+
+| Key        | Description                              |
+| ---------- | ---------------------------------------- |
+| `resource` | Resource name granted to the principal.  |
+| `scope`    | Scope name granted on that resource.     |
+
+**Sample Query**
+
+```graphql
+query {
+  permissions {
+    resource
+    scope
+  }
+}
+```
+
+See [Authorization (FGA)](./authorization) for the full model.
 
 ### `_user`
 
@@ -1628,3 +1670,63 @@ mutation {
   }
 }
 ```
+
+### Authorization (admin)
+
+Manage the FGA policy graph. All require super-admin authentication (cookie or `X-Authorizer-Admin-Secret`). See [Authorization (FGA)](./authorization) for the conceptual model.
+
+All admin authorization operations are namespaced with the `_authz_` prefix.
+
+#### `_authz_add_resource` / `_authz_update_resource` / `_authz_delete_resource` / `_authz_resources`
+
+Manage **resources** (the nouns the application protects).
+
+```graphql
+mutation { _authz_add_resource(params: { name: "docs" }) { id name } }
+mutation { _authz_update_resource(params: { id: "<id>", name: "documents" }) { id name } }
+mutation { _authz_delete_resource(id: "<id>") { message } }
+query    { _authz_resources(params: { pagination: { limit: 25, page: 1 } }) {
+  pagination { total limit page }
+  resources  { id name }
+} }
+```
+
+#### `_authz_add_scope` / `_authz_update_scope` / `_authz_delete_scope` / `_authz_scopes`
+
+Manage **scopes** (verbs / actions). Same input/output shape as resources.
+
+#### `_authz_add_policy` / `_authz_update_policy` / `_authz_delete_policy` / `_authz_policies`
+
+Manage **policies** (principal selectors).
+
+```graphql
+mutation {
+  _authz_add_policy(params: {
+    name: "user-role-can-read",
+    type: "role",
+    targets: [{ target_type: "role", target_value: "user" }],
+    logic:  "positive",
+    decision_strategy: "affirmative"
+  }) { id name }
+}
+```
+
+`type` accepts `role`, `user`, or `attribute`. `target_value` for `role` policies must be a configured role (see `--roles`). `target_value` for `user` policies is the user's **ID** (not email).
+
+#### `_authz_add_permission` / `_authz_update_permission` / `_authz_delete_permission` / `_authz_permissions`
+
+Bind a resource + scopes + policies into a single permission row.
+
+```graphql
+mutation {
+  _authz_add_permission(params: {
+    name: "docs-read",
+    resource_id: "<resource-id>",
+    scope_ids:   ["<read-scope-id>"],
+    policy_ids:  ["<policy-id>"],
+    decision_strategy: "affirmative"
+  }) { id name }
+}
+```
+
+`decision_strategy` is one of `affirmative` (default), `consensus`, or `unanimous`. See [Authorization §6](./authorization#6-decision-strategies).

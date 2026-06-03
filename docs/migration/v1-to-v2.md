@@ -504,3 +504,26 @@ import { SignUpRequest, LoginRequest } from '@authorizerdev/authorizer-js'
 - [ ] Upgrade **@authorizerdev/authorizer-js** to v3 and **@authorizerdev/authorizer-react** to v2; update type names and Node version as needed.
 - [ ] Use **kebab-case** flags (for example `--database-url`) and avoid deprecated names (`database_url`, `env_file`, etc.).
 - [ ] Re-test admin login, JWT issuance, and any flows that previously depended on dashboard-updated env.
+
+---
+
+## Authorization (FGA)
+
+v2 introduces a fine-grained authorization layer alongside the existing role check. It is **opt-in per request** — pre-v2 callers that do not pass `required_permissions` see no behavior change.
+
+### What's new
+
+- `session`, `validate_session`, and `validate_jwt_token` accept a new optional `required_permissions: [PermissionInput!]` field. Any deny or unmatched `(resource, scope)` returns `unauthorized`.
+- Admin GraphQL operations namespaced under `_authz_`: `_authz_add_resource`, `_authz_add_scope`, `_authz_add_policy`, `_authz_add_permission` (plus update / delete mutations and `_authz_resources` / `_authz_scopes` / `_authz_policies` / `_authz_permissions` list queries). Dashboard UI under Authorization → Resources / Scopes / Policies / Permissions.
+- New per-call `permissions` query returns the flat `(resource, scope)` list granted to the calling principal.
+- New CLI flag `--authorization-cache-ttl` (default `300` seconds). Cache is delegated to your configured `memory_store` (Redis or DB-backed); set `0` to disable.
+- New Prometheus counter `authorizer_required_permissions_checks_total{endpoint, outcome}` for adoption + denial tracking. Outcomes: `granted` / `denied` / `not_requested` / `error`.
+
+### Adoption checklist
+
+- [ ] **Define the policy graph first** via the dashboard (Authorization → Resources/Scopes/Policies/Permissions) or admin GraphQL mutations. Any `required_permissions` pointing at an undefined `(resource, scope)` returns `unauthorized` immediately — authorization is always enforcing, there is no permissive fallthrough.
+- [ ] **Adopt incrementally** by adding `required_permissions` to one session API call site at a time.
+- [ ] **Alert on `outcome="error"`** for `authorizer_required_permissions_checks_total` — should sit at zero.
+- [ ] **Track adoption** via `outcome="not_requested"` per endpoint.
+
+Full reference: [Authorization (FGA)](../core/authorization).
