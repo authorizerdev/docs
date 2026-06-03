@@ -514,8 +514,8 @@ v2 introduces a fine-grained authorization layer alongside the existing role che
 ### What's new
 
 - `session`, `validate_session`, and `validate_jwt_token` accept a new optional `required_permissions: [PermissionInput!]` field. Any deny or unmatched `(resource, scope)` returns `unauthorized`.
-- Admin GraphQL mutations: `_add_resource`, `_add_scope`, `_add_policy`, `_add_permission` (plus list / update / delete for each). Dashboard UI under Authorization → Resources / Scopes / Policies / Permissions.
-- New per-call `my_permissions` query returns the flat `(resource, scope)` list granted to the calling principal.
+- Admin GraphQL operations namespaced under `_authz_`: `_authz_add_resource`, `_authz_add_scope`, `_authz_add_policy`, `_authz_add_permission` (plus update / delete mutations and `_authz_resources` / `_authz_scopes` / `_authz_policies` / `_authz_permissions` list queries). Dashboard UI under Authorization → Resources / Scopes / Policies / Permissions.
+- New per-call `permissions` query returns the flat `(resource, scope)` list granted to the calling principal.
 - New CLI flag `--authorization-cache-ttl` (default `300` seconds). Cache is delegated to your configured `memory_store` (Redis or DB-backed); set `0` to disable.
 - New Prometheus counter `authorizer_required_permissions_checks_total{endpoint, outcome}` for adoption + denial tracking. Outcomes: `granted` / `denied` / `not_requested` / `error`.
 

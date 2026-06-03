@@ -59,7 +59,7 @@ Authorizer v2 focuses on simpler, more secure configuration and a cleaner operat
 Or with Docker:
 
 ```bash
-docker run -p 8080:8080 lakhansamani/authorizer:latest \
+docker run -p 8080:8080 quay.io/authorizer/authorizer:latest \
   --database-type=sqlite \
   --database-url=test.db \
   --jwt-type=HS256 \

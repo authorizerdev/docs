@@ -267,7 +267,7 @@ query {
 }
 ```
 
-### `my_permissions`
+### `permissions`
 
 Query the flat list of `(resource, scope)` pairs the calling principal has been granted. Requires a valid session or bearer token.
 
@@ -282,7 +282,7 @@ Query the flat list of `(resource, scope)` pairs the calling principal has been 
 
 ```graphql
 query {
-  my_permissions {
+  permissions {
     resource
     scope
   }
@@ -1675,31 +1675,33 @@ mutation {
 
 Manage the FGA policy graph. All require super-admin authentication (cookie or `X-Authorizer-Admin-Secret`). See [Authorization (FGA)](./authorization) for the conceptual model.
 
-#### `_add_resource` / `_update_resource` / `_delete_resource` / `_list_resources`
+All admin authorization operations are namespaced with the `_authz_` prefix.
+
+#### `_authz_add_resource` / `_authz_update_resource` / `_authz_delete_resource` / `_authz_resources`
 
 Manage **resources** (the nouns the application protects).
 
 ```graphql
-mutation { _add_resource(params: { name: "docs" }) { id name } }
-mutation { _update_resource(params: { id: "<id>", name: "documents" }) { id name } }
-mutation { _delete_resource(params: { id: "<id>" }) { message } }
-query    { _list_resources(params: { pagination: { limit: 25, page: 1 } }) {
+mutation { _authz_add_resource(params: { name: "docs" }) { id name } }
+mutation { _authz_update_resource(params: { id: "<id>", name: "documents" }) { id name } }
+mutation { _authz_delete_resource(id: "<id>") { message } }
+query    { _authz_resources(params: { pagination: { limit: 25, page: 1 } }) {
   pagination { total limit page }
   resources  { id name }
 } }
 ```
 
-#### `_add_scope` / `_update_scope` / `_delete_scope` / `_list_scopes`
+#### `_authz_add_scope` / `_authz_update_scope` / `_authz_delete_scope` / `_authz_scopes`
 
 Manage **scopes** (verbs / actions). Same input/output shape as resources.
 
-#### `_add_policy` / `_update_policy` / `_delete_policy` / `_list_policies`
+#### `_authz_add_policy` / `_authz_update_policy` / `_authz_delete_policy` / `_authz_policies`
 
 Manage **policies** (principal selectors).
 
 ```graphql
 mutation {
-  _add_policy(params: {
+  _authz_add_policy(params: {
     name: "user-role-can-read",
     type: "role",
     targets: [{ target_type: "role", target_value: "user" }],
@@ -1711,13 +1713,13 @@ mutation {
 
 `type` accepts `role`, `user`, or `attribute`. `target_value` for `role` policies must be a configured role (see `--roles`). `target_value` for `user` policies is the user's **ID** (not email).
 
-#### `_add_permission` / `_update_permission` / `_delete_permission` / `_list_permissions`
+#### `_authz_add_permission` / `_authz_update_permission` / `_authz_delete_permission` / `_authz_permissions`
 
 Bind a resource + scopes + policies into a single permission row.
 
 ```graphql
 mutation {
-  _add_permission(params: {
+  _authz_add_permission(params: {
     name: "docs-read",
     resource_id: "<resource-id>",
     scope_ids:   ["<read-scope-id>"],

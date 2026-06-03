@@ -149,7 +149,7 @@ Example of how the next version will configure the deployment:
 ```yaml
 containers:
   - name: authorizer
-    image: lakhansamani/authorizer:latest
+    image: quay.io/authorizer/authorizer:latest
     args:
       - "--database-type=$(DATABASE_TYPE)"
       - "--database-url=$(DATABASE_URL)"

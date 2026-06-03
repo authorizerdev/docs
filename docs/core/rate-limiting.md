@@ -138,7 +138,7 @@ Redis Cluster is also supported. Provide multiple URLs:
 ```yaml
 services:
   authorizer:
-    image: lakhansamani/authorizer:latest
+    image: quay.io/authorizer/authorizer:latest
     command:
       - --database-type=postgres
       - --database-url=postgres://user:pass@db:5432/authorizer

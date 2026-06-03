@@ -68,4 +68,4 @@ Update the start command to pass CLI flags:
 
 Update the [Docker image](https://github.com/authorizerdev/authorizer-railway/blob/main/Dockerfile#L1) to the desired version in the repository created with your deployment.
 
-Find all versions on [GitHub](https://github.com/authorizerdev/authorizer/releases) or [Docker Hub](https://hub.docker.com/r/lakhansamani/authorizer).
+Find all versions on [GitHub](https://github.com/authorizerdev/authorizer/releases) or [Quay](https://quay.io/repository/authorizer/authorizer).

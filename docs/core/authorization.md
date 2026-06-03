@@ -11,8 +11,8 @@ This page covers:
 
 1. The data model — **resources, scopes, policies, permissions**.
 2. How a caller asserts a permission via `required_permissions` on `session`, `validate_session`, and `validate_jwt_token`.
-3. How an admin defines the policy graph via the `_add_resource` / `_add_scope` / `_add_policy` / `_add_permission` GraphQL mutations.
-4. How a client reads its own granted permissions via the `my_permissions` query.
+3. How an admin defines the policy graph via the `_authz_add_resource` / `_authz_add_scope` / `_authz_add_policy` / `_authz_add_permission` GraphQL mutations.
+4. How a client reads its own granted permissions via the `permissions` query.
 5. Decision strategies, principal targets, and operational observability.
 
 ---
@@ -100,17 +100,17 @@ Omit `required_permissions` to preserve pre-FGA behavior — the call returns/va
 
 ## 3. Building the policy graph (admin mutations)
 
-All admin mutations require the super-admin secret (cookie or `X-Authorizer-Admin-Secret`). They are prefixed with `_` per Authorizer convention.
+All admin mutations require the super-admin secret (cookie or `X-Authorizer-Admin-Secret`). They are prefixed with `_authz_` to namespace the authorization API distinctly from other admin operations.
 
 ### Step 1 — Define resources and scopes
 
 ```graphql
-mutation { _add_resource(params: { name: "docs" })  { id name } }
-mutation { _add_scope(params:    { name: "read" })  { id name } }
-mutation { _add_scope(params:    { name: "write" }) { id name } }
+mutation { _authz_add_resource(params: { name: "docs" })  { id name } }
+mutation { _authz_add_scope(params:    { name: "read" })  { id name } }
+mutation { _authz_add_scope(params:    { name: "write" }) { id name } }
 ```
 
-List, update, and delete each have symmetric mutations: `_list_resources`, `_update_resource`, `_delete_resource`, and the same set for `scope`.
+List, update, and delete each have symmetric operations: `_authz_resources` (list query), `_authz_update_resource`, `_authz_delete_resource`, and the same set for `scope` (`_authz_scopes`, `_authz_update_scope`, `_authz_delete_scope`).
 
 ### Step 2 — Define a policy (who matches)
 
@@ -124,7 +124,7 @@ A policy is a principal selector. The `type` field controls which target is hono
 
 ```graphql
 mutation {
-  _add_policy(params: {
+  _authz_add_policy(params: {
     name: "user-role-can-read",
     type: "role",
     targets: [{ target_type: "role", target_value: "user" }]
@@ -136,7 +136,7 @@ mutation {
 
 ```graphql
 mutation {
-  _add_permission(params: {
+  _authz_add_permission(params: {
     name: "docs-read",
     resource_id: "<resource-id>",
     scope_ids:   ["<read-scope-id>"],
@@ -150,13 +150,13 @@ mutation {
 
 ---
 
-## 4. Reading granted permissions — `my_permissions`
+## 4. Reading granted permissions — `permissions`
 
 A signed-in caller can ask "what am I allowed to do?" without enumerating every `(resource, scope)` pair:
 
 ```graphql
 query {
-  my_permissions {
+  permissions {
     resource
     scope
   }
