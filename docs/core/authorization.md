@@ -102,6 +102,10 @@ Omit `required_permissions` to preserve pre-FGA behavior — the call returns/va
 
 All admin mutations require the super-admin secret (cookie or `X-Authorizer-Admin-Secret`). They are prefixed with `_authz_` to namespace the authorization API distinctly from other admin operations.
 
+:::tip
+Every mutation in this section can also be performed from the admin UI at **`/dashboard`** (Authorization section) — no GraphQL required. The dashboard calls these same `_authz_` mutations under the hood, so the two are interchangeable.
+:::
+
 ### Step 1 — Define resources and scopes
 
 ```graphql
