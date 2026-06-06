@@ -17,6 +17,7 @@ title: Functions
 - [signup](#--signup)
 - [verifyEmail](#--verifyemail)
 - [getProfile](#--getprofile)
+- [getPermissions](#--getpermissions)
 - [updateProfile](#--updateprofile)
 - [forgotPassword](#--forgotpassword)
 - [resetPassword](#--resetpassword)
@@ -291,6 +292,39 @@ const { data, errors } = await authRef.getProfile({
 })
 ```
 
+## - `getPermissions`
+
+Function to fetch the fine-grained authorization (FGA) permissions granted to the authenticated user. This function makes an authorized request, hence if it is used from the browser the HTTP cookie is sent if user has logged in else you need to pass headers object.
+
+It accepts the optional JSON object as parameter, you can pass the HTTP Headers there.
+
+| Key             | Description                                                                            | Required |
+| --------------- | -------------------------------------------------------------------------------------- | -------- |
+| `Authorization` | Authorization header passed to the server. It needs `Bearer access_token` as its value | true     |
+
+It returns an array of permission objects in the response `data`. Each object has the following keys
+
+**Response**
+
+| Key        | Description                                                          |
+| ---------- | ------------------------------------------------------------------- |
+| `resource` | The resource the permission applies to, e.g. `documents`           |
+| `scope`    | The action allowed on the resource, e.g. `read`, `write`, `delete` |
+
+**Sample Usage**
+
+```js
+// from browser if HTTP cookie is present
+const { data, errors } = await authRef.getPermissions()
+
+// from NodeJS / if HTTP cookie is not used
+const { data, errors } = await authRef.getPermissions({
+  Authorization: `Bearer ${token}`,
+})
+
+// data => [{ resource: 'documents', scope: 'read' }, ...]
+```
+
 ## - `updateProfile`
 
 Function to update profile of user. This function makes an authorized request, hence if it is used from the browser the HTTP cookie is sent if user has logged in else you need to pass headers object.
@@ -473,7 +507,7 @@ const { data, errors } await authRef.getMetadata()
 
 Function to get session information. This function makes an authorized request, hence if it is used from the browser the HTTP cookie is sent if user has logged in else you need to pass headers object.
 
-It accepts the optional JSON object as parameter, you can pass the HTTP Headers there. Optionally you can also validate the roles against the given token by passing the `roles` as second argument to function.
+It accepts the optional JSON object as parameter, you can pass the HTTP Headers there. Optionally you can also pass a `SessionQueryRequest` object as the second argument to validate `roles` and `required_permissions` (FGA) against the session — if any required permission is denied, the request returns unauthorized.
 
 | Key             | Description                                                                          | Required |
 | --------------- | ------------------------------------------------------------------------------------ | -------- |
@@ -511,6 +545,16 @@ const { data, errors } = await authRef.getSession(
     Authorization: `Bearer some_token`,
   },
   'admin',
+)
+
+// with fine-grained authorization (FGA) checks
+const { data, errors } = await authRef.getSession(
+  {
+    Authorization: `Bearer some_token`,
+  },
+  {
+    required_permissions: [{ resource: 'documents', scope: 'read' }],
+  },
 )
 ```
 
@@ -578,9 +622,10 @@ It expects the JSON object as parameter with following parameters
 
 | Key          | Description                                                                                              | Required |
 | ------------ | -------------------------------------------------------------------------------------------------------- | -------- |
-| `token_type` | Type of token that needs to be validated. It can be one of `access_token`, `refresh_token` or `id_token` | `true`   |
-| `token`      | Jwt token string                                                                                         | `true`   |
-| `roles`      | Array of roles to validate jwt token for                                                                 | `false`  |
+| `token_type`            | Type of token that needs to be validated. It can be one of `access_token`, `refresh_token` or `id_token`                  | `true`   |
+| `token`                 | Jwt token string                                                                                                          | `true`   |
+| `roles`                 | Array of roles to validate jwt token for                                                                                  | `false`  |
+| `required_permissions`  | Array of `{ resource, scope }` permissions (FGA) that must **all** be granted to the principal (AND semantics). If any is denied, `is_valid` is `false` | `false`  |
 
 It returns the following keys in response `data` object
 
@@ -594,8 +639,18 @@ It returns the following keys in response `data` object
 
 ```js
 const { data, errors } = await authRef.validateJWTToken({
-  token_type: `access_token`
-  token: `some jwt token string`
+  token_type: `access_token`,
+  token: `some jwt token string`,
+})
+
+// with fine-grained authorization (FGA) checks
+const { data, errors } = await authRef.validateJWTToken({
+  token_type: `access_token`,
+  token: `some jwt token string`,
+  required_permissions: [
+    { resource: 'documents', scope: 'read' },
+    { resource: 'documents', scope: 'write' },
+  ],
 })
 ```
 
@@ -607,8 +662,9 @@ It expects the JSON object as parameter with following parameters
 
 | Key      | Description                                                                                         | Required |
 | -------- | --------------------------------------------------------------------------------------------------- | -------- |
-| `cookie` | browser session cookie value. If not present it will need coookie present in header as https cookie | `false`  |
-| `roles`  | Array of roles to validate jwt token for                                                            | `false`  |
+| `cookie`               | browser session cookie value. If not present it will need coookie present in header as https cookie                       | `false`  |
+| `roles`                | Array of roles to validate jwt token for                                                                                  | `false`  |
+| `required_permissions` | Array of `{ resource, scope }` permissions (FGA) that must **all** be granted to the principal (AND semantics). If any is denied, `is_valid` is `false` | `false`  |
 
 It returns the following keys in response `data` object
 
@@ -623,6 +679,12 @@ It returns the following keys in response `data` object
 ```js
 const { data, errors } = await authRef.validateSession({
   cookie: ``,
+})
+
+// with fine-grained authorization (FGA) checks
+const { data, errors } = await authRef.validateSession({
+  cookie: ``,
+  required_permissions: [{ resource: 'documents', scope: 'read' }],
 })
 ```
 

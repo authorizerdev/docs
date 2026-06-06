@@ -78,6 +78,40 @@ if res.IsValid {
 }
 ```
 
+### Step 4: Fine-grained authorization (FGA)
+
+Authorizer supports `resource:scope` based fine-grained permissions. The SDK exposes them in two ways.
+
+**Assert required permissions while validating** -- pass `RequiredPermissions` to `ValidateJWTToken`, `ValidateSession` or `GetSession`. They are evaluated with AND semantics: every entry must be granted, otherwise the result is unauthorized.
+
+```go
+res, err := authorizerClient.ValidateJWTToken(&authorizer.ValidateJWTTokenInput{
+    TokenType: authorizer.TokenTypeAccessToken,
+    Token:     "your-jwt-token",
+    RequiredPermissions: []*authorizer.PermissionInput{
+        {Resource: "documents", Scope: "read"},
+        {Resource: "documents", Scope: "write"},
+    },
+})
+if err != nil || !res.IsValid {
+    // unauthorized
+}
+```
+
+**Fetch the principal's granted permissions** -- `GetPermissions` returns the `resource:scope` permissions for the authenticated principal. Pass the auth header (or session cookie) so the principal can be identified.
+
+```go
+permissions, err := authorizerClient.GetPermissions(map[string]string{
+    "Authorization": "Bearer your-access-token",
+})
+if err != nil {
+    panic(err)
+}
+for _, p := range permissions {
+    fmt.Println(p.Resource, p.Scope)
+}
+```
+
 ## Available Methods
 
 The SDK provides the following methods:
@@ -90,8 +124,9 @@ The SDK provides the following methods:
 - `GetProfile` -- Get user profile
 - `UpdateProfile` -- Update user profile
 - `MagicLinkLogin` -- Login with magic link
-- `ValidateJWTToken` -- Validate a JWT token
-- `GetSession` -- Get current session
+- `ValidateJWTToken` -- Validate a JWT token (optionally with `RequiredPermissions` for FGA)
+- `GetSession` -- Get current session (optionally with `RequiredPermissions` for FGA)
+- `GetPermissions` -- Get the fine-grained `resource:scope` permissions granted to the authenticated user
 - `RevokeToken` -- Revoke a token
 - `Logout` -- Logout user
-- `ValidateSession` -- Validate a session
+- `ValidateSession` -- Validate a session (optionally with `RequiredPermissions` for FGA)
