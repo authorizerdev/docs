@@ -28,9 +28,8 @@ title: Functions
 - [logout](#--logout)
 - [validateJWTToken](#--validatejwttoken)
 - [validateSession](#--validatesession)
-- [fgaCheck](#--fgacheck)
-- [fgaBatchCheck](#--fgabatchcheck)
-- [fgaListObjects](#--fgalistobjects)
+- [checkPermissions](#--checkpermissions)
+- [listPermissions](#--listpermissions)
 - [verifyOtp](#--verifyotp)
 - [resendOtp](#--resendotp)
 - [deactivateAccount](#--deactivateaccount)
@@ -629,144 +628,42 @@ const { data, errors } = await authRef.validateSession({
 })
 ```
 
-## - `fgaCheck`
+## - `checkPermissions`
 
-Function to perform a fine-grained authorization (FGA) check using the embedded [OpenFGA](https://openfga.dev) relationship-based authorization engine. It checks whether a user has a given relation to an object.
+Function to evaluate one or more fine-grained authorization (FGA) permission checks against the embedded [OpenFGA](https://openfga.dev) engine, in a single call. `results` come back in the same order as `checks` and echo each pair.
+
+This function makes an authorized request, hence from the browser the HTTP cookie is sent automatically if the user has logged in. From NodeJS pass the `Authorization` header as the optional second argument.
+
+The subject defaults to the caller's token. An optional `user` ("type:id", or a bare id treated as `user:<id>`) is honored only for super-admins or when it equals the caller's own token subject. Each check also accepts optional `contextual_tuples`, evaluated for that call only and never persisted.
 
 For complete worked scenarios — Express middleware, list filtering, and tuple lifecycle — see [Authorization recipes](/core/authorization#9-real-world-recipes).
 
-This function makes an authorized request, hence from the browser the HTTP cookie is sent automatically if the user has logged in. From NodeJS pass the `Authorization` header as the optional second argument.
-
-It accepts a JSON object as the first parameter with the following keys
-
-| Key                 | Description                                                                       | Required |
-| ------------------- | -------------------------------------------------------------------------------- | -------- |
-| `relation`          | The relation to check, e.g. `viewer`, `editor`                                   | true     |
-| `object`            | The object to check the relation against, e.g. `document:1`                | true     |
-| `contextual_tuples` | Optional contextual relationship tuples evaluated only for this check            | false    |
-| `user`              | Optional user identifier. Defaults to the authenticated principal if omitted     | false    |
-
-It returns the following keys in response `data` object
-
-**Response**
-
-| Key       | Description                                          |
-| --------- | --------------------------------------------------- |
-| `allowed` | Boolean indicating if the relation is granted or not |
-
-**Sample Usage**
-
 ```js
-// from browser with HTTP Cookie
-const { data, errors } = await authRef.fgaCheck({
-  relation: 'viewer',
-  object: 'document:1',
-})
-
-// from NodeJS / if HTTP cookie is not used
-const { data, errors } = await authRef.fgaCheck(
-  {
-    relation: 'viewer',
-    object: 'document:1',
-  },
-  {
-    Authorization: `Bearer ${token}`,
-  },
-)
-
-// data => { allowed: true }
-```
-
-## - `fgaBatchCheck`
-
-Function to perform multiple fine-grained authorization (FGA) checks in a single request. Returns the results in the same order as the supplied checks.
-
-This function makes an authorized request, hence from the browser the HTTP cookie is sent automatically if the user has logged in. From NodeJS pass the `Authorization` header as the optional second argument.
-
-It accepts a JSON object as the first parameter with the following keys
-
-| Key      | Description                                                          | Required |
-| -------- | ------------------------------------------------------------------- | -------- |
-| `checks` | Array of `{ relation, object }` pairs to evaluate                   | true     |
-
-It returns the following keys in response `data` object
-
-**Response**
-
-| Key       | Description                                                          |
-| --------- | ------------------------------------------------------------------- |
-| `results` | Array of `{ allowed: boolean }`, one per check, in the same order   |
-
-**Sample Usage**
-
-```js
-// from browser with HTTP Cookie
-const { data, errors } = await authRef.fgaBatchCheck({
-  checks: [
-    { relation: 'viewer', object: 'document:1' },
-    { relation: 'editor', object: 'document:1' },
-  ],
-})
-
-// from NodeJS / if HTTP cookie is not used
-const { data, errors } = await authRef.fgaBatchCheck(
+const { data, errors } = await authRef.checkPermissions(
   {
     checks: [
-      { relation: 'viewer', object: 'document:1' },
-      { relation: 'editor', object: 'document:1' },
+      { relation: 'can_view', object: 'document:1' },
+      { relation: 'can_edit', object: 'document:1' },
     ],
   },
-  {
-    Authorization: `Bearer ${token}`,
-  },
-)
+  { Authorization: `Bearer ${token}` }, // omit in the browser to use the cookie
+);
 
-// data => { results: [{ allowed: true }, { allowed: false }] }
+if (data?.results?.[0]?.allowed) {
+  // caller may view document:1
+}
 ```
 
-## - `fgaListObjects`
+## - `listPermissions`
 
-Function to list all objects of a given type that the user has a relation to, using the embedded fine-grained authorization (FGA) engine.
-
-This function makes an authorized request, hence from the browser the HTTP cookie is sent automatically if the user has logged in. From NodeJS pass the `Authorization` header as the optional second argument.
-
-It accepts a JSON object as the first parameter with the following keys
-
-| Key           | Description                                                                   | Required |
-| ------------- | ---------------------------------------------------------------------------- | -------- |
-| `relation`    | The relation to check, e.g. `viewer`, `editor`                               | true     |
-| `object_type` | The object type to list, e.g. `document`                                     | true     |
-| `user`        | Optional user identifier. Defaults to the authenticated principal if omitted | false    |
-
-It returns the following keys in response `data` object
-
-**Response**
-
-| Key       | Description                                                          |
-| --------- | ------------------------------------------------------------------- |
-| `objects` | Array of object identifiers the user has the given relation to      |
-
-**Sample Usage**
+Function to list all objects of a given type the subject holds a relation on — ideal for filtering a list page down to what the user may see. Subject resolution follows the same rules as `checkPermissions`.
 
 ```js
-// from browser with HTTP Cookie
-const { data, errors } = await authRef.fgaListObjects({
-  relation: 'viewer',
-  object_type: 'document',
-})
-
-// from NodeJS / if HTTP cookie is not used
-const { data, errors } = await authRef.fgaListObjects(
-  {
-    relation: 'viewer',
-    object_type: 'document',
-  },
-  {
-    Authorization: `Bearer ${token}`,
-  },
-)
-
-// data => { objects: ['document:1', 'document:notes'] }
+const { data, errors } = await authRef.listPermissions(
+  { relation: 'can_view', object_type: 'document' },
+  { Authorization: `Bearer ${token}` },
+);
+// data?.objects => ['document:1', 'document:7', ...]
 ```
 
 ## - `verifyOtp`

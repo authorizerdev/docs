@@ -257,73 +257,48 @@ query {
 
 ### Authorization (client-facing)
 
-These queries answer authorization questions against the embedded FGA (ReBAC) engine. They require a valid session or bearer token. The subject is pinned server-side from the caller's token/cookie; the optional `user` override is honored only for super-admins. See [Authorization (FGA)](./authorization) for the full model.
+These queries answer authorization questions against the embedded FGA (ReBAC) engine. They require a valid session or bearer token. The subject is pinned server-side from the caller's token/cookie; the optional `user` is honored only for super-admins or when it equals the caller's own subject. See [Authorization (FGA)](./authorization) for the full model.
 
-#### `fga_check`
+#### `check_permissions`
 
-Check whether the subject has a `relation` on an `object`. Returns `{ allowed }`.
+Evaluate one or more permission checks in a single call. Returns `{ results { relation object allowed } }`, positionally aligned with `checks` and echoing each pair.
 
-Input `FgaCheckInput`:
+Input `CheckPermissionsInput`:
 
-| Key                 | Description                                                                 | Required |
-| ------------------- | --------------------------------------------------------------------------- | -------- |
-| `relation`          | Relation to check (e.g. `viewer`, `editor`).                                | `true`   |
-| `object`            | Object identifier (e.g. `document:1`).                                | `true`   |
-| `contextual_tuples` | Optional `[FgaTupleInput!]` of tuples evaluated only for this request.       | `false`  |
-| `user`              | Subject override (super-admin only). Defaults to the caller.                | `false`  |
+| Key      | Description                                                                                              | Required |
+| -------- | -------------------------------------------------------------------------------------------------------- | -------- |
+| `checks` | `[PermissionCheckInput!]!` — each `{ relation!, object!, contextual_tuples? }`.                           | `true`   |
+| `user`   | Subject ("type:id", bare id → `user:<id>`). Honored only for super-admins or self; defaults to the caller. | `false`  |
 
 ```graphql
 query {
-  fga_check(params: {
-    relation: "viewer",
-    object: "document:1"
-  }) {
-    allowed
-  }
-}
-```
-
-#### `fga_batch_check`
-
-Run multiple checks in a single request. Returns `{ results { allowed } }` in input order.
-
-Input `FgaBatchCheckInput`:
-
-| Key      | Description                                                              | Required |
-| -------- | ----------------------------------------------------------------------- | -------- |
-| `checks` | `[FgaCheckPairInput!]!`, each `{ relation, object, contextual_tuples?, user? }`. | `true`   |
-
-```graphql
-query {
-  fga_batch_check(params: {
+  check_permissions(params: {
     checks: [
-      { relation: "viewer", object: "document:1" },
-      { relation: "editor", object: "document:budget" }
+      { relation: "can_view", object: "document:1" },
+      { relation: "can_edit", object: "document:1" }
     ]
   }) {
-    results {
-      allowed
-    }
+    results { relation object allowed }
   }
 }
 ```
 
-#### `fga_list_objects`
+#### `list_permissions`
 
-List the objects of a given type on which the subject has a relation. Returns `{ objects }`.
+List the objects of a given type on which the subject holds a relation. Returns `{ objects }`.
 
-Input `FgaListObjectsInput`:
+Input `ListPermissionsInput`:
 
-| Key           | Description                                            | Required |
-| ------------- | ----------------------------------------------------- | -------- |
-| `relation`    | Relation to list for (e.g. `viewer`).                 | `true`   |
-| `object_type` | Object type to enumerate (e.g. `document`).           | `true`   |
-| `user`        | Subject override (super-admin only). Defaults to the caller. | `false`  |
+| Key           | Description                                                                                              | Required |
+| ------------- | -------------------------------------------------------------------------------------------------------- | -------- |
+| `relation`    | Relation to list for (e.g. `can_view`).                                                                  | `true`   |
+| `object_type` | Object type to enumerate (e.g. `document`).                                                              | `true`   |
+| `user`        | Subject ("type:id", bare id → `user:<id>`). Honored only for super-admins or self; defaults to the caller. | `false`  |
 
 ```graphql
 query {
-  fga_list_objects(params: {
-    relation: "viewer",
+  list_permissions(params: {
+    relation: "can_view",
     object_type: "document"
   }) {
     objects

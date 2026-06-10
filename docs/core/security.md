@@ -426,7 +426,7 @@ This kills the user-enumeration attack surface entirely.
 
 ## Fine-grained authorization
 
-Authorizer ships an embedded **OpenFGA** (ReBAC) engine, and access checks **fail closed** — an `fga_check` for a relation that the relationship tuples don't grant is denied, and any engine or store error denies rather than allows. There is no permissive "log but allow" mode. See [Authorization (FGA)](./authorization) for the authorization model, admin mutations, and per-endpoint usage.
+Authorizer ships an embedded **OpenFGA** (ReBAC) engine, and access checks **fail closed** — a `check_permissions` for a relation that the relationship tuples don't grant is denied, and any engine or store error denies rather than allows. There is no permissive "log but allow" mode. See [Authorization (FGA)](./authorization) for the authorization model, admin mutations, and per-endpoint usage.
 
 ---
 

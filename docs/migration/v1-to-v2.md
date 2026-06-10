@@ -509,18 +509,18 @@ import { SignUpRequest, LoginRequest } from '@authorizerdev/authorizer-js'
 
 ## Authorization (FGA)
 
-v2 adds an embedded **OpenFGA** engine for relationship-based access control (ReBAC). You author an authorization **model** (OpenFGA DSL: types + relations), grant access with **relationship tuples** (for example `user:<id>` is `viewer` of `document:1`), and have your apps check access with `fga_check`.
+v2 adds an embedded **OpenFGA** engine for relationship-based access control (ReBAC). You author an authorization **model** (OpenFGA DSL: types + relations), grant access with **relationship tuples** (for example `user:<id>` is `viewer` of `document:1`), and have your apps check access with `check_permissions`.
 
 ### What's new
 
 - **Embedded OpenFGA engine.** Enabled by default when the main database is SQL (SQLite, Postgres, MySQL), reusing that same database. For NoSQL main databases (MongoDB, DynamoDB, …) it is off unless you set `--fga-store` (`sqlite` / `postgres` / `mysql` / `memory`) and `--fga-store-url`.
-- **Client query operations:** `fga_check`, `fga_batch_check`, and `fga_list_objects` (the subject is pinned server-side to the calling principal).
+- **Client query operations:** `check_permissions` and `list_permissions` (the subject defaults to the calling principal; an explicit `user` is honored only for super-admins or self).
 - **Admin GraphQL operations** (super-admin, `_fga_` prefix): `_fga_write_model`, `_fga_get_model`, `_fga_write_tuples`, `_fga_delete_tuples`, `_fga_read_tuples`, `_fga_list_users`, `_fga_expand`, and `_fga_reset`. Dashboard UI under **Authorization** → Step 1 Define model / Step 2 Grant access / Step 3 Test access.
 
 ### Adoption checklist
 
 - [ ] **Define the authorization model first** via the dashboard (Authorization → Step 1 Define model) or the `_fga_write_model` admin mutation.
 - [ ] **Grant access with tuples** using `_fga_write_tuples` (dashboard Step 2 Grant access) to relate subjects to objects.
-- [ ] **Adopt `fga_check` incrementally** by adding access checks to one call site at a time (use `fga_batch_check` / `fga_list_objects` where it fits).
+- [ ] **Adopt `check_permissions` incrementally** by adding access checks to one call site at a time (use `list_permissions` where it fits).
 
 Full reference: [Authorization (FGA)](../core/authorization).

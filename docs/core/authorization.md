@@ -20,7 +20,7 @@ This page covers:
 1. [Enabling FGA](#1-enabling-fga)
 2. [The authorization model](#2-the-authorization-model) — types, relations, the DSL, and the dashboard.
 3. [Granting access](#3-granting-access--relationship-tuples) — relationship tuples.
-4. [Checking access](#4-checking-access--client-api) — `fga_check`, `fga_batch_check`, `fga_list_objects`.
+4. [Checking access](#4-checking-access--client-api) — `check_permissions`, `list_permissions`.
 5. [Admin GraphQL API](#5-admin-graphql-api) — the `_fga_*` operations the dashboard uses.
 6. [SDKs](#6-sdks) and [operational notes](#7-operational-notes).
 7. [Using FGA from your application](#8-using-fga-from-your-application) — middleware, the tuple lifecycle, list filtering.
@@ -151,57 +151,49 @@ resources inherit via a `… from parent` relation, or use `user:*` for public a
 
 ## 4. Checking access — client API
 
-These three queries are the **client-facing** surface — they answer questions for the
-**authenticated caller**. The subject is pinned server-side from the request (bearer
-token or session cookie); it cannot be spoofed from the client. A super-admin may pass an
-optional `user` to check on behalf of another subject; a non-trusted caller supplying
-`user` is rejected.
+The client-facing surface is exactly **two queries**. The subject defaults to the
+**authenticated caller** — resolved server-side from the bearer token or session
+cookie. An optional `user` ("type:id", or a bare id treated as `user:<id>`) is
+honored only when the caller is a **super-admin** or when it **equals the
+caller's own token subject**; anything else is rejected, never silently ignored.
 
-### `fga_check` — one question
+### `check_permissions` — one or many questions
 
-```graphql
-query {
-  fga_check(params: { relation: "can_view", object: "document:1" }) {
-    allowed
-  }
-}
-```
-
-### `fga_batch_check` — many at once
-
-Results are returned positionally, aligned with the `checks` you sent.
+A single check is simply a list of one. Results come back **in order** and echo
+the checked pair, so batch responses are self-describing.
 
 ```graphql
 query {
-  fga_batch_check(params: {
+  check_permissions(params: {
     checks: [
       { relation: "can_view", object: "document:1" },
       { relation: "can_edit", object: "document:1" }
     ]
   }) {
-    results { allowed }
+    results { relation object allowed }
   }
 }
 ```
 
-### `fga_list_objects` — what can I access?
+Each check also accepts optional `contextual_tuples` (evaluated for that one
+call only, never persisted) — handy for "what-if" checks or request-time facts.
 
-Returns the fully-qualified ids of every object of a type the caller relates to — ideal
-for filtering a list down to what the user is allowed to see.
+### `list_permissions` — what can I access?
+
+Returns the fully-qualified ids of every object of a type the subject holds the
+permission on — ideal for filtering a list down to what the user may see.
 
 ```graphql
 query {
-  fga_list_objects(params: { relation: "can_view", object_type: "document" }) {
+  list_permissions(params: { relation: "can_view", object_type: "document" }) {
     objects   # ["document:1", "document:7", ...]
   }
 }
 ```
 
-All three also accept optional `contextual_tuples` (evaluated for that one call only,
-never persisted) — handy for "what-if" checks or passing request-time facts.
-
-From the dashboard: **Step 3 · Test access** runs `fga_check` for the logged-in admin so
-you can verify the model and tuples interactively.
+From the dashboard: open **Users → ⋯ → View Permissions** to run
+`list_permissions` for any user (the admin session may specify a subject) and
+see exactly which objects they hold a permission on.
 
 ---
 
@@ -246,9 +238,9 @@ mutation {
 The official SDKs expose the read-side client API (model/tuple authoring stays in the
 dashboard / admin API):
 
-- **Go** — `FgaCheck`, `FgaBatchCheck`, `FgaListObjects`. See the
+- **Go** — `CheckPermissions`, `ListPermissions`. See the
   [authorizer-go README](https://github.com/authorizerdev/authorizer-go#fine-grained-authorization-fga).
-- **JavaScript / TypeScript** — `fgaCheck`, `fgaBatchCheck`, `fgaListObjects`. See the
+- **JavaScript / TypeScript** — `checkPermissions`, `listPermissions`. See the
   [authorizer-js README](https://github.com/authorizerdev/authorizer-js#fine-grained-authorization-fga).
 
 For each, pass the caller's auth header in server contexts; in the browser the session
@@ -289,8 +281,8 @@ request: **"may this user do this to this object?"**
                         │ API call + token │  │ OpenFGA│  │
                  ┌──────▼───────┐          │  │ engine │  │
                  │ Your backend │ ───────► │  └────────┘  │
-                 │              │ fga_check│              │
-                 └──────────────┘  allowed?└─────────────┘
+                 │              │  check_  │              │
+                 └──────────────┘permissions└─────────────┘
 ```
 
 There are exactly **two touchpoints**:
@@ -298,7 +290,7 @@ There are exactly **two touchpoints**:
 | Touchpoint | When | API | Credential |
 | --- | --- | --- | --- |
 | **Write tuples** | On your domain events — a document is created, a user joins a project, someone clicks "Share", access is revoked | `_fga_write_tuples` / `_fga_delete_tuples` | Admin secret, **server-side only** |
-| **Check access** | On every read/write your backend serves | `fga_check`, `fga_batch_check`, `fga_list_objects` | The **caller's own token** — the subject is pinned server-side and cannot be spoofed |
+| **Check access** | On every read/write your backend serves | `check_permissions`, `list_permissions` | The **caller's own token** by default — an explicit `user` is honored only for super-admins or self |
 
 ### Writing tuples from your domain events
 
@@ -357,11 +349,12 @@ const auth = new Authorizer({
 
 // requirePermission('can_edit', req => `document:${req.params.id}`)
 const requirePermission = (relation, objectFor) => async (req, res, next) => {
-  const { data } = await auth.fgaCheck(
-    { relation, object: objectFor(req) },
+  const { data } = await auth.checkPermissions(
+    { checks: [{ relation, object: objectFor(req) }] },
     { Authorization: req.headers.authorization }, // forward the caller's token
   );
-  if (!data?.allowed) return res.status(403).json({ error: 'forbidden' });
+  if (!data?.results?.[0]?.allowed)
+    return res.status(403).json({ error: 'forbidden' });
   next();
 };
 
@@ -380,11 +373,12 @@ The same middleware in Go:
 func RequirePermission(relation string, objectFor func(*http.Request) string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			res, err := authorizerClient.FgaCheck(&authorizer.FgaCheckRequest{
-				Relation: relation,
-				Object:   objectFor(r),
+			res, err := authorizerClient.CheckPermissions(&authorizer.CheckPermissionsRequest{
+				Checks: []*authorizer.PermissionCheckInput{
+					{Relation: relation, Object: objectFor(r)},
+				},
 			}, map[string]string{"Authorization": r.Header.Get("Authorization")})
-			if err != nil || !res.Allowed {
+			if err != nil || len(res.Results) == 0 || !res.Results[0].Allowed {
 				http.Error(w, "forbidden", http.StatusForbidden) // fail closed
 				return
 			}
@@ -399,7 +393,7 @@ func RequirePermission(relation string, objectFor func(*http.Request) string) fu
 For "show me my documents", ask once and filter your DB query by the result:
 
 ```js
-const { data } = await auth.fgaListObjects(
+const { data } = await auth.listPermissions(
   { relation: 'can_view', object_type: 'document' },
   { Authorization: req.headers.authorization },
 );
@@ -409,7 +403,7 @@ const docs = await db.documents.findMany({ where: { id: { in: ids } } });
 ```
 
 For rendering one page with many permission flags (can the user edit? delete?
-share?), use `fga_batch_check` — one round trip, results in order.
+share?), pass several checks to `check_permissions` — one round trip, results in order.
 
 ---
 
@@ -463,8 +457,8 @@ user:*       viewer   document:42
 **Your backend checks:**
 
 ```text
-fga_check(can_edit,   document:42)  with Marco's token → allowed
-fga_check(can_delete, document:42)  with Marco's token → denied  (owner only)
+check_permissions(can_edit,   document:42)  with Marco's token → allowed
+check_permissions(can_delete, document:42)  with Marco's token → denied  (owner only)
 ```
 
 "Unshare" is just `_fga_delete_tuples` on the same tuple. No schema migration, no
@@ -528,9 +522,9 @@ user:1b9d…   viewer   organization:101        ← ONE tuple
 Now every check below inherits, with zero per-resource tuples:
 
 ```text
-fga_check(can_view, resource:301)  → allowed   (viewer from project ← from org)
-fga_check(can_view, resource:302)  → allowed
-fga_check(can_edit, resource:301)  → denied    (viewers don't edit)
+check_permissions(can_view, resource:301)  → allowed   (viewer from project ← from org)
+check_permissions(can_view, resource:302)  → allowed
+check_permissions(can_edit, resource:301)  → denied    (viewers don't edit)
 ```
 
 **Fine-grained exception on top** — an external contractor edits one resource only:
@@ -538,8 +532,8 @@ fga_check(can_edit, resource:301)  → denied    (viewers don't edit)
 ```text
 user:2c8e…   editor   resource:301
 
-fga_check(can_edit, resource:301)  → allowed
-fga_check(can_view, resource:302)  → denied    (nothing leaks to siblings)
+check_permissions(can_edit, resource:301)  → allowed
+check_permissions(can_view, resource:302)  → denied    (nothing leaks to siblings)
 ```
 
 When a new resource is created, your app writes **one structural tuple**
@@ -592,8 +586,8 @@ user:4e0a…   assignee   role:manager
 **Checks:**
 
 ```text
-fga_check(can_edit,    record:88)  with Dana's token → allowed
-fga_check(can_approve, record:88)  with Dana's token → denied
+check_permissions(can_edit,    record:88)  with Dana's token → allowed
+check_permissions(can_approve, record:88)  with Dana's token → denied
 ```
 
 Offboarding = delete Dana's one `assignee` tuple; every record access disappears
@@ -656,7 +650,7 @@ type document
 user:*      viewer    document:7     # everyone can read the handbook
 user:5f1b…  blocked   document:7     # …except this account
 
-fga_check(can_view, document:7) with 5f1b…'s token → denied
+check_permissions(can_view, document:7) with 5f1b…'s token → denied
 ```
 
 `but not` always wins over every grant path — direct, inherited, or public.
@@ -671,11 +665,11 @@ App event → FGA operation:
 
 | Your app does | You call |
 | --- | --- |
-| Serve any protected read/write | `fga_check` (caller's token) |
-| Render a list page | `fga_list_objects`, filter your DB query by the ids |
-| Render one item with many action buttons | `fga_batch_check` |
+| Serve any protected read/write | `check_permissions` (caller's token) |
+| Render a list page | `list_permissions`, filter your DB query by the ids |
+| Render one item with many action buttons | `check_permissions` with several checks |
 | Create a resource | `_fga_write_tuples`: owner + structural parent tuple |
 | Share / grant / promote | `_fga_write_tuples`: one tuple |
 | Revoke / unshare / offboard | `_fga_delete_tuples`: the matching tuple(s) |
 | Reorganize (move project to new org) | delete + write the structural tuple |
-| Debug "why can X see Y?" | `_fga_expand` (admin), or the dashboard **Step 3 · Test access** with any subject |
+| Debug "why can X see Y?" | `_fga_expand` (admin), or **Users → View Permissions** for any subject |

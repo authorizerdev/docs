@@ -140,7 +140,7 @@ once. See [Authorization (FGA)](./authorization).
 
 | Metric | Type | Labels | Description |
 |--------|------|--------|-------------|
-| `authorizer_fga_checks_total` | Counter | `operation`, `result` | Access decisions from `fga_check` / `fga_batch_check`. The headline metric for adoption and denial/error alerting. |
+| `authorizer_fga_checks_total` | Counter | `operation`, `result` | Access decisions from `check_permissions`. The headline metric for adoption and denial/error alerting. |
 | `authorizer_fga_check_duration_seconds` | Histogram | `operation` | Latency of the client-facing FGA engine reads. |
 | `authorizer_fga_operations_total` | Counter | `operation`, `result` | Non-decision FGA operations (model/tuple management, enumeration, reset) by outcome. |
 
@@ -148,12 +148,12 @@ once. See [Authorization (FGA)](./authorization).
 
 | Label | Values |
 |---|---|
-| `operation` | `check` (single `fga_check`) · `batch_check` (each pair of an `fga_batch_check` is counted individually) |
+| `operation` | `check_permissions` (each supplied pair is counted individually) |
 | `result` | `allowed` · `denied` · `error` (the engine call failed — fail-closed, so the caller was denied) |
 
-**`authorizer_fga_check_duration_seconds`** `operation`: `check` · `batch_check` · `list_objects`. The histogram's `_count` also gives you a call rate per operation for free.
+**`authorizer_fga_check_duration_seconds`** `operation`: `check_permissions` · `list_permissions`. The histogram's `_count` also gives you a call rate per operation for free.
 
-**`authorizer_fga_operations_total`** `operation`: `get_model` · `write_model` · `read_tuples` · `write_tuples` · `delete_tuples` · `list_users` · `expand` · `list_objects` · `reset`. `result`: `success` · `error`.
+**`authorizer_fga_operations_total`** `operation`: `get_model` · `write_model` · `read_tuples` · `write_tuples` · `delete_tuples` · `list_users` · `expand` · `list_permissions` · `reset`. `result`: `success` · `error`.
 
 Useful queries:
 
