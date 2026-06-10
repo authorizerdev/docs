@@ -82,6 +82,8 @@ if res.IsValid {
 
 Authorizer ships with an embedded [OpenFGA](https://openfga.dev) relationship-based authorization (ReBAC) engine. The SDK exposes three client-facing methods to query it. Each takes a request struct and a `headers map[string]string` (pass `Authorization: Bearer <token>`).
 
+For complete worked scenarios — Go HTTP middleware, list filtering, and tuple lifecycle — see [Authorization recipes](/core/authorization-recipes).
+
 **FgaCheck** -- check whether a user has a relation to an object. Returns `Allowed`.
 
 ```go
