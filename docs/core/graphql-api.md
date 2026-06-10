@@ -268,7 +268,7 @@ Input `FgaCheckInput`:
 | Key                 | Description                                                                 | Required |
 | ------------------- | --------------------------------------------------------------------------- | -------- |
 | `relation`          | Relation to check (e.g. `viewer`, `editor`).                                | `true`   |
-| `object`            | Object identifier (e.g. `document:roadmap`).                                | `true`   |
+| `object`            | Object identifier (e.g. `document:1`).                                | `true`   |
 | `contextual_tuples` | Optional `[FgaTupleInput!]` of tuples evaluated only for this request.       | `false`  |
 | `user`              | Subject override (super-admin only). Defaults to the caller.                | `false`  |
 
@@ -276,7 +276,7 @@ Input `FgaCheckInput`:
 query {
   fga_check(params: {
     relation: "viewer",
-    object: "document:roadmap"
+    object: "document:1"
   }) {
     allowed
   }
@@ -297,7 +297,7 @@ Input `FgaBatchCheckInput`:
 query {
   fga_batch_check(params: {
     checks: [
-      { relation: "viewer", object: "document:roadmap" },
+      { relation: "viewer", object: "document:1" },
       { relation: "editor", object: "document:budget" }
     ]
   }) {
@@ -1763,7 +1763,7 @@ Input `params.tuples` is `[FgaTupleInput!]!`, each `{ user: String!, relation: S
 mutation {
   _fga_write_tuples(params: {
     tuples: [
-      { user: "user:alice", relation: "viewer", object: "document:roadmap" }
+      { user: "user:1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed", relation: "viewer", object: "document:1" }
     ]
   }) {
     message
@@ -1779,7 +1779,7 @@ Delete relationship tuples. Same input shape as `_fga_write_tuples`. Returns `Re
 mutation {
   _fga_delete_tuples(params: {
     tuples: [
-      { user: "user:alice", relation: "viewer", object: "document:roadmap" }
+      { user: "user:1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed", relation: "viewer", object: "document:1" }
     ]
   }) {
     message
@@ -1819,7 +1819,7 @@ List the users that have a given relation on an object (admin only).
 query {
   _fga_list_users(params: {
     relation: "viewer",
-    object: "document:roadmap"
+    object: "document:1"
   }) {
     users
   }
@@ -1834,7 +1834,7 @@ Expand the relationship/userset tree for a relation on an object (admin only). U
 query {
   _fga_expand(params: {
     relation: "viewer",
-    object: "document:roadmap"
+    object: "document:1"
   }) {
     tree
   }

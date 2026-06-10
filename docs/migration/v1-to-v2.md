@@ -509,7 +509,7 @@ import { SignUpRequest, LoginRequest } from '@authorizerdev/authorizer-js'
 
 ## Authorization (FGA)
 
-v2 adds an embedded **OpenFGA** engine for relationship-based access control (ReBAC). You author an authorization **model** (OpenFGA DSL: types + relations), grant access with **relationship tuples** (for example `user:alice` is `viewer` of `document:1`), and have your apps check access with `fga_check`.
+v2 adds an embedded **OpenFGA** engine for relationship-based access control (ReBAC). You author an authorization **model** (OpenFGA DSL: types + relations), grant access with **relationship tuples** (for example `user:<id>` is `viewer` of `document:1`), and have your apps check access with `fga_check`.
 
 ### What's new
 

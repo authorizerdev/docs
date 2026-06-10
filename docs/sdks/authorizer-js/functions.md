@@ -633,7 +633,7 @@ const { data, errors } = await authRef.validateSession({
 
 Function to perform a fine-grained authorization (FGA) check using the embedded [OpenFGA](https://openfga.dev) relationship-based authorization engine. It checks whether a user has a given relation to an object.
 
-For complete worked scenarios — Express middleware, list filtering, and tuple lifecycle — see [Authorization recipes](/core/authorization-recipes).
+For complete worked scenarios — Express middleware, list filtering, and tuple lifecycle — see [Authorization recipes](/core/authorization#9-real-world-recipes).
 
 This function makes an authorized request, hence from the browser the HTTP cookie is sent automatically if the user has logged in. From NodeJS pass the `Authorization` header as the optional second argument.
 
@@ -642,7 +642,7 @@ It accepts a JSON object as the first parameter with the following keys
 | Key                 | Description                                                                       | Required |
 | ------------------- | -------------------------------------------------------------------------------- | -------- |
 | `relation`          | The relation to check, e.g. `viewer`, `editor`                                   | true     |
-| `object`            | The object to check the relation against, e.g. `document:roadmap`                | true     |
+| `object`            | The object to check the relation against, e.g. `document:1`                | true     |
 | `contextual_tuples` | Optional contextual relationship tuples evaluated only for this check            | false    |
 | `user`              | Optional user identifier. Defaults to the authenticated principal if omitted     | false    |
 
@@ -660,14 +660,14 @@ It returns the following keys in response `data` object
 // from browser with HTTP Cookie
 const { data, errors } = await authRef.fgaCheck({
   relation: 'viewer',
-  object: 'document:roadmap',
+  object: 'document:1',
 })
 
 // from NodeJS / if HTTP cookie is not used
 const { data, errors } = await authRef.fgaCheck(
   {
     relation: 'viewer',
-    object: 'document:roadmap',
+    object: 'document:1',
   },
   {
     Authorization: `Bearer ${token}`,
@@ -703,8 +703,8 @@ It returns the following keys in response `data` object
 // from browser with HTTP Cookie
 const { data, errors } = await authRef.fgaBatchCheck({
   checks: [
-    { relation: 'viewer', object: 'document:roadmap' },
-    { relation: 'editor', object: 'document:roadmap' },
+    { relation: 'viewer', object: 'document:1' },
+    { relation: 'editor', object: 'document:1' },
   ],
 })
 
@@ -712,8 +712,8 @@ const { data, errors } = await authRef.fgaBatchCheck({
 const { data, errors } = await authRef.fgaBatchCheck(
   {
     checks: [
-      { relation: 'viewer', object: 'document:roadmap' },
-      { relation: 'editor', object: 'document:roadmap' },
+      { relation: 'viewer', object: 'document:1' },
+      { relation: 'editor', object: 'document:1' },
     ],
   },
   {
@@ -766,7 +766,7 @@ const { data, errors } = await authRef.fgaListObjects(
   },
 )
 
-// data => { objects: ['document:roadmap', 'document:notes'] }
+// data => { objects: ['document:1', 'document:notes'] }
 ```
 
 ## - `verifyOtp`

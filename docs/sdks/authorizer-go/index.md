@@ -82,14 +82,14 @@ if res.IsValid {
 
 Authorizer ships with an embedded [OpenFGA](https://openfga.dev) relationship-based authorization (ReBAC) engine. The SDK exposes three client-facing methods to query it. Each takes a request struct and a `headers map[string]string` (pass `Authorization: Bearer <token>`).
 
-For complete worked scenarios — Go HTTP middleware, list filtering, and tuple lifecycle — see [Authorization recipes](/core/authorization-recipes).
+For complete worked scenarios — Go HTTP middleware, list filtering, and tuple lifecycle — see [Authorization recipes](/core/authorization#9-real-world-recipes).
 
 **FgaCheck** -- check whether a user has a relation to an object. Returns `Allowed`.
 
 ```go
 res, err := authorizerClient.FgaCheck(&authorizer.FgaCheckRequest{
     Relation: "viewer",
-    Object:   "document:roadmap",
+    Object:   "document:1",
 }, map[string]string{
     "Authorization": "Bearer your-access-token",
 })
@@ -97,7 +97,7 @@ if err != nil {
     panic(err)
 }
 if res.Allowed {
-    // user is a viewer of document:roadmap
+    // user is a viewer of document:1
 }
 ```
 
@@ -106,8 +106,8 @@ if res.Allowed {
 ```go
 res, err := authorizerClient.FgaBatchCheck(&authorizer.FgaBatchCheckRequest{
     Checks: []*authorizer.FgaCheckPair{
-        {Relation: "viewer", Object: "document:roadmap"},
-        {Relation: "editor", Object: "document:roadmap"},
+        {Relation: "viewer", Object: "document:1"},
+        {Relation: "editor", Object: "document:1"},
     },
 }, map[string]string{
     "Authorization": "Bearer your-access-token",
