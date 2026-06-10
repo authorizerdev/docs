@@ -280,16 +280,18 @@ metric, labelled by limit kind. See
 
 ```bash
 ./build/server \
-  --authorization-cache-ttl=300 \
+  --fga-store=postgres \
+  --fga-store-url="postgres://user:pass@host/db" \
   --include-permissions-in-token=false \
   --authorization-log-all-checks=false
 ```
 
-- **`--authorization-cache-ttl`** (default `300`): per-`CheckPermission` cache time-to-live in seconds. Set `0` to disable the cache. The cache is delegated to your configured `memory_store` — Redis when `--redis-url` is set, the database when only `--database-type` is configured, an in-process fallback otherwise. Cache is invalidated automatically when an admin mutation changes any resource, scope, policy, or permission.
+- **`--fga-store`**: backing store for the embedded OpenFGA engine — one of `sqlite`, `postgres`, `mysql`, or `memory`. Only needed when the main database is NoSQL (see paragraph below); for SQL main databases the engine reuses that database automatically.
+- **`--fga-store-url`**: connection string for the FGA store when `--fga-store` is set to a database driver.
 - **`--include-permissions-in-token`** (default `false`): when true, the access token's claims include the caller's flat `(resource, scope)` grant list. Useful for stateless downstream services that don't want to round-trip back to Authorizer per check.
 - **`--authorization-log-all-checks`** (default `false`): audit-log every `CheckPermission` call, not just denials. Diagnostic; expensive at scale.
 
-Authorization is always enforcing — a `required_permissions` check against an unmatched or denied `(resource, scope)` pair returns `unauthorized`. There is no permissive mode. See [Authorization (FGA)](./authorization) for the full model.
+Authorizer ships an embedded **OpenFGA** (ReBAC) engine. It is enabled by default when the main database is SQL-compatible (SQLite/Postgres/MySQL) and reuses that database. For NoSQL main databases (MongoDB, DynamoDB, …) it is off unless you set `--fga-store` (one of `sqlite`/`postgres`/`mysql`/`memory`) and `--fga-store-url`. Checks fail closed. See [Authorization (FGA)](./authorization).
 
 ---
 

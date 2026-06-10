@@ -113,7 +113,6 @@ This query can take a optional input `params` of type `SessionQueryInput` which 
 | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
 | `roles`                | Array of string with valid roles                                                                                                                                             | false    |
 | `scope`                | List of openID scopes. If not present default scopes ['openid', 'email', 'profile'] is used                                                                                  | false    |
-| `required_permissions` | Array of `{resource, scope}` pairs evaluated with AND semantics against the caller's principal. Any deny or unmatched pair returns `unauthorized`. See [Authorization (FGA)](./authorization). | false    |
 
 It returns `AuthResponse` type with the following keys.
 
@@ -135,10 +134,7 @@ It returns `AuthResponse` type with the following keys.
 ```graphql
 query {
   session(params: {
-    roles: ["admin"],
-    required_permissions: [
-      { resource: "dashboard", scope: "view" }
-    ]
+    roles: ["admin"]
   }) {
     message
     access_token
@@ -205,7 +201,6 @@ Query to validate the given jwt token. This query needs input `params` of type `
 | `token_type`           | Type of token that needs to be validated. One of `access_token`, `refresh_token`, `id_token`.                                                                                | `true`   |
 | `token`                | JWT string                                                                                                                                                                   | `true`   |
 | `roles`                | Array of roles to validate the JWT token for                                                                                                                                 | `false`  |
-| `required_permissions` | Array of `{resource, scope}` pairs evaluated with AND semantics against the JWT's principal. Any deny or unmatched pair returns `unauthorized`. See [Authorization (FGA)](./authorization). | `false`  |
 
 It returns `ValidateJWTTokenResponse` type with the following keys.
 
@@ -222,10 +217,7 @@ It returns `ValidateJWTTokenResponse` type with the following keys.
 query {
   validate_jwt_token(params: {
     token_type: "access_token",
-    token: "some jwt token",
-    required_permissions: [
-      { resource: "docs", scope: "read" }
-    ]
+    token: "some jwt token"
   }) {
     is_valid
     claims
@@ -242,7 +234,6 @@ Query to validate the browser session. This query needs input `params` of type `
 | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
 | `cookie`               | Browser cookie. Either the browser HTTP cookie is present or this parameter must be supplied.                                                                                | `false`  |
 | `roles`                | Array of roles to validate session for                                                                                                                                       | `false`  |
-| `required_permissions` | Array of `{resource, scope}` pairs evaluated with AND semantics against the cookie's principal. Any deny or unmatched pair returns `unauthorized`. See [Authorization (FGA)](./authorization). | `false`  |
 
 It returns `ValidateSessionResponse` type with the following keys.
 
@@ -257,39 +248,90 @@ It returns `ValidateSessionResponse` type with the following keys.
 ```graphql
 query {
   validate_session(params: {
-    cookie: "",
-    required_permissions: [
-      { resource: "docs", scope: "write" }
-    ]
+    cookie: ""
   }) {
     is_valid
   }
 }
 ```
 
-### `permissions`
+### Authorization (client-facing)
 
-Query the flat list of `(resource, scope)` pairs the calling principal has been granted. Requires a valid session or bearer token.
+These queries answer authorization questions against the embedded FGA (ReBAC) engine. They require a valid session or bearer token. The subject is pinned server-side from the caller's token/cookie; the optional `user` override is honored only for super-admins. See [Authorization (FGA)](./authorization) for the full model.
 
-**Response**
+#### `fga_check`
 
-| Key        | Description                              |
-| ---------- | ---------------------------------------- |
-| `resource` | Resource name granted to the principal.  |
-| `scope`    | Scope name granted on that resource.     |
+Check whether the subject has a `relation` on an `object`. Returns `{ allowed }`.
 
-**Sample Query**
+Input `FgaCheckInput`:
+
+| Key                 | Description                                                                 | Required |
+| ------------------- | --------------------------------------------------------------------------- | -------- |
+| `relation`          | Relation to check (e.g. `viewer`, `editor`).                                | `true`   |
+| `object`            | Object identifier (e.g. `document:roadmap`).                                | `true`   |
+| `contextual_tuples` | Optional `[FgaTupleInput!]` of tuples evaluated only for this request.       | `false`  |
+| `user`              | Subject override (super-admin only). Defaults to the caller.                | `false`  |
 
 ```graphql
 query {
-  permissions {
-    resource
-    scope
+  fga_check(params: {
+    relation: "viewer",
+    object: "document:roadmap"
+  }) {
+    allowed
   }
 }
 ```
 
-See [Authorization (FGA)](./authorization) for the full model.
+#### `fga_batch_check`
+
+Run multiple checks in a single request. Returns `{ results { allowed } }` in input order.
+
+Input `FgaBatchCheckInput`:
+
+| Key      | Description                                                              | Required |
+| -------- | ----------------------------------------------------------------------- | -------- |
+| `checks` | `[FgaCheckPairInput!]!`, each `{ relation, object, contextual_tuples?, user? }`. | `true`   |
+
+```graphql
+query {
+  fga_batch_check(params: {
+    checks: [
+      { relation: "viewer", object: "document:roadmap" },
+      { relation: "editor", object: "document:budget" }
+    ]
+  }) {
+    results {
+      allowed
+    }
+  }
+}
+```
+
+#### `fga_list_objects`
+
+List the objects of a given type on which the subject has a relation. Returns `{ objects }`.
+
+Input `FgaListObjectsInput`:
+
+| Key           | Description                                            | Required |
+| ------------- | ----------------------------------------------------- | -------- |
+| `relation`    | Relation to list for (e.g. `viewer`).                 | `true`   |
+| `object_type` | Object type to enumerate (e.g. `document`).           | `true`   |
+| `user`        | Subject override (super-admin only). Defaults to the caller. | `false`  |
+
+```graphql
+query {
+  fga_list_objects(params: {
+    relation: "viewer",
+    object_type: "document"
+  }) {
+    objects
+  }
+}
+```
+
+`FgaTupleInput` (used by `contextual_tuples` above and by the admin operations) is `{ user: String!, relation: String!, object: String! }`.
 
 ### `_user`
 
@@ -1673,60 +1715,140 @@ mutation {
 
 ### Authorization (admin)
 
-Manage the FGA policy graph. All require super-admin authentication (cookie or `X-Authorizer-Admin-Secret`). See [Authorization (FGA)](./authorization) for the conceptual model.
+Manage the embedded FGA (ReBAC) engine: the authorization model and the relationship tuples. All require super-admin authentication (cookie or `X-Authorizer-Admin-Secret`). All admin authorization operations are namespaced with the `_fga_` prefix. See [Authorization (FGA)](./authorization) for the conceptual model.
 
-All admin authorization operations are namespaced with the `_authz_` prefix.
+#### `_fga_write_model`
 
-#### `_authz_add_resource` / `_authz_update_resource` / `_authz_delete_resource` / `_authz_resources`
-
-Manage **resources** (the nouns the application protects).
-
-```graphql
-mutation { _authz_add_resource(params: { name: "docs" }) { id name } }
-mutation { _authz_update_resource(params: { id: "<id>", name: "documents" }) { id name } }
-mutation { _authz_delete_resource(id: "<id>") { message } }
-query    { _authz_resources(params: { pagination: { limit: 25, page: 1 } }) {
-  pagination { total limit page }
-  resources  { id name }
-} }
-```
-
-#### `_authz_add_scope` / `_authz_update_scope` / `_authz_delete_scope` / `_authz_scopes`
-
-Manage **scopes** (verbs / actions). Same input/output shape as resources.
-
-#### `_authz_add_policy` / `_authz_update_policy` / `_authz_delete_policy` / `_authz_policies`
-
-Manage **policies** (principal selectors).
+Write (replace) the authorization model from an FGA DSL string. Returns `FgaModel` `{ id, dsl }`.
 
 ```graphql
 mutation {
-  _authz_add_policy(params: {
-    name: "user-role-can-read",
-    type: "role",
-    targets: [{ target_type: "role", target_value: "user" }],
-    logic:  "positive",
-    decision_strategy: "affirmative"
-  }) { id name }
+  _fga_write_model(params: {
+    dsl: """
+      model
+        schema 1.1
+      type user
+      type document
+        relations
+          define viewer: [user]
+          define editor: [user]
+    """
+  }) {
+    id
+    dsl
+  }
 }
 ```
 
-`type` accepts `role`, `user`, or `attribute`. `target_value` for `role` policies must be a configured role (see `--roles`). `target_value` for `user` policies is the user's **ID** (not email).
+#### `_fga_get_model`
 
-#### `_authz_add_permission` / `_authz_update_permission` / `_authz_delete_permission` / `_authz_permissions`
+Read the current authorization model. Returns `FgaModel` `{ id, dsl }`.
 
-Bind a resource + scopes + policies into a single permission row.
+```graphql
+query {
+  _fga_get_model {
+    id
+    dsl
+  }
+}
+```
+
+#### `_fga_write_tuples`
+
+Write relationship tuples. Returns `Response` `{ message }`.
+
+Input `params.tuples` is `[FgaTupleInput!]!`, each `{ user: String!, relation: String!, object: String! }`.
 
 ```graphql
 mutation {
-  _authz_add_permission(params: {
-    name: "docs-read",
-    resource_id: "<resource-id>",
-    scope_ids:   ["<read-scope-id>"],
-    policy_ids:  ["<policy-id>"],
-    decision_strategy: "affirmative"
-  }) { id name }
+  _fga_write_tuples(params: {
+    tuples: [
+      { user: "user:alice", relation: "viewer", object: "document:roadmap" }
+    ]
+  }) {
+    message
+  }
 }
 ```
 
-`decision_strategy` is one of `affirmative` (default), `consensus`, or `unanimous`. See [Authorization §6](./authorization#6-decision-strategies).
+#### `_fga_delete_tuples`
+
+Delete relationship tuples. Same input shape as `_fga_write_tuples`. Returns `Response` `{ message }`.
+
+```graphql
+mutation {
+  _fga_delete_tuples(params: {
+    tuples: [
+      { user: "user:alice", relation: "viewer", object: "document:roadmap" }
+    ]
+  }) {
+    message
+  }
+}
+```
+
+#### `_fga_read_tuples`
+
+Read stored tuples with pagination. Returns `FgaTuples` `{ tuples { user relation object }, continuation_token }`.
+
+Input `params`:
+
+| Key                  | Description                                       | Required |
+| -------------------- | ------------------------------------------------ | -------- |
+| `page_size`          | Maximum number of tuples to return.              | `false`  |
+| `continuation_token` | Token from a previous response to fetch the next page. | `false`  |
+
+```graphql
+query {
+  _fga_read_tuples(params: { page_size: 50 }) {
+    tuples {
+      user
+      relation
+      object
+    }
+    continuation_token
+  }
+}
+```
+
+#### `_fga_list_users`
+
+List the users that have a given relation on an object (admin only).
+
+```graphql
+query {
+  _fga_list_users(params: {
+    relation: "viewer",
+    object: "document:roadmap"
+  }) {
+    users
+  }
+}
+```
+
+#### `_fga_expand`
+
+Expand the relationship/userset tree for a relation on an object (admin only). Useful for debugging how access is derived.
+
+```graphql
+query {
+  _fga_expand(params: {
+    relation: "viewer",
+    object: "document:roadmap"
+  }) {
+    tree
+  }
+}
+```
+
+#### `_fga_reset`
+
+Delete the authorization model, all of its versions, and all tuples. Returns `Response` `{ message }`. The operation is refused while any tuple still exists, so delete tuples first.
+
+```graphql
+mutation {
+  _fga_reset {
+    message
+  }
+}
+```

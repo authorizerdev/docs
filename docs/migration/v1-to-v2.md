@@ -509,21 +509,18 @@ import { SignUpRequest, LoginRequest } from '@authorizerdev/authorizer-js'
 
 ## Authorization (FGA)
 
-v2 introduces a fine-grained authorization layer alongside the existing role check. It is **opt-in per request** — pre-v2 callers that do not pass `required_permissions` see no behavior change.
+v2 adds an embedded **OpenFGA** engine for relationship-based access control (ReBAC). You author an authorization **model** (OpenFGA DSL: types + relations), grant access with **relationship tuples** (for example `user:alice` is `viewer` of `document:1`), and have your apps check access with `fga_check`.
 
 ### What's new
 
-- `session`, `validate_session`, and `validate_jwt_token` accept a new optional `required_permissions: [PermissionInput!]` field. Any deny or unmatched `(resource, scope)` returns `unauthorized`.
-- Admin GraphQL operations namespaced under `_authz_`: `_authz_add_resource`, `_authz_add_scope`, `_authz_add_policy`, `_authz_add_permission` (plus update / delete mutations and `_authz_resources` / `_authz_scopes` / `_authz_policies` / `_authz_permissions` list queries). Dashboard UI under Authorization → Resources / Scopes / Policies / Permissions.
-- New per-call `permissions` query returns the flat `(resource, scope)` list granted to the calling principal.
-- New CLI flag `--authorization-cache-ttl` (default `300` seconds). Cache is delegated to your configured `memory_store` (Redis or DB-backed); set `0` to disable.
-- New Prometheus counter `authorizer_required_permissions_checks_total{endpoint, outcome}` for adoption + denial tracking. Outcomes: `granted` / `denied` / `not_requested` / `error`.
+- **Embedded OpenFGA engine.** Enabled by default when the main database is SQL (SQLite, Postgres, MySQL), reusing that same database. For NoSQL main databases (MongoDB, DynamoDB, …) it is off unless you set `--fga-store` (`sqlite` / `postgres` / `mysql` / `memory`) and `--fga-store-url`.
+- **Client query operations:** `fga_check`, `fga_batch_check`, and `fga_list_objects` (the subject is pinned server-side to the calling principal).
+- **Admin GraphQL operations** (super-admin, `_fga_` prefix): `_fga_write_model`, `_fga_get_model`, `_fga_write_tuples`, `_fga_delete_tuples`, `_fga_read_tuples`, `_fga_list_users`, `_fga_expand`, and `_fga_reset`. Dashboard UI under **Authorization** → Step 1 Define model / Step 2 Grant access / Step 3 Test access.
 
 ### Adoption checklist
 
-- [ ] **Define the policy graph first** via the dashboard (Authorization → Resources/Scopes/Policies/Permissions) or admin GraphQL mutations. Any `required_permissions` pointing at an undefined `(resource, scope)` returns `unauthorized` immediately — authorization is always enforcing, there is no permissive fallthrough.
-- [ ] **Adopt incrementally** by adding `required_permissions` to one session API call site at a time.
-- [ ] **Alert on `outcome="error"`** for `authorizer_required_permissions_checks_total` — should sit at zero.
-- [ ] **Track adoption** via `outcome="not_requested"` per endpoint.
+- [ ] **Define the authorization model first** via the dashboard (Authorization → Step 1 Define model) or the `_fga_write_model` admin mutation.
+- [ ] **Grant access with tuples** using `_fga_write_tuples` (dashboard Step 2 Grant access) to relate subjects to objects.
+- [ ] **Adopt `fga_check` incrementally** by adding access checks to one call site at a time (use `fga_batch_check` / `fga_list_objects` where it fits).
 
 Full reference: [Authorization (FGA)](../core/authorization).
