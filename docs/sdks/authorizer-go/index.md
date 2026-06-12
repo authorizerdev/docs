@@ -101,11 +101,31 @@ if err != nil {
 if res.Results[0].Allowed {
     // caller may view document:1
 }
+// Each result echoes its pair, so batch responses are self-describing:
+for _, r := range res.Results {
+    fmt.Printf("%s on %s: %v\n", r.Relation, r.Object, r.Allowed)
+}
 ```
 
-The subject defaults to the caller's token. An optional `User` ("type:id", bare id treated as `user:<id>`) is honored only for super-admins or when it equals the caller's own subject. Each check also accepts optional `ContextualTuples`, evaluated for that call only.
+The subject defaults to the caller's token. An optional `User` ("type:id", bare id treated as `user:<id>`) is honored only for super-admins or when it equals the caller's own subject. Each check also accepts optional `ContextualTuples` -- extra relationship tuples evaluated for that call only and never persisted, handy for "what-if" checks or request-time facts:
 
-**ListPermissions** -- list all objects of a given type the subject holds a relation on. Returns `Objects`.
+```go
+res, err := authorizerClient.CheckPermissions(&authorizer.CheckPermissionsRequest{
+    Checks: []*authorizer.PermissionCheckInput{
+        {
+            Relation: "can_view",
+            Object:   "document:1",
+            ContextualTuples: []*authorizer.FgaTupleInput{
+                {User: "user:1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed", Relation: "viewer", Object: "document:1"},
+            },
+        },
+    },
+}, map[string]string{
+    "Authorization": "Bearer " + token,
+})
+```
+
+**ListPermissions** -- list what the subject can access. With both `Relation` and `ObjectType` set it answers "which `ObjectType`s can I `Relation`?"; either or both filters may be omitted, so an empty request returns every permission the subject holds. Returns the distinct `Objects`, the `(Object, Relation)` detail in `Permissions`, and `Truncated` (`true` when the result was capped at 1000 entries).
 
 ```go
 res, err := authorizerClient.ListPermissions(&authorizer.ListPermissionsRequest{
@@ -115,6 +135,13 @@ res, err := authorizerClient.ListPermissions(&authorizer.ListPermissionsRequest{
     "Authorization": "Bearer " + token,
 })
 // res.Objects => ["document:1", "document:7", ...]
+
+// No filters: everything the caller holds, with per-relation detail
+all, err := authorizerClient.ListPermissions(&authorizer.ListPermissionsRequest{}, map[string]string{
+    "Authorization": "Bearer " + token,
+})
+// all.Permissions => [{Object: "document:1", Relation: "can_view"}, ...]
+// all.Truncated => false
 ```
 
 ## Available Methods

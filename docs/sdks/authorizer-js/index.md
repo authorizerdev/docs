@@ -166,3 +166,32 @@ async function main() {
   })
 }
 ```
+
+## Step 4: Fine-grained authorization (FGA)
+
+Authorizer ships with an embedded [OpenFGA](https://openfga.dev) relationship-based authorization (ReBAC) engine. The SDK exposes two client-facing methods to query it — [`checkPermissions`](/sdks/authorizer-js/functions#--checkpermissions) and [`listPermissions`](/sdks/authorizer-js/functions#--listpermissions). In the browser the session cookie is used automatically; from NodeJS pass the `Authorization` header.
+
+```js
+// Batch permission checks in one round trip — results come back in order:
+const { data } = await authRef.checkPermissions(
+  {
+    checks: [
+      { relation: 'can_view', object: 'document:1' },
+      { relation: 'can_edit', object: 'document:1' },
+    ],
+  },
+  { Authorization: `Bearer ${token}` }, // omit in the browser
+)
+if (data?.results?.[0]?.allowed) {
+  // caller may view document:1
+}
+
+// List everything the caller may see:
+const { data: list } = await authRef.listPermissions(
+  { relation: 'can_view', object_type: 'document' },
+  { Authorization: `Bearer ${token}` },
+)
+// list?.objects => ['document:1', 'document:7', ...]
+```
+
+See [Authorization (FGA)](/core/authorization) for the model, tuples, and real-world recipes.

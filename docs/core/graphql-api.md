@@ -113,6 +113,7 @@ This query can take a optional input `params` of type `SessionQueryInput` which 
 | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
 | `roles`                | Array of string with valid roles                                                                                                                                             | false    |
 | `scope`                | List of openID scopes. If not present default scopes ['openid', 'email', 'profile'] is used                                                                                  | false    |
+| `required_relations`   | `[FgaRelationInput!]` — each `{ relation!, object! }`. Gates the session on [fine-grained authorization](./authorization): every pair is checked against the authenticated caller with AND semantics, fail-closed. Requires FGA enabled. | false    |
 
 It returns `AuthResponse` type with the following keys.
 
@@ -201,6 +202,7 @@ Query to validate the given jwt token. This query needs input `params` of type `
 | `token_type`           | Type of token that needs to be validated. One of `access_token`, `refresh_token`, `id_token`.                                                                                | `true`   |
 | `token`                | JWT string                                                                                                                                                                   | `true`   |
 | `roles`                | Array of roles to validate the JWT token for                                                                                                                                 | `false`  |
+| `required_relations`   | `[FgaRelationInput!]` — each `{ relation!, object! }`. Gates validation on [fine-grained authorization](./authorization): AND semantics, fail-closed. Requires FGA enabled.  | `false`  |
 
 It returns `ValidateJWTTokenResponse` type with the following keys.
 
@@ -217,7 +219,8 @@ It returns `ValidateJWTTokenResponse` type with the following keys.
 query {
   validate_jwt_token(params: {
     token_type: "access_token",
-    token: "some jwt token"
+    token: "some jwt token",
+    required_relations: [{ relation: "can_edit", object: "document:1" }]
   }) {
     is_valid
     claims
@@ -234,6 +237,7 @@ Query to validate the browser session. This query needs input `params` of type `
 | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
 | `cookie`               | Browser cookie. Either the browser HTTP cookie is present or this parameter must be supplied.                                                                                | `false`  |
 | `roles`                | Array of roles to validate session for                                                                                                                                       | `false`  |
+| `required_relations`   | `[FgaRelationInput!]` — each `{ relation!, object! }`. Gates validation on [fine-grained authorization](./authorization): AND semantics, fail-closed. Requires FGA enabled.  | `false`  |
 
 It returns `ValidateSessionResponse` type with the following keys.
 
@@ -283,17 +287,45 @@ query {
 }
 ```
 
+Each check accepts optional `contextual_tuples` — extra tuples evaluated for that one check only and never persisted. Useful for "what-if" checks and request-time facts:
+
+```graphql
+query {
+  check_permissions(params: {
+    checks: [
+      {
+        relation: "can_view",
+        object: "document:1",
+        contextual_tuples: [
+          { user: "user:1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed", relation: "viewer", object: "document:1" }
+        ]
+      }
+    ]
+  }) {
+    results { relation object allowed }
+  }
+}
+```
+
 #### `list_permissions`
 
-List the objects of a given type on which the subject holds a relation. Returns `{ objects }`.
+List what the subject can access. With both `relation` and `object_type` set it answers "which `object_type`s can I `relation`?". Either or both filters may be omitted — every matching (type, relation) pair of the active model is then enumerated, so an empty input returns **all** permissions the subject holds.
 
 Input `ListPermissionsInput`:
 
 | Key           | Description                                                                                              | Required |
 | ------------- | -------------------------------------------------------------------------------------------------------- | -------- |
-| `relation`    | Relation to list for (e.g. `can_view`).                                                                  | `true`   |
-| `object_type` | Object type to enumerate (e.g. `document`).                                                              | `true`   |
+| `relation`    | Relation to list for (e.g. `can_view`). Omit to enumerate every relation of the active model.            | `false`  |
+| `object_type` | Object type to enumerate (e.g. `document`). Omit to enumerate every type of the active model.            | `false`  |
 | `user`        | Subject ("type:id", bare id → `user:<id>`). Honored only for super-admins or self; defaults to the caller. | `false`  |
+
+**Response** `ListPermissionsResponse`:
+
+| Key           | Description                                                                                                          |
+| ------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `objects`     | Distinct fully-qualified object ids the subject holds the queried permission on (e.g. `["document:1", "document:7"]`). |
+| `permissions` | The `(object, relation)` detail pairs — relevant when no `relation` filter was supplied.                                |
+| `truncated`   | `true` when the result was capped (1000 entries) and more permissions exist.                                            |
 
 ```graphql
 query {
@@ -302,6 +334,8 @@ query {
     object_type: "document"
   }) {
     objects
+    permissions { object relation }
+    truncated
   }
 }
 ```
@@ -1694,7 +1728,7 @@ Manage the embedded FGA (ReBAC) engine: the authorization model and the relation
 
 #### `_fga_write_model`
 
-Write (replace) the authorization model from an FGA DSL string. Returns `FgaModel` `{ id, dsl }`.
+Install a new authorization-model version from an FGA DSL string and make it active. Models are append-only — earlier versions are retained. Returns `FgaModel` `{ id, dsl }`.
 
 ```graphql
 mutation {
@@ -1764,18 +1798,21 @@ mutation {
 
 #### `_fga_read_tuples`
 
-Read stored tuples with pagination. Returns `FgaTuples` `{ tuples { user relation object }, continuation_token }`.
+Read stored tuples with pagination and optional filters. Any empty filter field acts as a wildcard for that position. Returns `FgaTuples` `{ tuples { user relation object }, continuation_token }` — `continuation_token` is empty when the result set is exhausted.
 
-Input `params`:
+Input `params` (`FgaReadTuplesInput`):
 
 | Key                  | Description                                       | Required |
 | -------------------- | ------------------------------------------------ | -------- |
+| `user`               | Filter by subject (e.g. `user:1b9d…`). Empty = any user. | `false`  |
+| `relation`           | Filter by relation (e.g. `viewer`). Empty = any relation. | `false`  |
+| `object`             | Filter by object (e.g. `document:1`). Empty = any object. | `false`  |
 | `page_size`          | Maximum number of tuples to return.              | `false`  |
 | `continuation_token` | Token from a previous response to fetch the next page. | `false`  |
 
 ```graphql
 query {
-  _fga_read_tuples(params: { page_size: 50 }) {
+  _fga_read_tuples(params: { object: "document:1", page_size: 50 }) {
     tuples {
       user
       relation
@@ -1788,13 +1825,22 @@ query {
 
 #### `_fga_list_users`
 
-List the users that have a given relation on an object (admin only).
+List the users that have a given relation on an object (admin only — reveals the access graph). Returns `{ users }` — fully-qualified user ids (e.g. `"user:1b9d…"`).
+
+Input `params` (`FgaListUsersInput`):
+
+| Key         | Description                                            | Required |
+| ----------- | ------------------------------------------------------ | -------- |
+| `object`    | Object to inspect (e.g. `document:1`).                 | `true`   |
+| `relation`  | Relation to resolve (e.g. `viewer`).                   | `true`   |
+| `user_type` | Type of subjects to enumerate (e.g. `user`).           | `true`   |
 
 ```graphql
 query {
   _fga_list_users(params: {
+    object: "document:1",
     relation: "viewer",
-    object: "document:1"
+    user_type: "user"
   }) {
     users
   }
@@ -1803,7 +1849,9 @@ query {
 
 #### `_fga_expand`
 
-Expand the relationship/userset tree for a relation on an object (admin only). Useful for debugging how access is derived.
+Expand the relationship/userset tree for a relation on an object (admin only — reveals the access graph). Useful for debugging how access is derived. Returns `{ tree }` — the OpenFGA userset tree serialized as a JSON string.
+
+Input `params` (`FgaExpandInput`): `{ relation: String!, object: String! }`.
 
 ```graphql
 query {

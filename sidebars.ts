@@ -19,6 +19,7 @@ const sidebars: SidebarsConfig = {
         'core/server-config',
         'core/security',
         'core/authorization',
+        'core/fga-guide',
         'core/databases',
         'core/endpoints',
         'core/graphql-api',

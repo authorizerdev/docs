@@ -25,6 +25,7 @@ This page covers:
 6. [SDKs](#6-sdks) and [operational notes](#7-operational-notes).
 7. [Using FGA from your application](#8-using-fga-from-your-application) — middleware, the tuple lifecycle, list filtering.
 8. [Real-world recipes](#9-real-world-recipes) — document sharing, multi-tenant SaaS, job roles, time-bound access, block lists.
+9. [Cheat sheet](#10-cheat-sheet) — app event → FGA operation.
 
 ---
 
@@ -86,8 +87,12 @@ and the permission relations (`can_view`, `can_edit`, `can_delete`) resolve thro
 A single `owner` tuple therefore grants view, edit, and delete.
 
 The DSL also supports **hierarchies** (`viewer from parent`), **group usersets**
-(`[user, team#member]`), **public access** (`[user:*]`), **exclusions**
-(`viewer but not blocked`), and **conditions** (ABAC, e.g. time-bound grants).
+(`[user, team#member]`), **public access** (`[user:*]`), and **exclusions**
+(`viewer but not blocked`). OpenFGA's parameterized **conditions** (ABAC/CEL,
+`[user with someCondition]`) are **not usable through Authorizer's API**: tuples
+cannot carry a condition and checks cannot supply condition context — use
+[contextual tuples](#4-checking-access--client-api) or scheduled tuple deletion
+instead.
 
 ### From the dashboard
 
@@ -176,7 +181,23 @@ query {
 ```
 
 Each check also accepts optional `contextual_tuples` (evaluated for that one
-call only, never persisted) — handy for "what-if" checks or request-time facts.
+call only, never persisted) — handy for "what-if" checks or request-time facts:
+
+```graphql
+query {
+  check_permissions(params: {
+    checks: [{
+      relation: "can_view",
+      object: "document:1",
+      contextual_tuples: [
+        { user: "user:1b9d…", relation: "viewer", object: "document:1" }
+      ]
+    }]
+  }) {
+    results { relation object allowed }
+  }
+}
+```
 
 ### `list_permissions` — what can I access?
 
@@ -186,14 +207,32 @@ permission on — ideal for filtering a list down to what the user may see.
 ```graphql
 query {
   list_permissions(params: { relation: "can_view", object_type: "document" }) {
-    objects   # ["document:1", "document:7", ...]
+    objects                          # ["document:1", "document:7", ...]
+    permissions { object relation }  # (object, relation) detail pairs
+    truncated                        # true if capped at 1000 entries
   }
 }
 ```
 
+Both filters are optional. Omit `relation`, `object_type`, or both, and every
+matching (type, relation) pair of the active model is enumerated — an empty
+input returns **all** permissions the subject holds. The `permissions` field
+carries the per-relation detail (relevant when no `relation` filter was
+supplied); `truncated` is `true` when the result was capped at 1000 entries.
+
 From the dashboard: open **Users → ⋯ → View Permissions** to run
 `list_permissions` for any user (the admin session may specify a subject) and
 see exactly which objects they hold a permission on.
+
+### Gating sessions on permissions — `required_relations`
+
+The session and token-validation queries (`session`, `validate_jwt_token`,
+`validate_session`) accept an optional `required_relations` list of
+`{ relation, object }` pairs. Each pair is checked against the authenticated
+caller with **AND semantics, fail-closed** — one denied relation invalidates
+the whole result. This lets a gateway validate "logged in **and** may edit
+document 1" in a single call. See the
+[GraphQL API reference](./graphql-api#validate_jwt_token).
 
 ---
 
@@ -210,9 +249,9 @@ the API are interchangeable.
 | `_fga_get_model` | query | Fetch the active model (id + DSL). |
 | `_fga_write_tuples(params: { tuples })` | mutation | Add relationship tuples. |
 | `_fga_delete_tuples(params: { tuples })` | mutation | Remove relationship tuples. |
-| `_fga_read_tuples(params: { page_size, continuation_token })` | query | Page through stored tuples. |
-| `_fga_list_users(params)` | query | List the users that have a relation on an object (reveals the access graph — admin only). |
-| `_fga_expand(params)` | query | Expand the relationship/userset tree for a `(relation, object)` (admin only). |
+| `_fga_read_tuples(params: { user?, relation?, object?, page_size?, continuation_token? })` | query | Page through stored tuples; empty filter fields act as wildcards. |
+| `_fga_list_users(params: { object, relation, user_type })` | query | List the users of `user_type` that have a relation on an object (reveals the access graph — admin only). |
+| `_fga_expand(params: { relation, object })` | query | Expand the relationship/userset tree for a `(relation, object)`, returned as a JSON string (admin only). |
 | `_fga_reset` | mutation | Delete the model, **all** versions, and **all** tuples, then start a fresh empty store. Refused while any tuple still exists. |
 
 ```graphql
@@ -231,6 +270,9 @@ mutation {
 }
 ```
 
+Full parameter tables and examples for every operation live in the
+[GraphQL API reference](./graphql-api#authorization-admin).
+
 ---
 
 ## 6. SDKs
@@ -239,9 +281,11 @@ The official SDKs expose the read-side client API (model/tuple authoring stays i
 dashboard / admin API):
 
 - **Go** — `CheckPermissions`, `ListPermissions`. See the
-  [authorizer-go README](https://github.com/authorizerdev/authorizer-go#fine-grained-authorization-fga).
+  [Go SDK guide](/sdks/authorizer-go#step-4-fine-grained-authorization-fga) and the
+  [authorizer-go README](https://github.com/authorizerdev/authorizer-go).
 - **JavaScript / TypeScript** — `checkPermissions`, `listPermissions`. See the
-  [authorizer-js README](https://github.com/authorizerdev/authorizer-js#fine-grained-authorization-fga).
+  [JS SDK functions](/sdks/authorizer-js/functions#--checkpermissions) and the
+  [authorizer-js README](https://github.com/authorizerdev/authorizer-js).
 
 For each, pass the caller's auth header in server contexts; in the browser the session
 cookie is used automatically.
@@ -600,7 +644,15 @@ with it.
 **Scenario.** A contractor gets access that must expire automatically — no cron
 job to revoke it.
 
-**Model** (an ABAC condition on the grant):
+OpenFGA models expiry with [parameterized conditions](https://openfga.dev/docs/modeling/conditions)
+(`[user with non_expired_grant]`), but those are **not usable through
+Authorizer's API** — `_fga_write_tuples` cannot attach a condition to a tuple
+and `check_permissions` cannot supply condition context, so a condition-gated
+grant would never evaluate to allowed. Use one of these instead:
+
+- **Scheduled revocation.** Grant a plain tuple and have your application (a
+  job queue, cron, or workflow engine) call `_fga_delete_tuples` at the expiry
+  time. Deletion is immediate and complete — the next check is denied.
 
 ```dsl
 model
@@ -610,19 +662,19 @@ type user
 
 type document
   relations
-    define viewer: [user with non_expired_grant]
+    define viewer: [user]
     define can_view: viewer
-
-condition non_expired_grant(current_time: timestamp, grant_time: timestamp, grant_duration: duration) {
-  current_time < grant_time + grant_duration
-}
 ```
 
-Write the tuple with its condition context (grant time + duration), then pass
-`current_time` as request-time context on each check. Once
-`grant_time + grant_duration` passes, the same check flips to **denied** — no
-cleanup required. See [OpenFGA conditions](https://openfga.dev/docs/modeling/conditions)
-for the tuple-condition syntax.
+```text
+user:ctr-9a2…  viewer  document:sow-2026        # written at grant time
+# at expiry: _fga_delete_tuples removes the same tuple → access gone
+```
+
+- **Contextual tuples.** Don't persist the grant at all: your backend decides
+  per-request whether the contract window is still open and, if so, passes the
+  `viewer` tuple as a [contextual tuple](#4-checking-access--client-api) on the
+  check. No tuple exists to clean up; expiry is enforced by your own clock.
 
 ---
 
