@@ -37,6 +37,7 @@ Table of Contents
 | --------------------- | ------------------------------------------------------------------ |
 | Proto package         | `authorizer.v1`                                                    |
 | Service               | `AuthorizerService`                                                |
+| BSR module            | [`buf.build/authorizerdev/authorizer`](https://buf.build/authorizerdev/authorizer) |
 | Port                  | `--grpc-port` (default `9091`)                                     |
 | TLS                   | `--grpc-tls-cert` + `--grpc-tls-key`; `--grpc-insecure` for dev    |
 | Server reflection     | `--enable-grpc-reflection` (default `true`)                        |
@@ -48,16 +49,16 @@ attach the user's credential as request metadata —
 
 ## Protobuf schema
 
-The service is defined in Protocol Buffers in the
-[`proto/` directory of the authorizer repo](https://github.com/authorizerdev/authorizer/tree/main/proto)
-— package `authorizer.v1` (in `proto/authorizer/v1/`), with shared messages in
-`authorizer.common.v1`. Vendor those `.proto` files into your project and generate a typed
-client for any language. The repo is configured for [Buf](https://buf.build/), so the
-simplest path is:
+The schema is published to the **[Buf Schema Registry](https://buf.build/authorizerdev/authorizer)**
+as the module `buf.build/authorizerdev/authorizer` (package `authorizer.v1`, with shared
+messages in `authorizer.common.v1`). You can generate a typed client for any language
+without copying `.proto` files around:
 
 ```yaml
-# buf.gen.yaml — run against a local checkout of the proto/ directory
+# buf.gen.yaml
 version: v2
+inputs:
+  - module: buf.build/authorizerdev/authorizer
 plugins:
   - remote: buf.build/grpc/go
     out: gen
@@ -68,21 +69,23 @@ plugins:
 ```
 
 ```bash
-# clone the protos, then generate
-git clone https://github.com/authorizerdev/authorizer
-buf generate authorizer/proto
+buf generate
 ```
 
 Swap the remote plugins for `buf.build/grpc/python`, `.../grpc/web`, etc. to target other
-languages, or use `protoc` directly against the same files. Since
-[server reflection](#service--transport) is enabled by default, tools like
-[`grpcurl`](#calling-with-grpcurl) and Postman can also call the API with **no** local proto
-files at all.
+languages.
 
-> The schema is **not** currently published to a Buf Schema Registry module — vendor the
-> `.proto` files from the repo (or use reflection). Prefer not to codegen yourself? The
-> official [Go](../sdks/authorizer-go/), [JavaScript](../sdks/authorizer-js/), and
-> [Python](../sdks/authorizer-python/) SDKs wrap the API for you.
+**Other options:**
+
+- **Vendor the source** — the `.proto` files live in the
+  [`proto/` directory of the repo](https://github.com/authorizerdev/authorizer/tree/main/proto);
+  run `buf generate` or `protoc` against them directly.
+- **No protos at all** — since [server reflection](#service--transport) is enabled by
+  default, [`grpcurl`](#calling-with-grpcurl), Postman, etc. can call the API without any
+  schema files.
+- **Skip codegen** — the official [Go](../sdks/authorizer-go/),
+  [JavaScript](../sdks/authorizer-js/), and [Python](../sdks/authorizer-python/) SDKs wrap
+  the API for you.
 
 ## Available methods
 
