@@ -5,7 +5,11 @@ title: Endpoints
 
 # Endpoints
 
-Endpoints supported by Authorizer
+Endpoints supported by Authorizer.
+
+> Looking for the typed API surface? Every operation is also available as a
+> [GraphQL API](./graphql-api) and a JSON [REST API](./rest-api) under `/v1`, and a
+> read-only subset is exposed to AI agents via the [MCP Server](./mcp).
 
 ## `/`
 
