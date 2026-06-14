@@ -243,7 +243,7 @@ Common cases:
 ## See also
 
 - [GraphQL API](./graphql-api) — the full field-level reference shared by all transports.
-- [gRPC API](./grpc) — the same operations over native gRPC (BSR module, reflection, health).
+- [gRPC API](./grpc) — the same operations over native gRPC (reflection, health, codegen).
 - [Authorization (FGA)](./authorization) — the relationship model behind the permission endpoints.
 - [Endpoints](./endpoints) — OAuth/OIDC and operational endpoints (`/authorize`, `/oauth/token`, `/.well-known/*`, `/healthz`).
 - [MCP Server](./mcp) — exposing `check_permissions` / `list_permissions` to LLM agents.

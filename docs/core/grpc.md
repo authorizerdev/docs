@@ -48,16 +48,16 @@ attach the user's credential as request metadata —
 
 ## Protobuf schema
 
-The schema is published to the **[Buf Schema Registry](https://buf.build/authorizerdev/authorizer)**
-as the module `buf.build/authorizerdev/authorizer`. You can generate a typed client for any
-language without copying `.proto` files around.
-
-`buf.gen.yaml`:
+The service is defined in Protocol Buffers in the
+[`proto/` directory of the authorizer repo](https://github.com/authorizerdev/authorizer/tree/main/proto)
+— package `authorizer.v1` (in `proto/authorizer/v1/`), with shared messages in
+`authorizer.common.v1`. Vendor those `.proto` files into your project and generate a typed
+client for any language. The repo is configured for [Buf](https://buf.build/), so the
+simplest path is:
 
 ```yaml
+# buf.gen.yaml — run against a local checkout of the proto/ directory
 version: v2
-inputs:
-  - module: buf.build/authorizerdev/authorizer
 plugins:
   - remote: buf.build/grpc/go
     out: gen
@@ -68,13 +68,21 @@ plugins:
 ```
 
 ```bash
-buf generate
+# clone the protos, then generate
+git clone https://github.com/authorizerdev/authorizer
+buf generate authorizer/proto
 ```
 
 Swap the remote plugins for `buf.build/grpc/python`, `.../grpc/web`, etc. to target other
-languages. Prefer not to codegen yourself? The official [Go](../sdks/authorizer-go/),
-[JavaScript](../sdks/authorizer-js/), and [Python](../sdks/authorizer-python/) SDKs wrap the
-API for you.
+languages, or use `protoc` directly against the same files. Since
+[server reflection](#service--transport) is enabled by default, tools like
+[`grpcurl`](#calling-with-grpcurl) and Postman can also call the API with **no** local proto
+files at all.
+
+> The schema is **not** currently published to a Buf Schema Registry module — vendor the
+> `.proto` files from the repo (or use reflection). Prefer not to codegen yourself? The
+> official [Go](../sdks/authorizer-go/), [JavaScript](../sdks/authorizer-js/), and
+> [Python](../sdks/authorizer-python/) SDKs wrap the API for you.
 
 ## Available methods
 
