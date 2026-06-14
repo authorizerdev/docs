@@ -16,9 +16,13 @@ Use REST when a GraphQL client is overkill — server-to-server calls, shell scr
 webhooks, or platforms where a simple `POST` with a JSON body is the path of least
 resistance.
 
-> The same server also speaks **gRPC** (default port `9091`, set with `--grpc-port`) and
-> **GraphQL** (`POST /graphql`). All three are backed by the same service layer, so they
-> behave identically.
+> The same server also speaks **[gRPC](./grpc)** (default port `9091`, set with
+> `--grpc-port`) and **[GraphQL](./graphql-api)** (`POST /graphql`). All three are backed by
+> the same service layer, so they behave identically.
+
+> **Availability:** the `/v1` REST gateway is mounted only when the gRPC server is enabled
+> (the default). The surface is being migrated incrementally — see
+> [Available endpoints](#endpoint-reference) below for what is live today.
 
 ## Base URL & transport
 
@@ -67,23 +71,19 @@ the [GraphQL API reference](./graphql-api).
 | Method & path                    | Description                                          | GraphQL equivalent                                        |
 | -------------------------------- | ---------------------------------------------------- | --------------------------------------------------------- |
 | `POST /v1/signup`                | Register a new user                                  | [`signup`](./graphql-api#signup)                          |
-| `POST /v1/login`                 | Email/phone + password login                         | [`login`](./graphql-api#login)                            |
 | `POST /v1/logout`                | Invalidate the current session                       | [`logout`](./graphql-api#logout)                          |
-| `POST /v1/magic_link_login`      | Start a passwordless magic-link login                | [`magic_link_login`](./graphql-api#magic_link_login)      |
-| `POST /v1/verify_email`          | Verify an email with a token                         | [`verify_email`](./graphql-api#verify_email)              |
-| `POST /v1/resend_verify_email`   | Re-send the verification email                       | [`resend_verify_email`](./graphql-api#resend_verify_email)|
-| `POST /v1/verify_otp`            | Verify an email/SMS OTP or TOTP                      | [`verify_otp`](./graphql-api#verify_otp)                  |
-| `POST /v1/resend_otp`            | Re-send an OTP                                        | [`resend_otp`](./graphql-api#resend_otp)                  |
-| `POST /v1/forgot_password`       | Start a password-reset flow                          | [`forgot_password`](./graphql-api#forgot_password)        |
-| `POST /v1/reset_password`        | Complete a password reset                            | [`reset_password`](./graphql-api#reset_password)          |
 | `GET  /v1/profile`               | Get the authenticated user's profile *(auth)*        | [`profile`](./graphql-api#profile)                        |
-| `POST /v1/update_profile`        | Update the authenticated user's profile *(auth)*     | [`update_profile`](./graphql-api#update_profile)          |
-| `POST /v1/deactivate_account`    | Deactivate the authenticated account *(auth)*        | [`deactivate_account`](./graphql-api#deactivate_account)  |
-| `POST /v1/revoke`                | Revoke a refresh token                               | [`revoke`](./graphql-api#revoke)                          |
 | `POST /v1/session`               | Refresh / fetch the current session *(auth)*         | [`session`](./graphql-api#session)                        |
+| `POST /v1/revoke`                | Revoke a refresh token                               | [`revoke`](./graphql-api#revoke)                          |
 | `POST /v1/validate_jwt_token`    | Validate a JWT and (optionally) required relations   | [`validate_jwt_token`](./graphql-api#validate_jwt_token)  |
 | `POST /v1/validate_session`      | Validate a session cookie + required relations       | [`validate_session`](./graphql-api#validate_session)      |
 | `GET  /v1/meta`                  | Server feature flags & provider availability         | [`meta`](./graphql-api#meta)                              |
+
+> **Migration in progress.** The remaining authentication operations — `login`,
+> `magic_link_login`, `verify_email`, `resend_verify_email`, `verify_otp`, `resend_otp`,
+> `forgot_password`, `reset_password`, `update_profile`, and `deactivate_account` — are
+> defined in the schema but not yet served over REST/gRPC; they return `501`/`UNIMPLEMENTED`
+> for now. Use the [GraphQL API](./graphql-api) for these flows until their migration lands.
 
 ### Fine-grained authorization (FGA)
 
@@ -207,10 +207,12 @@ Common cases:
 | Explicit `user` not permitted for caller   | `403 Forbidden`    |
 | FGA not enabled (`--fga-store` unset)      | `400 Bad Request`  |
 | Validation failure (e.g. `> 100` checks)   | `400 Bad Request`  |
+| Endpoint not yet migrated to REST/gRPC     | `501 Not Implemented` |
 
 ## See also
 
 - [GraphQL API](./graphql-api) — the full field-level reference shared by all transports.
+- [gRPC API](./grpc) — the same operations over native gRPC (BSR module, reflection, health).
 - [Authorization (FGA)](./authorization) — the relationship model behind the permission endpoints.
 - [Endpoints](./endpoints) — OAuth/OIDC and operational endpoints (`/authorize`, `/oauth/token`, `/.well-known/*`, `/healthz`).
 - [MCP Server](./mcp) — exposing `check_permissions` / `list_permissions` to LLM agents.

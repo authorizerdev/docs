@@ -7,13 +7,29 @@ title: Overview
 
 Authorizer is developed using [Golang](https://golang.org/). Authorizer core comes with:
 
-- GraphQL API
+- [GraphQL API](./graphql-api), [REST API](./rest-api), and [gRPC API](./grpc)
+- [Fine-grained authorization (FGA)](./authorization) — relationship-based access control
+- [MCP server](./mcp) for AI agents
 - Email and Password login
 - OAuth login
 - Forgot password
 - Update profile API
 - Web application with a login page, sign up page, and forgot-password page. These can save hundreds of hours.
 - Secure session management with [HTTP cookie](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies)
+
+## APIs
+
+Authorizer exposes the same service over multiple transports, all backed by one schema:
+
+| API | Use it for | Reference |
+| --- | ---------- | --------- |
+| **GraphQL** (`/graphql`) | The complete, canonical surface — all auth flows, admin operations, and FGA. | [GraphQL API](./graphql-api) |
+| **REST** (`/v1`) | Simple JSON-over-HTTP for scripts and server-to-server calls. | [REST API](./rest-api) |
+| **gRPC** (`:9091`) | Strongly-typed, high-performance binary RPC. | [gRPC API](./grpc) |
+| **MCP** (stdio) | Letting an LLM agent check permissions on a user's behalf. | [MCP Server](./mcp) |
+
+For authorization, see the [Authorization (FGA)](./authorization) model and the
+[FGA Guide](./fga-guide) cookbook.
 
 ### How Authorizer is secure?
 
@@ -36,5 +52,7 @@ Client applications can also save `access_token` received on successful login in
 - Isomorphic schema
 - Client applications can request the data that is only required
 - In the future, we can stitch with other schema and offer schema-based permissions and user graph
+
+> For relationship-based, schema-driven permissions today, see [Authorization (FGA)](./authorization).
 
 > **Note:** You can always use GraphQL API as a rest API with the appropriate request body

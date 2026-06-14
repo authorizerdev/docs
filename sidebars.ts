@@ -24,6 +24,7 @@ const sidebars: SidebarsConfig = {
         'core/endpoints',
         'core/graphql-api',
         'core/rest-api',
+        'core/grpc',
         'core/mcp',
         'core/oauth2-oidc',
         'core/sso-guide',
