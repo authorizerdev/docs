@@ -78,6 +78,45 @@ if res.IsValid {
 }
 ```
 
+### Step 4: Fine-grained authorization (FGA)
+
+Authorizer ships with an embedded [OpenFGA](https://openfga.dev) relationship-based authorization (ReBAC) engine. The SDK exposes two client-facing methods to query it. Each takes a request struct and a `headers map[string]string` (pass `Authorization: Bearer <token>`).
+
+For complete worked scenarios — Go HTTP middleware, list filtering, and tuple lifecycle — see [Authorization recipes](/core/authorization#9-real-world-recipes).
+
+**CheckPermissions** -- evaluate one or more permission checks in a single call. `Results` come back in the same order as `Checks` and echo each pair.
+
+```go
+res, err := authorizerClient.CheckPermissions(&authorizer.CheckPermissionsRequest{
+    Checks: []*authorizer.PermissionCheckInput{
+        {Relation: "can_view", Object: "document:1"},
+        {Relation: "can_edit", Object: "document:1"},
+    },
+}, map[string]string{
+    "Authorization": "Bearer " + token,
+})
+if err != nil {
+    panic(err)
+}
+if res.Results[0].Allowed {
+    // caller may view document:1
+}
+```
+
+The subject defaults to the caller's token. An optional `User` ("type:id", bare id treated as `user:<id>`) is honored only for super-admins or when it equals the caller's own subject. Each check also accepts optional `ContextualTuples`, evaluated for that call only.
+
+**ListPermissions** -- list all objects of a given type the subject holds a relation on. Returns `Objects`.
+
+```go
+res, err := authorizerClient.ListPermissions(&authorizer.ListPermissionsRequest{
+    Relation:   "can_view",
+    ObjectType: "document",
+}, map[string]string{
+    "Authorization": "Bearer " + token,
+})
+// res.Objects => ["document:1", "document:7", ...]
+```
+
 ## Available Methods
 
 The SDK provides the following methods:
@@ -95,3 +134,5 @@ The SDK provides the following methods:
 - `RevokeToken` -- Revoke a token
 - `Logout` -- Logout user
 - `ValidateSession` -- Validate a session
+- `CheckPermissions` -- Evaluate one or more permission checks (FGA)
+- `ListPermissions` -- List objects the subject holds a permission on (FGA)

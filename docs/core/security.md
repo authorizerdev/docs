@@ -426,14 +426,14 @@ This kills the user-enumeration attack surface entirely.
 
 ## Fine-grained authorization
 
-Authorizer ships a built-in FGA engine that is **always enforcing** — a `required_permissions` check against an unmatched or denied `(resource, scope)` pair returns `unauthorized`. There is no permissive "log but allow" mode. See [Authorization (FGA)](./authorization) for the data model, admin mutations, and per-endpoint usage.
+Authorizer ships an embedded **OpenFGA** (ReBAC) engine, and access checks **fail closed** — a `check_permissions` for a relation that the relationship tuples don't grant is denied, and any engine or store error denies rather than allows. There is no permissive "log but allow" mode. See [Authorization (FGA)](./authorization) for the authorization model, admin mutations, and per-endpoint usage.
 
 ---
 
 ## See also
 
 - [Server Configuration](./server-config) — full CLI flag reference
-- [Authorization (FGA)](./authorization) — resources, scopes, policies, permissions
+- [Authorization (FGA)](./authorization) — OpenFGA authorization model, tuples, and access checks
 - [Rate Limiting](./rate-limiting) — rate limiter configuration
 - [Metrics & Monitoring](./metrics-monitoring) — Prometheus metrics including the new GraphQL limit counter
 - [v1 to v2 Migration](../migration/v1-to-v2) — for users upgrading from v1

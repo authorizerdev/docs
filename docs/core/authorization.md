@@ -5,278 +5,671 @@ title: Authorization (FGA)
 
 # Authorization (Fine-Grained)
 
-Authorizer ships a built-in fine-grained authorization (FGA) engine alongside its authentication features. FGA is **opt-in per request** and **always enforcing** — a request that asks for a permission the policy graph does not grant is rejected with `unauthorized`.
+Authorizer ships a built-in **fine-grained authorization (FGA)** engine powered by an
+embedded [OpenFGA](https://openfga.dev) instance — the open-source implementation of
+Google's [Zanzibar](https://research.google/pubs/pub48190/) relationship-based access
+control (ReBAC) model. Instead of static `role → permission` tables, you describe your
+domain as **types** and **relations**, grant access with **relationship tuples**, and
+ask the engine `Check(user, relation, object)` at request time.
+
+FGA is **opt-in** and runs **in-process** — there is no extra service to deploy and no
+network hop on a check.
 
 This page covers:
 
-1. The data model — **resources, scopes, policies, permissions**.
-2. How a caller asserts a permission via `required_permissions` on `session`, `validate_session`, and `validate_jwt_token`.
-3. How an admin defines the policy graph via the `_authz_add_resource` / `_authz_add_scope` / `_authz_add_policy` / `_authz_add_permission` GraphQL mutations.
-4. How a client reads its own granted permissions via the `permissions` query.
-5. Decision strategies, principal targets, and operational observability.
+1. [Enabling FGA](#1-enabling-fga)
+2. [The authorization model](#2-the-authorization-model) — types, relations, the DSL, and the dashboard.
+3. [Granting access](#3-granting-access--relationship-tuples) — relationship tuples.
+4. [Checking access](#4-checking-access--client-api) — `check_permissions`, `list_permissions`.
+5. [Admin GraphQL API](#5-admin-graphql-api) — the `_fga_*` operations the dashboard uses.
+6. [SDKs](#6-sdks) and [operational notes](#7-operational-notes).
+7. [Using FGA from your application](#8-using-fga-from-your-application) — middleware, the tuple lifecycle, list filtering.
+8. [Real-world recipes](#9-real-world-recipes) — document sharing, multi-tenant SaaS, job roles, time-bound access, block lists.
 
 ---
 
-## 1. Model
+## 1. Enabling FGA
 
-| Concept | Purpose | Example |
-| --- | --- | --- |
-| **Resource** | A noun the application protects. | `docs`, `billing`, `org` |
-| **Scope** | A verb / action on a resource. | `read`, `write`, `admin` |
-| **Policy** | A rule that says **who** matches — a principal selector. Targets a role, a user ID, or an attribute. | "all users with role=`user`" |
-| **Permission** | The binding `(resource, [scopes], [policies], decision_strategy)`. Allows scopes on the resource when at least one policy matches (per decision strategy). | "policy `user-role-can-read` grants `docs:read`" |
-| **Principal** | The caller being checked. `{id, type, roles, max_scopes?}`. `type` is `user`, `client`, or `agent`. `max_scopes` (optional) is a ceiling — even if a policy grants more, scopes outside `max_scopes` are denied. | `{id: "u-1", type: "user", roles: ["user"]}` |
+The engine stores its model and tuples in a SQL datastore.
 
-**Evaluator contract:** `CheckPermission(principal, resource, scope) → {allowed, matched_policy}`.
+- **SQL main database** (SQLite, Postgres, MySQL, …): FGA is **enabled by default** and
+  reuses your main database. Nothing to configure.
+- **NoSQL main database** (MongoDB, DynamoDB, …): OpenFGA can't use these, so FGA is
+  **disabled** unless you point it at a SQL store with `--fga-store`.
 
-- If no permission row exists for `(resource, scope)`, the result is **deny**. No policy is consulted.
-- If permissions exist, each is evaluated via its `decision_strategy` (see §6). An explicit deny short-circuits the request unless overridden by strategy.
-- Errors (DB, invalid input) **always fail closed** — the caller sees `unauthorized`.
-
----
-
-## 2. Asserting permissions on session APIs
-
-Three GraphQL operations accept an optional `required_permissions: [PermissionInput!]`:
-
-| Operation | Use case |
+| Flag | Purpose |
 | --- | --- |
-| `session` | SSO bootstrap. Returns `access_token` only if the cookie's user has every listed permission. Rotates the session cookie on success. |
-| `validate_session` | Server-rendered apps with cookies. Validates the cookie **and** the permission set. Does not rotate. |
-| `validate_jwt_token` | API gateway / service middleware. Validates a JWT **and** the permission set. Does not rotate. |
+| `--fga-store` | Override the OpenFGA datastore: `sqlite`, `postgres`, `mysql`, or `memory` (dev only — non-persistent). Defaults to the main database when it is SQL-compatible. |
+| `--fga-store-url` | Connection URI for an overridden `--fga-store` (a `file:` URI for SQLite, a DSN for Postgres/MySQL). Ignored when FGA reuses the main database. |
 
-**Input shape:**
+```bash
+# Reuses Postgres main DB — FGA on automatically:
+authorizer --database-type postgres --database-url "postgresql://..."
 
-```graphql
-input PermissionInput {
-  resource: String!
-  scope: String!
-}
+# MongoDB main DB — give FGA its own Postgres store to turn it on:
+authorizer --database-type mongodb --database-url "mongodb://..." \
+  --fga-store postgres --fga-store-url "postgresql://user:pass@host:5432/fga"
 ```
 
-Semantics: every entry in `required_permissions` must be allowed (AND). Any deny — or any unknown `(resource, scope)` pair — returns `unauthorized`.
+When FGA is disabled, every FGA GraphQL operation returns
+`fine-grained authorization is not enabled` and the rest of the server runs normally.
 
-### Examples
+---
+
+## 2. The authorization model
+
+The model is your permission **rulebook**. It declares the object **types** you protect,
+the **relations** on each type (`owner`, `editor`, `viewer`, `can_view`…), and how those
+relations are computed from one another. You write it once; access is then granted with
+data (tuples), not by editing the model.
+
+It is expressed in OpenFGA's [DSL](https://openfga.dev/docs/configuration-language):
+
+```dsl
+model
+  schema 1.1
+
+type user
+
+type document
+  relations
+    define owner: [user]
+    define editor: [user] or owner
+    define viewer: [user] or editor
+    define can_view: viewer
+    define can_edit: editor
+    define can_delete: owner
+```
+
+Reading it: an `owner` is also an `editor` (`or owner`), an `editor` is also a `viewer`,
+and the permission relations (`can_view`, `can_edit`, `can_delete`) resolve through them.
+A single `owner` tuple therefore grants view, edit, and delete.
+
+The DSL also supports **hierarchies** (`viewer from parent`), **group usersets**
+(`[user, team#member]`), **public access** (`[user:*]`), **exclusions**
+(`viewer but not blocked`), and **conditions** (ABAC, e.g. time-bound grants).
+
+### From the dashboard
+
+Open **`/dashboard` → Authorization → Step 1 · Define the model**. Two ways in:
+
+- **Roles &amp; permissions** (the default) — a simple matrix: list your roles
+  (`admin`, `editor`, `viewer`) and the actions they can take (`view`, `edit`, `delete`),
+  then tick which role can do what. The dashboard turns the matrix into a valid OpenFGA
+  RBAC model for you — no DSL to learn. It starts from a standard
+  `admin / editor / viewer` set; your configured instance roles (`--roles`) are offered
+  as one-click additions.
+- **Advanced (DSL)** — the raw editor with a catalog of ready-made examples (document
+  sharing, folder hierarchy, organizations &amp; teams, RBAC, groups, block lists,
+  multi-tenant SaaS, GitHub-style repos, time-bound conditions) and a plain-English
+  summary of whatever you type.
+
+### Versioning
+
+There is always exactly **one active model**. Saving creates a new **immutable version**
+and makes it active; earlier versions are retained so in-flight requests stay valid.
+OpenFGA models are **append-only** — an individual version cannot be deleted. To change
+the rules, save a new version. To wipe everything and start over, **reset** the store
+(see [§7](#7-operational-notes)).
+
+---
+
+## 3. Granting access — relationship tuples
+
+A **relationship tuple** is a single fact: _`user` is `relation` of `object`_. Tuples are
+the data that actually grants access; add and remove them any time without touching the
+model.
+
+```text
+user:1b9d…   viewer   document:1      → this user can view document 1
+user:2c8e…   owner    document:1      → this user owns document 1 (⇒ editor, viewer)
+team:9#member  viewer  document:1   → every member of team:9 can view it
+user:*       viewer   document:5      → document 5 is public
+```
+
+:::info Identify users by id, not name
+The subject is `user:<id>` — the **Authorizer user id** (the token's `sub` claim,
+shown on the dashboard's Users page). Names and emails aren't unique and can change;
+the id is stable. Short ids like `user:1b9d…` on this page abbreviate full UUIDs.
+:::
+
+Note that FGA relation names are **independent of the instance's `--roles`** (the JWT
+`roles` claim): app roles stay global and coarse, FGA relations are object-scoped and
+usually more granular. The dashboard's model builder seeds from your configured roles
+as a convenience, but the two sets are free to differ.
+
+From the dashboard: **Step 2 · Grant access** — add tuples inline, with one-click
+templates for the common shapes (direct grant, assign a role, grant a whole role, public
+access, grant-on-a-folder-that-cascades).
+
+:::tip
+To avoid one tuple per object id, grant on a container (`folder`, `organization`) and let
+resources inherit via a `… from parent` relation, or use `user:*` for public access.
+:::
+
+---
+
+## 4. Checking access — client API
+
+The client-facing surface is exactly **two queries**. The subject defaults to the
+**authenticated caller** — resolved server-side from the bearer token or session
+cookie. An optional `user` ("type:id", or a bare id treated as `user:<id>`) is
+honored only when the caller is a **super-admin** or when it **equals the
+caller's own token subject**; anything else is rejected, never silently ignored.
+
+### `check_permissions` — one or many questions
+
+A single check is simply a list of one. Results come back **in order** and echo
+the checked pair, so batch responses are self-describing.
 
 ```graphql
-# session
 query {
-  session(params: {
-    required_permissions: [
-      { resource: "docs", scope: "read" }
+  check_permissions(params: {
+    checks: [
+      { relation: "can_view", object: "document:1" },
+      { relation: "can_edit", object: "document:1" }
     ]
   }) {
-    access_token
-    user { id email roles }
+    results { relation object allowed }
   }
-}
-
-# validate_jwt_token — multiple required permissions are ANDed
-query {
-  validate_jwt_token(params: {
-    token_type: "access_token",
-    token: "<jwt>",
-    required_permissions: [
-      { resource: "docs",    scope: "read" },
-      { resource: "billing", scope: "view" }
-    ]
-  }) { is_valid claims }
-}
-
-# validate_session
-query {
-  validate_session(params: {
-    cookie: "<session-cookie>",
-    required_permissions: [
-      { resource: "docs", scope: "write" }
-    ]
-  }) { is_valid user { id roles } }
 }
 ```
 
-Omit `required_permissions` to preserve pre-FGA behavior — the call returns/validates as before.
+Each check also accepts optional `contextual_tuples` (evaluated for that one
+call only, never persisted) — handy for "what-if" checks or request-time facts.
+
+### `list_permissions` — what can I access?
+
+Returns the fully-qualified ids of every object of a type the subject holds the
+permission on — ideal for filtering a list down to what the user may see.
+
+```graphql
+query {
+  list_permissions(params: { relation: "can_view", object_type: "document" }) {
+    objects   # ["document:1", "document:7", ...]
+  }
+}
+```
+
+From the dashboard: open **Users → ⋯ → View Permissions** to run
+`list_permissions` for any user (the admin session may specify a subject) and
+see exactly which objects they hold a permission on.
 
 ---
 
-## 3. Building the policy graph (admin mutations)
+## 5. Admin GraphQL API
 
-All admin mutations require the super-admin secret (cookie or `X-Authorizer-Admin-Secret`). They are prefixed with `_authz_` to namespace the authorization API distinctly from other admin operations.
+Authoring the model and tuples is an admin task. These operations require the super-admin
+secret (cookie or `X-Authorizer-Admin-Secret`) and are prefixed `_fga_` to namespace the
+admin authorization API. The dashboard calls exactly these under the hood, so the UI and
+the API are interchangeable.
 
-### Step 1 — Define resources and scopes
-
-```graphql
-mutation { _authz_add_resource(params: { name: "docs" })  { id name } }
-mutation { _authz_add_scope(params:    { name: "read" })  { id name } }
-mutation { _authz_add_scope(params:    { name: "write" }) { id name } }
-```
-
-List, update, and delete each have symmetric operations: `_authz_resources` (list query), `_authz_update_resource`, `_authz_delete_resource`, and the same set for `scope` (`_authz_scopes`, `_authz_update_scope`, `_authz_delete_scope`).
-
-### Step 2 — Define a policy (who matches)
-
-A policy is a principal selector. The `type` field controls which target is honored:
-
-| `type`      | `target_type` accepts | Notes |
-| ----------- | -------------------- | ----- |
-| `role`      | `role`               | `target_value` must be a configured role (see `--roles`). |
-| `user`      | `user`               | `target_value` is the user's **ID** (not email). |
-| `attribute` | `attribute`          | Custom attribute match — `target_value` is the JSON key the principal must satisfy. |
+| Operation | Type | Purpose |
+| --- | --- | --- |
+| `_fga_write_model(params: { dsl })` | mutation | Install a new authorization-model version from its DSL. |
+| `_fga_get_model` | query | Fetch the active model (id + DSL). |
+| `_fga_write_tuples(params: { tuples })` | mutation | Add relationship tuples. |
+| `_fga_delete_tuples(params: { tuples })` | mutation | Remove relationship tuples. |
+| `_fga_read_tuples(params: { page_size, continuation_token })` | query | Page through stored tuples. |
+| `_fga_list_users(params)` | query | List the users that have a relation on an object (reveals the access graph — admin only). |
+| `_fga_expand(params)` | query | Expand the relationship/userset tree for a `(relation, object)` (admin only). |
+| `_fga_reset` | mutation | Delete the model, **all** versions, and **all** tuples, then start a fresh empty store. Refused while any tuple still exists. |
 
 ```graphql
+# Install a model:
 mutation {
-  _authz_add_policy(params: {
-    name: "user-role-can-read",
-    type: "role",
-    targets: [{ target_type: "role", target_value: "user" }]
-  }) { id }
+  _fga_write_model(params: { dsl: "model\n  schema 1.1\n\ntype user\n\ntype document\n  relations\n    define viewer: [user]\n    define can_view: viewer" }) {
+    id
+  }
 }
-```
 
-### Step 3 — Bind it all together with a permission
-
-```graphql
+# Grant access:
 mutation {
-  _authz_add_permission(params: {
-    name: "docs-read",
-    resource_id: "<resource-id>",
-    scope_ids:   ["<read-scope-id>"],
-    policy_ids:  ["<policy-id>"],
-    decision_strategy: "affirmative"
-  }) { id }
-}
-```
-
-`scope_ids` can include multiple scopes — one permission row can cover `read` + `write`. `policy_ids` likewise can include multiple policies; their combination follows `decision_strategy` (see §6).
-
----
-
-## 4. Reading granted permissions — `permissions`
-
-A signed-in caller can ask "what am I allowed to do?" without enumerating every `(resource, scope)` pair:
-
-```graphql
-query {
-  permissions {
-    resource
-    scope
-  }
-}
-```
-
-Returns the flat list of `(resource, scope)` pairs granted to the caller's principal. Useful for:
-
-- Building UIs that hide/show actions based on the current user.
-- JWT embedding — bake the list into a custom claim if you want a stateless authz check downstream.
-
----
-
-## 5. Principal types
-
-`CheckPermission` evaluates against a `Principal`. Authorizer derives the principal automatically from the calling identity:
-
-| Auth method | `principal.type` | `principal.id` |
-| ----------- | ---------------- | -------------- |
-| User session / JWT | `user`   | user's UUID |
-| Machine-to-machine client credentials | `client` | client ID |
-| Agent token (planned) | `agent`  | agent ID |
-
-`max_scopes` is an optional **delegation ceiling** carried on the principal — e.g. a downstream token issued via OAuth's `scope=` param can be ceilinged so it never exceeds the granted set even if policies later widen.
-
----
-
-## 6. Decision strategies
-
-A permission can attach multiple policies. Their verdicts combine via `decision_strategy`:
-
-| Strategy | Semantics | When to use |
-| -------- | --------- | ----------- |
-| `affirmative` (default) | Any policy granting access wins; deny only if all deny. | Most-permissive — additive role grants. |
-| `consensus` | More grants than denies → allow. Equal split → deny. | Voting-style approval. |
-| `unanimous` | All policies must grant; any deny denies. | Strict — e.g. "billing-admin AND on-call". |
-
-An **explicit deny** from any policy in `unanimous` or `consensus` short-circuits to deny.
-
----
-
-## 7. Observability
-
-Two Prometheus counters surface authorization behavior. Detailed shapes live in [Metrics & Monitoring](./metrics-monitoring#authorization-metrics).
-
-| Counter | What it measures |
-| ------- | ---------------- |
-| `authorizer_required_permissions_checks_total{endpoint, outcome}` | Per-endpoint outcome of `required_permissions`: `granted`, `denied`, `not_requested`, `error`. **Use this for FGA adoption + denial alerting.** |
-| `authorizer_authz_checks_total{result}` | Per-`CheckPermission` evaluator outcome: `allowed`, `denied`, `unmatched`, `error`. Lower-level than the above. |
-| `authorizer_authz_unmatched_total` | Subset of evaluator calls that found no permission row for `(resource, scope)`. Watch this when adding new `required_permissions` call sites to find gaps in your policy graph. |
-
-`outcome="error"` on `authorizer_required_permissions_checks_total` is an operational signal — a DB/storage failure is preventing the check from completing. Page on it.
-
----
-
-## 8. Caching
-
-`CheckPermission` results are cached for `--authorization-cache-ttl` seconds (default `300`, set `0` to disable). The cache is delegated to your configured `memory_store` — Redis when `--redis-url` is set, the database when only `--database-type` is configured, an in-process fallback otherwise.
-
-Cache is invalidated automatically when an admin mutation changes any resource, scope, policy, or permission. There is no per-request cache bypass.
-
----
-
-## 9. Common patterns
-
-### Gating an API gateway route
-
-Use `validate_jwt_token` from your gateway middleware:
-
-```graphql
-query {
-  validate_jwt_token(params: {
-    token_type: "access_token",
-    token: "<bearer>",
-    required_permissions: [{ resource: "billing", scope: "view" }]
-  }) { is_valid }
-}
-```
-
-Cache the result for the JWT's remaining lifetime. The server already caches the underlying evaluator result for `--authorization-cache-ttl`; an extra layer at the gateway saves the network hop.
-
-### Server-rendered app with cookies
-
-Use `validate_session` on each protected page render:
-
-```graphql
-query {
-  validate_session(params: {
-    cookie: "<cookie>",
-    required_permissions: [{ resource: "admin", scope: "view" }]
-  }) { is_valid user { id roles } }
-}
-```
-
-### Bootstrapping SSO with a permission gate
-
-`session` mints a fresh access token but only when the policy graph allows the listed permissions:
-
-```graphql
-query {
-  session(params: {
-    required_permissions: [{ resource: "dashboard", scope: "view" }]
-  }) {
-    access_token
-    user { id }
-  }
+  _fga_write_tuples(params: {
+    tuples: [{ user: "user:1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed", relation: "viewer", object: "document:1" }]
+  }) { message }
 }
 ```
 
 ---
 
-## 10. Adopting FGA in an existing deployment
+## 6. SDKs
 
-FGA is opt-in per call. Existing callers that don't pass `required_permissions` see no behavior change.
+The official SDKs expose the read-side client API (model/tuple authoring stays in the
+dashboard / admin API):
 
-To roll it out:
+- **Go** — `CheckPermissions`, `ListPermissions`. See the
+  [authorizer-go README](https://github.com/authorizerdev/authorizer-go#fine-grained-authorization-fga).
+- **JavaScript / TypeScript** — `checkPermissions`, `listPermissions`. See the
+  [authorizer-js README](https://github.com/authorizerdev/authorizer-js#fine-grained-authorization-fga).
 
-1. **Define the policy graph first.** Add resources, scopes, policies, and permissions via the dashboard (or the admin GraphQL mutations above) before any caller starts asserting them. Any `required_permissions` pointing at an undefined `(resource, scope)` returns `unauthorized` immediately — there is no permissive "log but allow" fallback.
-2. **Adopt incrementally.** Add `required_permissions` to one endpoint at a time. Watch `authorizer_required_permissions_checks_total{endpoint, outcome}` per endpoint:
-   - `outcome="not_requested"` falling = adoption rising.
-   - `outcome="denied"` rising = policy gap or attacker probe.
-   - `outcome="error"` non-zero = page; storage / validation failure.
-3. **Build the dashboards.** See [Metrics & Monitoring §Authorization Metrics](./metrics-monitoring#authorization-metrics) for PromQL examples.
+For each, pass the caller's auth header in server contexts; in the browser the session
+cookie is used automatically.
+
+---
+
+## 7. Operational notes
+
+- **Fail closed.** If a check can't be completed (engine disabled, store error), the
+  caller is denied — never silently allowed.
+- **Resetting.** `_fga_reset` (dashboard: Step 1 → _Danger zone_) is the only way to
+  remove a model and its past versions, because OpenFGA models are append-only. It is
+  **refused while any relationship tuples still exist**, so live grants are never dropped
+  silently — delete the tuples first. The action is audited (`admin.fga_reset`).
+- **Auditing.** Model writes, tuple writes/deletes, and resets are recorded as admin
+  audit events, visible under **Audit Logs** in the dashboard.
+- **Metrics.** The engine exports Prometheus metrics — `authorizer_fga_checks_total`
+  (allow/deny/error), `authorizer_fga_check_duration_seconds`, and
+  `authorizer_fga_operations_total` — for adoption tracking and denial/error alerting.
+  See [Metrics & Monitoring → Authorization (FGA) Metrics](./metrics-monitoring#authorization-fga-metrics).
+- **Learn the model language.** See the OpenFGA docs:
+  [modeling guide](https://openfga.dev/docs/modeling/getting-started) and
+  [configuration language](https://openfga.dev/docs/configuration-language).
+
+---
+
+## 8. Using FGA from your application
+
+Your application keeps doing what it does; Authorizer answers one extra question per
+request: **"may this user do this to this object?"**
+
+```text
+                 ┌──────────────┐  login   ┌─────────────┐
+                 │   Your app   │ ───────► │  Authorizer  │
+                 │  (frontend)  │ ◄─────── │              │
+                 └──────┬───────┘  token   │  ┌────────┐  │
+                        │ API call + token │  │ OpenFGA│  │
+                 ┌──────▼───────┐          │  │ engine │  │
+                 │ Your backend │ ───────► │  └────────┘  │
+                 │              │  check_  │              │
+                 └──────────────┘permissions└─────────────┘
+```
+
+There are exactly **two touchpoints**:
+
+| Touchpoint | When | API | Credential |
+| --- | --- | --- | --- |
+| **Write tuples** | On your domain events — a document is created, a user joins a project, someone clicks "Share", access is revoked | `_fga_write_tuples` / `_fga_delete_tuples` | Admin secret, **server-side only** |
+| **Check access** | On every read/write your backend serves | `check_permissions`, `list_permissions` | The **caller's own token** by default — an explicit `user` is honored only for super-admins or self |
+
+### Writing tuples from your domain events
+
+Grant and revoke access by writing tuples when things happen in **your** system —
+this is the part teams most often miss. Typical lifecycle:
+
+| Event in your app | Tuple operation |
+| --- | --- |
+| User creates a document | write `user:<id>` `owner` `document:<docId>` |
+| Document is filed in a folder | write `folder:<fid>` `parent_folder` `document:<docId>` |
+| User clicks "Share with Bob (can edit)" | write `user:<bobId>` `editor` `document:<docId>` |
+| User joins an organization | write `user:<id>` `member` `organization:<orgId>` |
+| "Make public" toggle | write `user:*` `viewer` `document:<docId>` |
+| Access revoked / user offboarded | `_fga_delete_tuples` the matching tuple(s) |
+
+Server-side helper (any language — it's one GraphQL call):
+
+```js
+// Server-side only: uses the admin secret.
+async function writeTuples(tuples) {
+  await fetch('https://auth.yourapp.com/graphql', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Authorizer-Admin-Secret': process.env.AUTHORIZER_ADMIN_SECRET,
+    },
+    body: JSON.stringify({
+      query: `mutation ($params: FgaWriteTuplesInput!) {
+        _fga_write_tuples(params: $params) { message }
+      }`,
+      variables: { params: { tuples } },
+    }),
+  });
+}
+
+// On "document created":
+await writeTuples([
+  { user: `user:${creatorId}`, relation: 'owner', object: `document:${docId}` },
+]);
+```
+
+### Checking access in your backend
+
+Use the SDKs ([authorizer-js](https://github.com/authorizerdev/authorizer-js),
+[authorizer-go](https://github.com/authorizerdev/authorizer-go)) or one GraphQL
+call. Express middleware:
+
+```js
+import { Authorizer } from '@authorizerdev/authorizer-js';
+
+const auth = new Authorizer({
+  authorizerURL: 'https://auth.yourapp.com',
+  redirectURL: 'https://yourapp.com',
+  clientID: process.env.AUTHORIZER_CLIENT_ID,
+});
+
+// requirePermission('can_edit', req => `document:${req.params.id}`)
+const requirePermission = (relation, objectFor) => async (req, res, next) => {
+  const { data } = await auth.checkPermissions(
+    { checks: [{ relation, object: objectFor(req) }] },
+    { Authorization: req.headers.authorization }, // forward the caller's token
+  );
+  if (!data?.results?.[0]?.allowed)
+    return res.status(403).json({ error: 'forbidden' });
+  next();
+};
+
+app.get('/documents/:id',
+  requirePermission('can_view', (req) => `document:${req.params.id}`),
+  getDocumentHandler);
+
+app.put('/documents/:id',
+  requirePermission('can_edit', (req) => `document:${req.params.id}`),
+  updateDocumentHandler);
+```
+
+The same middleware in Go:
+
+```go
+func RequirePermission(relation string, objectFor func(*http.Request) string) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			res, err := authorizerClient.CheckPermissions(&authorizer.CheckPermissionsRequest{
+				Checks: []*authorizer.PermissionCheckInput{
+					{Relation: relation, Object: objectFor(r)},
+				},
+			}, map[string]string{"Authorization": r.Header.Get("Authorization")})
+			if err != nil || len(res.Results) == 0 || !res.Results[0].Allowed {
+				http.Error(w, "forbidden", http.StatusForbidden) // fail closed
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+```
+
+### Filtering lists — don't check one by one
+
+For "show me my documents", ask once and filter your DB query by the result:
+
+```js
+const { data } = await auth.listPermissions(
+  { relation: 'can_view', object_type: 'document' },
+  { Authorization: req.headers.authorization },
+);
+// data.objects => ['document:1', 'document:7', ...]
+const ids = data.objects.map((o) => o.split(':')[1]);
+const docs = await db.documents.findMany({ where: { id: { in: ids } } });
+```
+
+For rendering one page with many permission flags (can the user edit? delete?
+share?), pass several checks to `check_permissions` — one round trip, results in order.
+
+---
+
+---
+
+## 9. Real-world recipes
+
+Complete worked scenarios — each with the model, the tuples, and the checks your
+app runs. Every model below is also a one-click example in the dashboard model
+editor (**Step 1 → Advanced → Browse examples**) and is validated against the
+embedded engine in CI.
+
+### Document collaboration (Google-Docs-style sharing)
+
+**Scenario.** Users create documents, share them with specific people as editor or
+viewer, and optionally make them public.
+
+**Model** (concentric: an `owner` is an `editor` is a `viewer` — one tuple grants
+the whole stack):
+
+```dsl
+model
+  schema 1.1
+
+type user
+
+type document
+  relations
+    define owner: [user]
+    define editor: [user] or owner
+    define viewer: [user, user:*] or editor
+    define can_view: viewer
+    define can_edit: editor
+    define can_delete: owner
+```
+
+**Your app writes tuples on these events:**
+
+```text
+# Priya creates doc 42:
+user:1b9d…   owner    document:42
+
+# Priya shares with Marco as editor, with Sam as viewer:
+user:2c8e…   editor   document:42
+user:3d9f…   viewer   document:42
+
+# Priya hits "anyone with the link can view":
+user:*       viewer   document:42
+```
+
+**Your backend checks:**
+
+```text
+check_permissions(can_edit,   document:42)  with Marco's token → allowed
+check_permissions(can_delete, document:42)  with Marco's token → denied  (owner only)
+```
+
+"Unshare" is just `_fga_delete_tuples` on the same tuple. No schema migration, no
+`document_permissions` join table in your DB.
+
+---
+
+### B2B multi-tenant SaaS (org → project → resource)
+
+**Scenario.** Customers are organizations; each has projects containing resources.
+An org-wide grant must cover everything beneath it — **without one tuple per
+resource** — while still allowing per-resource exceptions.
+
+**Model:**
+
+```dsl
+model
+  schema 1.1
+
+type user
+
+type organization
+  relations
+    define admin: [user]
+    define editor: [user] or admin
+    define viewer: [user] or editor
+    define can_view: viewer
+    define can_edit: editor
+
+type project
+  relations
+    define org: [organization]
+    define editor: [user] or editor from org
+    define viewer: [user] or editor or viewer from org
+    define can_view: viewer
+    define can_edit: editor
+
+type resource
+  relations
+    define project: [project]
+    define editor: [user] or editor from project
+    define viewer: [user] or editor or viewer from project
+    define can_view: viewer
+    define can_edit: editor
+```
+
+**Wire the structure once** (when an org/project/resource is created in your app):
+
+```text
+organization:101   org       project:201
+project:201      project   resource:301
+project:201      project   resource:302
+```
+
+**Grant once, high in the tree:**
+
+```text
+user:1b9d…   viewer   organization:101        ← ONE tuple
+```
+
+Now every check below inherits, with zero per-resource tuples:
+
+```text
+check_permissions(can_view, resource:301)  → allowed   (viewer from project ← from org)
+check_permissions(can_view, resource:302)  → allowed
+check_permissions(can_edit, resource:301)  → denied    (viewers don't edit)
+```
+
+**Fine-grained exception on top** — an external contractor edits one resource only:
+
+```text
+user:2c8e…   editor   resource:301
+
+check_permissions(can_edit, resource:301)  → allowed
+check_permissions(can_view, resource:302)  → denied    (nothing leaks to siblings)
+```
+
+When a new resource is created, your app writes **one structural tuple**
+(`project:201 project resource:303`) and every existing org-level grant
+applies to it instantly. Tenant isolation falls out of the graph: members of
+`organization:101` simply have no path to `organization:102` objects.
+
+---
+
+### Approval workflow with job roles
+
+**Scenario.** An HR or finance system where `labour`, `manager`, and `executive`
+staff have escalating permissions on records — managers edit, executives approve
+and delete.
+
+**Model** (`role#assignee` lets you grant a whole role with one tuple):
+
+```dsl
+model
+  schema 1.1
+
+type user
+
+type role
+  relations
+    define assignee: [user]
+
+type record
+  relations
+    define labour: [user, role#assignee]
+    define manager: [user, role#assignee]
+    define executive: [user, role#assignee]
+    define can_delete: executive
+    define can_approve: executive
+    define can_edit: manager or can_delete
+    define can_view: labour or can_edit
+```
+
+**Tuples:**
+
+```text
+# Bind each role group to the records it covers (once per record type/instance):
+role:manager#assignee     manager     record:88
+role:executive#assignee   executive   record:88
+
+# Onboarding Dana as a manager is now ONE tuple, covering every bound record:
+user:4e0a…   assignee   role:manager
+```
+
+**Checks:**
+
+```text
+check_permissions(can_edit,    record:88)  with Dana's token → allowed
+check_permissions(can_approve, record:88)  with Dana's token → denied
+```
+
+Offboarding = delete Dana's one `assignee` tuple; every record access disappears
+with it.
+
+---
+
+### Time-bound contractor access
+
+**Scenario.** A contractor gets access that must expire automatically — no cron
+job to revoke it.
+
+**Model** (an ABAC condition on the grant):
+
+```dsl
+model
+  schema 1.1
+
+type user
+
+type document
+  relations
+    define viewer: [user with non_expired_grant]
+    define can_view: viewer
+
+condition non_expired_grant(current_time: timestamp, grant_time: timestamp, grant_duration: duration) {
+  current_time < grant_time + grant_duration
+}
+```
+
+Write the tuple with its condition context (grant time + duration), then pass
+`current_time` as request-time context on each check. Once
+`grant_time + grant_duration` passes, the same check flips to **denied** — no
+cleanup required. See [OpenFGA conditions](https://openfga.dev/docs/modeling/conditions)
+for the tuple-condition syntax.
+
+---
+
+### Suspending a user (block list)
+
+**Scenario.** Broad access stays in place, but specific users must be locked out
+of specific objects — overriding anything else that grants them access.
+
+**Model:**
+
+```dsl
+model
+  schema 1.1
+
+type user
+
+type document
+  relations
+    define viewer: [user]
+    define blocked: [user]
+    define can_view: viewer but not blocked
+```
+
+```text
+user:*      viewer    document:7     # everyone can read the handbook
+user:5f1b…  blocked   document:7     # …except this account
+
+check_permissions(can_view, document:7) with 5f1b…'s token → denied
+```
+
+`but not` always wins over every grant path — direct, inherited, or public.
+
+---
+
+---
+
+## 10. Cheat sheet
+
+App event → FGA operation:
+
+| Your app does | You call |
+| --- | --- |
+| Serve any protected read/write | `check_permissions` (caller's token) |
+| Render a list page | `list_permissions`, filter your DB query by the ids |
+| Render one item with many action buttons | `check_permissions` with several checks |
+| Create a resource | `_fga_write_tuples`: owner + structural parent tuple |
+| Share / grant / promote | `_fga_write_tuples`: one tuple |
+| Revoke / unshare / offboard | `_fga_delete_tuples`: the matching tuple(s) |
+| Reorganize (move project to new org) | delete + write the structural tuple |
+| Debug "why can X see Y?" | `_fga_expand` (admin), or **Users → View Permissions** for any subject |

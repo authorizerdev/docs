@@ -28,6 +28,8 @@ title: Functions
 - [logout](#--logout)
 - [validateJWTToken](#--validatejwttoken)
 - [validateSession](#--validatesession)
+- [checkPermissions](#--checkpermissions)
+- [listPermissions](#--listpermissions)
 - [verifyOtp](#--verifyotp)
 - [resendOtp](#--resendotp)
 - [deactivateAccount](#--deactivateaccount)
@@ -473,7 +475,7 @@ const { data, errors } await authRef.getMetadata()
 
 Function to get session information. This function makes an authorized request, hence if it is used from the browser the HTTP cookie is sent if user has logged in else you need to pass headers object.
 
-It accepts the optional JSON object as parameter, you can pass the HTTP Headers there. Optionally you can also validate the roles against the given token by passing the `roles` as second argument to function.
+It accepts the optional JSON object as parameter, you can pass the HTTP Headers there. Optionally you can also pass a `SessionQueryRequest` object as the second argument to validate `roles` against the session.
 
 | Key             | Description                                                                          | Required |
 | --------------- | ------------------------------------------------------------------------------------ | -------- |
@@ -578,9 +580,9 @@ It expects the JSON object as parameter with following parameters
 
 | Key          | Description                                                                                              | Required |
 | ------------ | -------------------------------------------------------------------------------------------------------- | -------- |
-| `token_type` | Type of token that needs to be validated. It can be one of `access_token`, `refresh_token` or `id_token` | `true`   |
-| `token`      | Jwt token string                                                                                         | `true`   |
-| `roles`      | Array of roles to validate jwt token for                                                                 | `false`  |
+| `token_type`            | Type of token that needs to be validated. It can be one of `access_token`, `refresh_token` or `id_token`                  | `true`   |
+| `token`                 | Jwt token string                                                                                                          | `true`   |
+| `roles`                 | Array of roles to validate jwt token for                                                                                  | `false`  |
 
 It returns the following keys in response `data` object
 
@@ -594,8 +596,8 @@ It returns the following keys in response `data` object
 
 ```js
 const { data, errors } = await authRef.validateJWTToken({
-  token_type: `access_token`
-  token: `some jwt token string`
+  token_type: `access_token`,
+  token: `some jwt token string`,
 })
 ```
 
@@ -607,8 +609,8 @@ It expects the JSON object as parameter with following parameters
 
 | Key      | Description                                                                                         | Required |
 | -------- | --------------------------------------------------------------------------------------------------- | -------- |
-| `cookie` | browser session cookie value. If not present it will need coookie present in header as https cookie | `false`  |
-| `roles`  | Array of roles to validate jwt token for                                                            | `false`  |
+| `cookie`               | browser session cookie value. If not present it will need coookie present in header as https cookie                       | `false`  |
+| `roles`                | Array of roles to validate jwt token for                                                                                  | `false`  |
 
 It returns the following keys in response `data` object
 
@@ -624,6 +626,44 @@ It returns the following keys in response `data` object
 const { data, errors } = await authRef.validateSession({
   cookie: ``,
 })
+```
+
+## - `checkPermissions`
+
+Function to evaluate one or more fine-grained authorization (FGA) permission checks against the embedded [OpenFGA](https://openfga.dev) engine, in a single call. `results` come back in the same order as `checks` and echo each pair.
+
+This function makes an authorized request, hence from the browser the HTTP cookie is sent automatically if the user has logged in. From NodeJS pass the `Authorization` header as the optional second argument.
+
+The subject defaults to the caller's token. An optional `user` ("type:id", or a bare id treated as `user:<id>`) is honored only for super-admins or when it equals the caller's own token subject. Each check also accepts optional `contextual_tuples`, evaluated for that call only and never persisted.
+
+For complete worked scenarios — Express middleware, list filtering, and tuple lifecycle — see [Authorization recipes](/core/authorization#9-real-world-recipes).
+
+```js
+const { data, errors } = await authRef.checkPermissions(
+  {
+    checks: [
+      { relation: 'can_view', object: 'document:1' },
+      { relation: 'can_edit', object: 'document:1' },
+    ],
+  },
+  { Authorization: `Bearer ${token}` }, // omit in the browser to use the cookie
+);
+
+if (data?.results?.[0]?.allowed) {
+  // caller may view document:1
+}
+```
+
+## - `listPermissions`
+
+Function to list all objects of a given type the subject holds a relation on — ideal for filtering a list page down to what the user may see. Subject resolution follows the same rules as `checkPermissions`.
+
+```js
+const { data, errors } = await authRef.listPermissions(
+  { relation: 'can_view', object_type: 'document' },
+  { Authorization: `Bearer ${token}` },
+);
+// data?.objects => ['document:1', 'document:7', ...]
 ```
 
 ## - `verifyOtp`

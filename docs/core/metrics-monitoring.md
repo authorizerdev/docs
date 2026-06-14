@@ -132,41 +132,48 @@ raised. Alert at the rate that distinguishes the two for your traffic
 profile. See [GraphQL hardening](./security#graphql-hardening) for the
 limits themselves.
 
-### Authorization Metrics
+### Authorization (FGA) Metrics
+
+These metrics cover the embedded fine-grained authorization (OpenFGA) engine. They
+appear only once FGA is enabled and the corresponding operation has run at least
+once. See [Authorization (FGA)](./authorization).
 
 | Metric | Type | Labels | Description |
 |--------|------|--------|-------------|
-| `authorizer_required_permissions_checks_total` | Counter | `endpoint`, `outcome` | Per-endpoint outcome of `required_permissions` on session APIs. |
-| `authorizer_authz_checks_total` | Counter | `result` | Every `CheckPermission` call. `result=allowed\|denied\|unmatched\|error`. |
-| `authorizer_authz_unmatched_total` | Counter | — | `CheckPermission` calls that found no permission row for `(resource, scope)`. |
-| `authorizer_authz_check_duration_seconds` | Histogram | — | End-to-end `CheckPermission` latency. |
+| `authorizer_fga_checks_total` | Counter | `operation`, `result` | Access decisions from `check_permissions`. The headline metric for adoption and denial/error alerting. |
+| `authorizer_fga_check_duration_seconds` | Histogram | `operation` | Latency of the client-facing FGA engine reads. |
+| `authorizer_fga_operations_total` | Counter | `operation`, `result` | Non-decision FGA operations (model/tuple management, enumeration, reset) by outcome. |
 
-**`required_permissions_checks_total` labels:**
+**`authorizer_fga_checks_total` labels:**
 
 | Label | Values |
-| ----- | ------ |
-| `endpoint` | `session`, `validate_session`, `validate_jwt_token` |
-| `outcome`  | `granted` (all listed permissions allowed) · `denied` (one or more denied) · `not_requested` (caller omitted the field) · `error` (CheckPermission errored — DB/validation) |
+|---|---|
+| `operation` | `check_permissions` (each supplied pair is counted individually) |
+| `result` | `allowed` · `denied` · `error` (the engine call failed — fail-closed, so the caller was denied) |
 
-**Use cases:**
+**`authorizer_fga_check_duration_seconds`** `operation`: `check_permissions` · `list_permissions`. The histogram's `_count` also gives you a call rate per operation for free.
 
-- `outcome="denied"` rising on a given endpoint = either a policy gap or an attacker probe. Cross-check with `authorizer_authz_unmatched_total` (gap) versus `authorizer_authz_checks_total{result="denied"}` (policy deny).
-- `outcome="error"` should sit at zero. Any non-zero rate is an infra problem — alert on it.
-- `outcome="not_requested"` is the FGA *adoption gap* — share of calls not yet opting into permission gating.
+**`authorizer_fga_operations_total`** `operation`: `get_model` · `write_model` · `read_tuples` · `write_tuples` · `delete_tuples` · `list_users` · `expand` · `list_permissions` · `reset`. `result`: `success` · `error`.
 
-```promql
-# Adoption: share of calls per endpoint that still don't pass required_permissions
-sum by (endpoint) (rate(authorizer_required_permissions_checks_total{outcome="not_requested"}[5m]))
-  /
-sum by (endpoint) (rate(authorizer_required_permissions_checks_total[5m]))
-```
+Useful queries:
 
 ```promql
-# Alert candidate: required_permissions errors over 5 minutes
-sum(rate(authorizer_required_permissions_checks_total{outcome="error"}[5m])) > 0
+# FGA denial rate (last 5 minutes)
+sum(rate(authorizer_fga_checks_total{result="denied"}[5m]))
+
+# FGA check error rate — should be ~0; a spike means the engine/store is failing closed
+sum(rate(authorizer_fga_checks_total{result="error"}[5m]))
+
+# Admin authorization changes (model/tuple writes, resets)
+sum by (operation) (increase(authorizer_fga_operations_total{operation=~"write_model|write_tuples|delete_tuples|reset"}[1h]))
+
+# p99 check latency
+histogram_quantile(0.99, sum by (le, operation) (rate(authorizer_fga_check_duration_seconds_bucket[5m])))
 ```
 
-See [Authorization (FGA)](./authorization) for the underlying model.
+A non-zero `result="error"` rate on `authorizer_fga_checks_total` is an operational
+signal — the engine or its datastore is failing, and checks are denying as a result.
+Page on it.
 
 ### Infrastructure Metrics
 
@@ -285,15 +292,6 @@ groups:
           severity: warning
         annotations:
           summary: "Elevated GraphQL error rate"
-
-      - alert: AuthzRequiredPermissionsErrors
-        expr: sum(rate(authorizer_required_permissions_checks_total{outcome="error"}[5m])) > 0
-        for: 5m
-        labels:
-          severity: page
-        annotations:
-          summary: "required_permissions checks are failing with errors"
-          description: "Authorizer's FGA evaluator is returning errors on required_permissions checks. Storage or validation failure is likely. Inspect server logs."
 ```
 
 ## Manual Testing
