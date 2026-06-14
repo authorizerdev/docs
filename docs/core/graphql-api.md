@@ -20,6 +20,8 @@ Table of Contents
     - [`profile`](#profile)
     - [`validate_jwt_token`](#validate_jwt_token)
     - [`validate_session`](#validate_session)
+    - [`check_permissions`](#check_permissions)
+    - [`list_permissions`](#list_permissions)
     - [`_users`](#_users)
     - [`_user`](#_user)
     - [`_verification_requests`](#_verification_requests)
@@ -29,9 +31,6 @@ Table of Contents
     - [`_webhooks`](#_webhooks)
     - [`_webhook_logs`](#_webhook_logs)
     - [`_email_templates`](#_email_templates)
-    - [Authorization (client-facing)](#authorization-client-facing)
-      - [`check_permissions`](#check_permissions)
-      - [`list_permissions`](#list_permissions)
   - [Mutations](#mutations)
     - [`signup`](#signup)
     - [`login`](#login)
@@ -271,11 +270,9 @@ query {
 }
 ```
 
-### Authorization (client-facing)
+### `check_permissions`
 
-These queries answer authorization questions against the embedded FGA (ReBAC) engine. They require a valid session or bearer token. The subject is pinned server-side from the caller's token/cookie; the optional `user` is honored only for super-admins or when it equals the caller's own subject. See [Authorization (FGA)](./authorization) for the full model.
-
-#### `check_permissions`
+> `check_permissions` and `list_permissions` answer authorization questions against the embedded FGA (ReBAC) engine. They require a valid session or bearer token. The subject is pinned server-side from the caller's token/cookie; the optional `user` is honored only for super-admins or when it equals the caller's own subject. See [Authorization (FGA)](./authorization) for the full model.
 
 Evaluate one or more permission checks in a single call. Returns `{ results { relation object allowed } }`, positionally aligned with `checks` and echoing each pair.
 
@@ -319,7 +316,7 @@ query {
 }
 ```
 
-#### `list_permissions`
+### `list_permissions`
 
 List what the subject can access. With both `relation` and `object_type` set it answers "which `object_type`s can I `relation`?". Either or both filters may be omitted — every matching (type, relation) pair of the active model is then enumerated, so an empty input returns **all** permissions the subject holds.
 

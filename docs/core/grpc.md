@@ -16,16 +16,16 @@ Table of Contents
 - [Service & transport](#service--transport)
 - [Protobuf schema](#protobuf-schema)
 - [Available methods](#available-methods)
-  - [`Meta`](#available-methods)
-  - [`Signup`](#available-methods)
-  - [`Session`](#available-methods)
-  - [`Profile`](#available-methods)
-  - [`Logout`](#available-methods)
-  - [`Revoke`](#available-methods)
-  - [`ValidateJwtToken`](#available-methods)
-  - [`ValidateSession`](#available-methods)
-  - [`CheckPermissions`](#available-methods)
-  - [`ListPermissions`](#available-methods)
+  - [`Meta`](#meta)
+  - [`Signup`](#signup)
+  - [`Session`](#session)
+  - [`Profile`](#profile)
+  - [`Logout`](#logout)
+  - [`Revoke`](#revoke)
+  - [`ValidateJwtToken`](#validatejwttoken)
+  - [`ValidateSession`](#validatesession)
+  - [`CheckPermissions`](#checkpermissions)
+  - [`ListPermissions`](#listpermissions)
 - [Calling with `grpcurl`](#calling-with-grpcurl)
 - [Health checks](#health-checks)
 - [Errors](#errors)
@@ -84,21 +84,48 @@ API for you.
 > currently served by the [GraphQL API](./graphql-api) and return `UNIMPLEMENTED` over
 > gRPC until their migration lands.
 
-| RPC                  | Auth   | Description                                          |
-| -------------------- | ------ | ---------------------------------------------------- |
-| `Meta`               | public | Server feature flags & provider availability.        |
-| `Signup`             | public | Register a new user.                                 |
-| `Session`            | user   | Refresh / fetch the current session.                 |
-| `Profile`            | user   | The authenticated user's profile.                    |
-| `Logout`             | user   | Invalidate the current session.                      |
-| `Revoke`             | public | Revoke a refresh token.                              |
-| `ValidateJwtToken`   | public | Validate a JWT and optional required relations.      |
-| `ValidateSession`    | user   | Validate a session cookie and required relations.    |
-| `CheckPermissions`   | user   | Batch-evaluate FGA `(relation, object)` checks.      |
-| `ListPermissions`    | user   | List objects/relations the subject can access.       |
+Each message mirrors its GraphQL/REST counterpart — see the linked
+[GraphQL API reference](./graphql-api) anchor for field-level details.
 
-Each message mirrors its GraphQL/REST counterpart — see the
-[GraphQL API reference](./graphql-api) for field-level details.
+### `Meta`
+
+*Public.* Server feature flags & provider availability. Mirrors [`meta`](./graphql-api#meta).
+
+### `Signup`
+
+*Public.* Register a new user. Mirrors [`signup`](./graphql-api#signup).
+
+### `Session`
+
+*Authenticated.* Refresh / fetch the current session. Mirrors [`session`](./graphql-api#session).
+
+### `Profile`
+
+*Authenticated.* The authenticated user's profile. Mirrors [`profile`](./graphql-api#profile).
+
+### `Logout`
+
+*Authenticated.* Invalidate the current session. Mirrors [`logout`](./graphql-api#logout).
+
+### `Revoke`
+
+*Public.* Revoke a refresh token. Mirrors [`revoke`](./graphql-api#revoke).
+
+### `ValidateJwtToken`
+
+*Public.* Validate a JWT and optional required relations. Mirrors [`validate_jwt_token`](./graphql-api#validate_jwt_token).
+
+### `ValidateSession`
+
+*Authenticated.* Validate a session cookie and required relations. Mirrors [`validate_session`](./graphql-api#validate_session).
+
+### `CheckPermissions`
+
+*Authenticated.* Batch-evaluate FGA `(relation, object)` checks. Mirrors [`check_permissions`](./graphql-api#check_permissions).
+
+### `ListPermissions`
+
+*Authenticated.* List objects/relations the subject can access. Mirrors [`list_permissions`](./graphql-api#list_permissions).
 
 ## Calling with `grpcurl`
 

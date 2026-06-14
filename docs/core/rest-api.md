@@ -29,18 +29,16 @@ Table of Contents
 - [Base URL & transport](#base-url--transport)
 - [Authentication](#authentication)
 - [Endpoint reference](#endpoint-reference)
-  - [Authentication & user](#authentication--user)
-    - [`POST /v1/signup`](#authentication--user)
-    - [`POST /v1/logout`](#authentication--user)
-    - [`GET /v1/profile`](#authentication--user)
-    - [`POST /v1/session`](#authentication--user)
-    - [`POST /v1/revoke`](#authentication--user)
-    - [`POST /v1/validate_jwt_token`](#authentication--user)
-    - [`POST /v1/validate_session`](#authentication--user)
-    - [`GET /v1/meta`](#authentication--user)
-  - [Fine-grained authorization (FGA)](#fine-grained-authorization-fga)
-    - [`POST /v1/check_permissions`](#post-v1check_permissions)
-    - [`POST /v1/list_permissions`](#post-v1list_permissions)
+  - [`POST /v1/signup`](#post-v1signup)
+  - [`POST /v1/logout`](#post-v1logout)
+  - [`GET /v1/profile`](#get-v1profile)
+  - [`POST /v1/session`](#post-v1session)
+  - [`POST /v1/revoke`](#post-v1revoke)
+  - [`POST /v1/validate_jwt_token`](#post-v1validate_jwt_token)
+  - [`POST /v1/validate_session`](#post-v1validate_session)
+  - [`GET /v1/meta`](#get-v1meta)
+  - [`POST /v1/check_permissions`](#post-v1check_permissions)
+  - [`POST /v1/list_permissions`](#post-v1list_permissions)
 - [Errors](#errors)
 - [See also](#see-also)
 
@@ -86,18 +84,8 @@ Every endpoint below accepts/returns the same fields as its GraphQL counterpart.
 full field-by-field breakdown of each request and response, follow the linked anchor in
 the [GraphQL API reference](./graphql-api).
 
-### Authentication & user
-
-| Method & path                    | Description                                          | GraphQL equivalent                                        |
-| -------------------------------- | ---------------------------------------------------- | --------------------------------------------------------- |
-| `POST /v1/signup`                | Register a new user                                  | [`signup`](./graphql-api#signup)                          |
-| `POST /v1/logout`                | Invalidate the current session                       | [`logout`](./graphql-api#logout)                          |
-| `GET  /v1/profile`               | Get the authenticated user's profile *(auth)*        | [`profile`](./graphql-api#profile)                        |
-| `POST /v1/session`               | Refresh / fetch the current session *(auth)*         | [`session`](./graphql-api#session)                        |
-| `POST /v1/revoke`                | Revoke a refresh token                               | [`revoke`](./graphql-api#revoke)                          |
-| `POST /v1/validate_jwt_token`    | Validate a JWT and (optionally) required relations   | [`validate_jwt_token`](./graphql-api#validate_jwt_token)  |
-| `POST /v1/validate_session`      | Validate a session cookie + required relations       | [`validate_session`](./graphql-api#validate_session)      |
-| `GET  /v1/meta`                  | Server feature flags & provider availability         | [`meta`](./graphql-api#meta)                              |
+Super-admin-only operations (the `_fga_*` model/tuple management mutations, env, users,
+webhooks, etc.) are **not** part of the REST surface — they remain GraphQL-only.
 
 > **Migration in progress.** The remaining authentication operations — `login`,
 > `magic_link_login`, `verify_email`, `resend_verify_email`, `verify_otp`, `resend_otp`,
@@ -105,22 +93,45 @@ the [GraphQL API reference](./graphql-api).
 > defined in the schema but not yet served over REST/gRPC; they return `501`/`UNIMPLEMENTED`
 > for now. Use the [GraphQL API](./graphql-api) for these flows until their migration lands.
 
-### Fine-grained authorization (FGA)
+### `POST /v1/signup`
 
-These two endpoints answer authorization questions against the embedded
-[FGA (ReBAC) engine](./authorization). They require a valid session or bearer token. The
-subject is pinned server-side from the caller's token/cookie; the optional `user` field
-is honored only for super-admins or when it equals the caller's own subject.
+Register a new user. Request/response fields match [`signup`](./graphql-api#signup).
 
-| Method & path                  | Description                                        | GraphQL equivalent                                        |
-| ------------------------------ | -------------------------------------------------- | --------------------------------------------------------- |
-| `POST /v1/check_permissions`   | Batch-evaluate `(relation, object)` checks         | [`check_permissions`](./graphql-api#check_permissions)    |
-| `POST /v1/list_permissions`    | List the objects/relations the subject can access  | [`list_permissions`](./graphql-api#list_permissions)      |
+### `POST /v1/logout`
 
-#### `POST /v1/check_permissions`
+Invalidate the current session *(auth)*. Mirrors [`logout`](./graphql-api#logout).
 
-Evaluate one or more permission checks in a single call. At least one, at most **100**
-checks. `results` come back in the same order as `checks` and echo each pair.
+### `GET /v1/profile`
+
+Get the authenticated user's profile *(auth)*. Mirrors [`profile`](./graphql-api#profile).
+
+### `POST /v1/session`
+
+Refresh / fetch the current session *(auth)*. Mirrors [`session`](./graphql-api#session).
+
+### `POST /v1/revoke`
+
+Revoke a refresh token. Mirrors [`revoke`](./graphql-api#revoke).
+
+### `POST /v1/validate_jwt_token`
+
+Validate a JWT and, optionally, required relations. Mirrors [`validate_jwt_token`](./graphql-api#validate_jwt_token).
+
+### `POST /v1/validate_session`
+
+Validate a session cookie and required relations. Mirrors [`validate_session`](./graphql-api#validate_session).
+
+### `GET /v1/meta`
+
+Server feature flags & provider availability. Mirrors [`meta`](./graphql-api#meta).
+
+### `POST /v1/check_permissions`
+
+Answer authorization questions against the embedded [FGA (ReBAC) engine](./authorization)
+— evaluate one or more permission checks in a single call. At least one, at most **100**
+checks. `results` come back in the same order as `checks` and echo each pair. The subject
+is pinned server-side from the caller's token/cookie; the optional `user` field is honored
+only for super-admins or when it equals the caller's own subject.
 
 **Request body**
 
@@ -172,7 +183,7 @@ curl -X POST https://auth.example.com/v1/check_permissions \
   }'
 ```
 
-#### `POST /v1/list_permissions`
+### `POST /v1/list_permissions`
 
 List what the subject can access. With both `relation` and `object_type` set it answers
 "which `object_type`s can I `relation`?"; either or both filters may be omitted, so an
