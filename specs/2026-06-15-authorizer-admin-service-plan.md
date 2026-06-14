@@ -379,6 +379,25 @@ git commit -m "chore(admin-api): wire admin gateway + forward admin-secret heade
 
 ---
 
+## Proto conventions (MUST follow — verified against existing `authorizer.proto`)
+
+- **No shared `Response` message.** Ops that return `model.Response{Message}`
+  use an inline field: `message XResponse { string message = 1; }` (see
+  `LogoutResponse`/`RevokeResponse`). Wherever this plan writes
+  `Response response = 1;` or `message Response {...}`, substitute the inline
+  `string message = 1;` form.
+- **Pagination:** request side uses `authorizer.common.v1.PaginationRequest`;
+  response side embeds `authorizer.common.v1.Pagination pagination = N;`.
+  Import `authorizer/common/v1/pagination.proto`. The `Pagination` field name
+  in this plan maps to these common types.
+- **Optional scalars:** plain proto3 scalars (no `optional` keyword);
+  handlers collapse empty→nil via the existing `optionalString` helper, matching
+  the public surface.
+- **Reuse `User`** from `authorizer/v1/types.proto` (already imported).
+- **Always confirm field-for-field parity** with the referenced
+  `internal/graph/model` type in `internal/graph/model/models_gen.go` before
+  generating each message.
+
 ## Per-op pattern (CANONICAL — applies to every op in Phases 1–8)
 
 Each operation is implemented with these five units. Phase 1, Task 1.1 shows
@@ -427,18 +446,12 @@ message AdminMetaResponse {
   AdminMeta admin_meta = 1;
 }
 message AdminMeta {
-  // mirror every field of model.AdminMeta (e.g. version, configured roles,
-  // default roles, protected roles). Use string/bool/repeated string to match
-  // the model. EmitUnpopulated keeps zero values visible to REST.
-  string version = 1;
-  repeated string roles = 2;
-  repeated string default_roles = 3;
-  repeated string protected_roles = 4;
+  // model.AdminMeta has exactly these three fields (no version).
+  repeated string roles = 1;
+  repeated string default_roles = 2;
+  repeated string protected_roles = 3;
 }
 ```
-
-> Inspect `internal/graph/model` AdminMeta to confirm exact fields and adjust
-> the message fields 1:1 before generating.
 
 - [ ] **Step 2: Generate**
 
@@ -501,7 +514,6 @@ func projectAdminMeta(m *model.AdminMeta) *authorizerv1.AdminMeta {
 		return nil
 	}
 	return &authorizerv1.AdminMeta{
-		Version:        m.Version,
 		Roles:          m.Roles,
 		DefaultRoles:   m.DefaultRoles,
 		ProtectedRoles: m.ProtectedRoles,
