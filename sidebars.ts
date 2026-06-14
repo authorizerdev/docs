@@ -19,9 +19,13 @@ const sidebars: SidebarsConfig = {
         'core/server-config',
         'core/security',
         'core/authorization',
+        'core/fga-guide',
         'core/databases',
         'core/endpoints',
         'core/graphql-api',
+        'core/rest-api',
+        'core/grpc',
+        'core/mcp',
         'core/oauth2-oidc',
         'core/sso-guide',
         'core/email',
@@ -82,6 +86,7 @@ const sidebars: SidebarsConfig = {
         'sdks/authorizer-react/index',
         'sdks/authorizer-react/components',
         'sdks/authorizer-react/hooks',
+        'sdks/authorizer-react/integration',
       ],
     },
     {
@@ -90,6 +95,15 @@ const sidebars: SidebarsConfig = {
       items: [
         'sdks/authorizer-go/index',
         'sdks/authorizer-go/example',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'authorizer-python',
+      items: [
+        'sdks/authorizer-python/index',
+        'sdks/authorizer-python/functions',
+        'sdks/authorizer-python/fga',
       ],
     },
     {

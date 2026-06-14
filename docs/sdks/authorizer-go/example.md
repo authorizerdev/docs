@@ -84,3 +84,59 @@ Copy JWT ID token from login response of authorizer `login` mutation / social me
 curl --location --request GET 'http://localhost:8090/ping' \
 --header 'Authorization: Bearer JWT_TOKEN'
 ```
+
+## Object-level authorization with FGA
+
+Once the token is validated, you can also ask Authorizer's embedded [OpenFGA](https://openfga.dev) engine whether the caller may act on a **specific object**. The middleware below forwards the caller's `Authorization` header — the server pins the subject from it — and fails closed on any error. See [Authorization (FGA)](/core/authorization) for the model and tuple setup.
+
+```go
+// RequirePermission gates a route on an FGA check, e.g.:
+//   router.GET("/documents/:id", RequirePermission("can_view"), getDocument)
+//   router.PUT("/documents/:id", RequirePermission("can_edit"), updateDocument)
+func RequirePermission(relation string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		res, err := authorizerClient.CheckPermissions(&authorizer.CheckPermissionsRequest{
+			Checks: []*authorizer.PermissionCheckInput{
+				{Relation: relation, Object: "document:" + c.Param("id")},
+			},
+		}, map[string]string{
+			// forward the caller's token so the server pins the subject
+			"Authorization": c.Request.Header.Get("Authorization"),
+		})
+		if err != nil || len(res.Results) == 0 || !res.Results[0].Allowed {
+			// fail closed
+			c.AbortWithStatusJSON(403, "forbidden")
+			return
+		}
+		c.Next()
+	}
+}
+```
+
+To render one page with several action flags (view / edit / delete buttons), batch the checks in one round trip — results come back in order and echo each pair:
+
+```go
+res, err := authorizerClient.CheckPermissions(&authorizer.CheckPermissionsRequest{
+	Checks: []*authorizer.PermissionCheckInput{
+		{Relation: "can_view", Object: "document:1"},
+		{Relation: "can_edit", Object: "document:1"},
+		{Relation: "can_delete", Object: "document:1"},
+	},
+}, map[string]string{"Authorization": authHeader})
+if err != nil {
+	// fail closed
+}
+for _, r := range res.Results {
+	// r.Relation, r.Object, r.Allowed
+}
+```
+
+And for list endpoints, ask once which objects the caller may see and filter your DB query by the result instead of checking one by one:
+
+```go
+res, err := authorizerClient.ListPermissions(&authorizer.ListPermissionsRequest{
+	Relation:   "can_view",
+	ObjectType: "document",
+}, map[string]string{"Authorization": authHeader})
+// res.Objects => ["document:1", "document:7", ...]
+```

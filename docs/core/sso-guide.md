@@ -59,7 +59,7 @@ Every app talks to Authorizer using standard **OIDC Discovery**. Point your app 
 
 ### 1. Deploy Authorizer
 
-Deploy a single Authorizer instance as your organization's IdP. See the [Deployment guide](/docs/deployment) for options (Docker, Kubernetes, Helm, binary, cloud platforms).
+Deploy a single Authorizer instance as your organization's IdP. See the [Deployment guide](/deployment) for options (Docker, Kubernetes, Helm, binary, cloud platforms).
 
 Configure the essentials:
 
@@ -291,7 +291,7 @@ All endpoints are auto-discoverable via OIDC Discovery, but here's a quick refer
 | `/oauth/introspect` | Check if a token is active |
 | `/logout` | RP-initiated logout |
 
-For detailed endpoint documentation, see the [OAuth 2.0 & OIDC reference](/docs/core/oauth2-oidc).
+For detailed endpoint documentation, see the [OAuth 2.0 & OIDC reference](/core/oauth2-oidc).
 
 ---
 

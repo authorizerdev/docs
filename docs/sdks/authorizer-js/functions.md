@@ -634,9 +634,31 @@ Function to evaluate one or more fine-grained authorization (FGA) permission che
 
 This function makes an authorized request, hence from the browser the HTTP cookie is sent automatically if the user has logged in. From NodeJS pass the `Authorization` header as the optional second argument.
 
-The subject defaults to the caller's token. An optional `user` ("type:id", or a bare id treated as `user:<id>`) is honored only for super-admins or when it equals the caller's own token subject. Each check also accepts optional `contextual_tuples`, evaluated for that call only and never persisted.
+The subject defaults to the caller's token. An optional `user` ("type:id", or a bare id treated as `user:<id>`) is honored only for super-admins or when it equals the caller's own token subject; anything else is rejected by the server — never silently ignored.
 
 For complete worked scenarios — Express middleware, list filtering, and tuple lifecycle — see [Authorization recipes](/core/authorization#9-real-world-recipes).
+
+It accepts 2 JSON objects as its parameters.
+
+1. data - Permission checks to evaluate
+2. headers - To pass Authorization header (optional in the browser)
+
+Here are the keys that the `data` object accepts
+
+| Key      | Description                                                                                                                  | Required |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------- | -------- |
+| `checks` | Array of checks, each `{ relation, object, contextual_tuples? }`. `contextual_tuples` (array of `{ user, relation, object }`) are evaluated for that check only and never persisted | true     |
+| `user`   | Subject override ("type:id", or a bare id treated as `user:<id>`). Honored only for super-admins or self; defaults to the caller | false    |
+
+It returns the following keys in response `data` object
+
+**Response**
+
+| Key       | Description                                                                                        |
+| --------- | --------------------------------------------------------------------------------------------------- |
+| `results` | One result per supplied check, in order, each `{ relation, object, allowed }` echoing the checked pair |
+
+**Sample Usage**
 
 ```js
 const { data, errors } = await authRef.checkPermissions(
@@ -652,11 +674,52 @@ const { data, errors } = await authRef.checkPermissions(
 if (data?.results?.[0]?.allowed) {
   // caller may view document:1
 }
+
+// "What-if" check with contextual tuples (evaluated for this call only):
+const { data: whatIf } = await authRef.checkPermissions(
+  {
+    checks: [
+      {
+        relation: 'can_view',
+        object: 'document:1',
+        contextual_tuples: [
+          { user: 'user:1b9d…', relation: 'viewer', object: 'document:1' },
+        ],
+      },
+    ],
+  },
+  { Authorization: `Bearer ${token}` },
+);
 ```
 
 ## - `listPermissions`
 
-Function to list all objects of a given type the subject holds a relation on — ideal for filtering a list page down to what the user may see. Subject resolution follows the same rules as `checkPermissions`.
+Function to list what the subject can access — ideal for filtering a list page down to what the user may see. With both `relation` and `object_type` set it answers "which `object_type`s can I `relation`?"; either or both filters may be omitted, so an empty `data` object returns every permission the subject holds. Subject resolution follows the same rules as `checkPermissions`.
+
+It accepts 2 JSON objects as its parameters.
+
+1. data - Optional relation / object type filters
+2. headers - To pass Authorization header (optional in the browser)
+
+Here are the keys that the `data` object accepts
+
+| Key           | Description                                                                                          | Required |
+| ------------- | ------------------------------------------------------------------------------------------------------ | -------- |
+| `relation`    | Relation to list for (e.g. `can_view`). Omit to enumerate every relation of the active model        | false    |
+| `object_type` | Object type to enumerate (e.g. `document`). Omit to enumerate every type of the active model        | false    |
+| `user`        | Subject override ("type:id", or a bare id treated as `user:<id>`). Honored only for super-admins or self | false    |
+
+It returns the following keys in response `data` object
+
+**Response**
+
+| Key           | Description                                                                              |
+| ------------- | ------------------------------------------------------------------------------------------ |
+| `objects`     | Distinct fully-qualified ids of the objects the subject holds the relation on, e.g. `["document:1"]` |
+| `permissions` | The `(object, relation)` detail behind `objects` — relevant when no `relation` filter was supplied |
+| `truncated`   | `true` when the result was capped (1000 entries) and more permissions exist             |
+
+**Sample Usage**
 
 ```js
 const { data, errors } = await authRef.listPermissions(
@@ -664,6 +727,11 @@ const { data, errors } = await authRef.listPermissions(
   { Authorization: `Bearer ${token}` },
 );
 // data?.objects => ['document:1', 'document:7', ...]
+
+// No filters: everything the caller holds, with per-relation detail
+const all = await authRef.listPermissions({}, { Authorization: `Bearer ${token}` });
+// all.data?.permissions => [{ object: 'document:1', relation: 'can_view' }, ...]
+// all.data?.truncated => false
 ```
 
 ## - `verifyOtp`

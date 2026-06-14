@@ -18,15 +18,16 @@ description: Authorizer is an open-source authentication and authorization solut
 - Sign-in / Sign-up with email ID and password
 - Secure session management with HTTP-only cookies
 - Email verification
-- OAuth2 and OpenID Connect compatible APIs
+- [OAuth2 and OpenID Connect](./core/oauth2-oidc) compatible APIs
 - APIs to update profile securely
 - Forgot password flow using email
 - Social logins (Google, GitHub, Facebook, LinkedIn, Apple, Discord, Twitter, Twitch, Roblox, Microsoft)
-- Role-based access management
+- Role-based access management and [fine-grained authorization (FGA)](./core/authorization)
 - Password-less login with magic link
 - TOTP-based multi-factor authentication
 - SMS OTP via Twilio
-- GraphQL API
+- [GraphQL](./core/graphql-api), [REST](./core/rest-api), and [gRPC](./core/grpc) APIs
+- [MCP server](./core/mcp) for AI agents
 
 ### Introduction Video
 
@@ -104,19 +105,19 @@ See [Databases](./core/databases) for connection string formats.
 ### Backend SDKs
 
 - [Golang](https://github.com/authorizerdev/authorizer-go)
+- [Python](https://github.com/authorizerdev/authorizer-python) (`pip install authorizer-py`)
 - [Node.js](https://github.com/authorizerdev/authorizer-js) (same package, works server-side)
+
+See the [SDK reference](./sdks/authorizer-js) for usage docs.
 
 ---
 
 ## Roadmap
 
-- 2-Factor authentication (TOTP, SMS OTP)
 - React Native SDK
 - Android Native SDK
 - iOS Native SDK
-- Python SDK
 - PHP SDK
 - WordPress plugin
 - AMI / Digital Ocean Droplet
 - Azure deployment
-- Password-less login with mobile number and OTP SMS
