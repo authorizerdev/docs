@@ -24,6 +24,18 @@ resistance.
 > (the default). The surface is being migrated incrementally — see
 > [Available endpoints](#endpoint-reference) below for what is live today.
 
+Table of Contents
+
+- [Base URL & transport](#base-url--transport)
+- [Authentication](#authentication)
+- [Endpoint reference](#endpoint-reference)
+  - [Authentication & user](#authentication--user)
+  - [Fine-grained authorization (FGA)](#fine-grained-authorization-fga)
+    - [`POST /v1/check_permissions`](#post-v1check_permissions)
+    - [`POST /v1/list_permissions`](#post-v1list_permissions)
+- [Errors](#errors)
+- [See also](#see-also)
+
 ## Base URL & transport
 
 | Property        | Value                                                                 |

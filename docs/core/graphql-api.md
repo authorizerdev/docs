@@ -29,6 +29,9 @@ Table of Contents
     - [`_webhooks`](#_webhooks)
     - [`_webhook_logs`](#_webhook_logs)
     - [`_email_templates`](#_email_templates)
+    - [Authorization (client-facing)](#authorization-client-facing)
+      - [`check_permissions`](#check_permissions)
+      - [`list_permissions`](#list_permissions)
   - [Mutations](#mutations)
     - [`signup`](#signup)
     - [`login`](#login)
@@ -61,6 +64,15 @@ Table of Contents
     - [`_add_email_template`](#_add_email_template)
     - [`_update_email_template`](#_update_email_template)
     - [`_delete_email_template`](#_delete_email_template)
+    - [Authorization (admin)](#authorization-admin)
+      - [`_fga_write_model`](#_fga_write_model)
+      - [`_fga_get_model`](#_fga_get_model)
+      - [`_fga_write_tuples`](#_fga_write_tuples)
+      - [`_fga_delete_tuples`](#_fga_delete_tuples)
+      - [`_fga_read_tuples`](#_fga_read_tuples)
+      - [`_fga_list_users`](#_fga_list_users)
+      - [`_fga_expand`](#_fga_expand)
+      - [`_fga_reset`](#_fga_reset)
 
 ## Queries
 

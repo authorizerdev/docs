@@ -11,6 +11,16 @@ service layer and the same Protocol Buffers definition, so they behave identical
 just gives you a strongly-typed, high-performance binary transport for server-to-server
 calls.
 
+Table of Contents
+
+- [Service & transport](#service--transport)
+- [Protobuf schema](#protobuf-schema)
+- [Available methods](#available-methods)
+- [Calling with `grpcurl`](#calling-with-grpcurl)
+- [Health checks](#health-checks)
+- [Errors](#errors)
+- [See also](#see-also)
+
 ## Service & transport
 
 | Property              | Value                                                              |
