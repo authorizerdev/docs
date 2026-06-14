@@ -405,6 +405,102 @@ its first burst:
 See the new [Security Hardening](../core/security#trusted-proxies) page
 for the full topology table and flag reference.
 
+### Database schema: `email` / `phone_number` are no longer `UNIQUE`
+
+In v1 the `email` and `phone_number` columns of the `authorizer_users` and
+`authorizer_otps` tables had **database-level `UNIQUE` constraints**. In v2 they
+are plain (non-unique) indexes, and uniqueness is enforced in the
+**application layer** instead (the create/update paths reject a duplicate email
+or phone number with `user with given email already exists`).
+
+**Why the change:**
+
+- **Uniform behaviour across all 13+ databases.** A SQL `UNIQUE` constraint
+  only exists on the relational backends and treats `NULL`s differently per
+  engine. Enforcing in code gives identical semantics on Postgres, MySQL,
+  MongoDB, DynamoDB, Cassandra, etc.
+- **`email` and `phone_number` are now optional.** v2 supports email-only and
+  phone-only signups, so a user row may legitimately have a `NULL` email or
+  phone number — a hard `UNIQUE` constraint on a nullable column is awkward and
+  inconsistent.
+
+#### Symptom on upgrade
+
+When v2 runs its automatic schema migration against a database created by v1,
+GORM detects the columns are still unique and tries to drop the old
+constraint — but under its own generated name (`uni_<table>_<column>`), which
+does **not** match the name Postgres/MySQL actually assigned
+(`<table>_<column>_key`). The migration then aborts at startup:
+
+```
+ERROR: constraint "uni_authorizer_users_email" of relation "authorizer_users" does not exist (SQLSTATE 42704)
+ALTER TABLE "authorizer_users" DROP CONSTRAINT "uni_authorizer_users_email"
+failed to create storage provider
+```
+
+You may see the same error for `authorizer_otps`, and for the `phone_number`
+column of either table (`uni_authorizer_users_phone_number`,
+`uni_authorizer_otps_email`, `uni_authorizer_otps_phone_number`).
+
+Depending on which v1 release created your database, the old uniqueness lives
+either as a **constraint** named `<table>_<column>_key` (e.g.
+`authorizer_users_email_key`) **or** as a standalone **unique index** named
+`idx_<table>_<column>` (e.g. `idx_authorizer_otps_phone_number`). You may need
+to clear both forms.
+
+#### Fix
+
+Recent v2 releases **drop these stale unique constraints and indexes
+automatically** at startup before running the migration, so no action is
+required — just upgrade to the latest server build.
+
+If you are on an earlier build that still fails with the error above, clear them
+manually once, then restart.
+
+First, list what actually exists on your instance — both unique constraints and
+unique indexes on these columns:
+
+```sql
+-- Postgres / Yugabyte / CockroachDB
+SELECT conrelid::regclass AS "table", conname AS unique_constraint
+FROM pg_constraint
+WHERE conrelid IN ('authorizer_users'::regclass, 'authorizer_otps'::regclass)
+  AND contype = 'u';
+
+SELECT tablename AS "table", indexname AS unique_index
+FROM pg_indexes
+WHERE tablename IN ('authorizer_users', 'authorizer_otps')
+  AND indexdef ILIKE '%UNIQUE%'
+  AND indexdef ~ '\((email|phone_number)\)';
+```
+
+Then drop whatever the queries return:
+
+```sql
+-- unique CONSTRAINTs (no-op if absent)
+ALTER TABLE authorizer_users DROP CONSTRAINT IF EXISTS authorizer_users_email_key;
+ALTER TABLE authorizer_users DROP CONSTRAINT IF EXISTS authorizer_users_phone_number_key;
+ALTER TABLE authorizer_otps  DROP CONSTRAINT IF EXISTS authorizer_otps_email_key;
+ALTER TABLE authorizer_otps  DROP CONSTRAINT IF EXISTS authorizer_otps_phone_number_key;
+
+-- standalone unique INDEXes (no-op if absent)
+DROP INDEX IF EXISTS idx_authorizer_users_email;
+DROP INDEX IF EXISTS idx_authorizer_users_phone_number;
+DROP INDEX IF EXISTS idx_authorizer_otps_email;
+DROP INDEX IF EXISTS idx_authorizer_otps_phone_number;
+```
+
+On **MySQL / MariaDB** these are unique indexes — drop them with
+`ALTER TABLE authorizer_users DROP INDEX email;` (and likewise for
+`phone_number` / `authorizer_otps`). **SQLite** and the NoSQL backends are
+unaffected.
+
+:::note
+This only removes a constraint that v2 no longer uses. Duplicate emails and
+phone numbers are still rejected — the check now lives in the server, not the
+database.
+:::
+
 ---
 
 ## 4. Deprecated GraphQL API Behavior
