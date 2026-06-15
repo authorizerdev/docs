@@ -22,13 +22,13 @@ resistance.
 
 > **Availability:** the `/v1` REST gateway is mounted only when the gRPC server is enabled
 > (the default). The surface is being migrated incrementally — see
-> [Available endpoints](#endpoint-reference) below for what is live today.
+> [Available endpoints](#public-api-endpoints) below for what is live today.
 
 Table of Contents
 
 - [Base URL & transport](#base-url--transport)
 - [Authentication](#authentication)
-- [Endpoint reference](#endpoint-reference)
+- [Public Endpoints](#public-api-endpoints)
   - [`POST /v1/signup`](#post-v1signup)
   - [`POST /v1/logout`](#post-v1logout)
   - [`GET /v1/profile`](#get-v1profile)
@@ -39,6 +39,46 @@ Table of Contents
   - [`GET /v1/meta`](#get-v1meta)
   - [`POST /v1/check_permissions`](#post-v1check_permissions)
   - [`POST /v1/list_permissions`](#post-v1list_permissions)
+- [Authorizer Admin API Endpoints](#authorizer-admin-api-endpoints)
+  - [Admin Authentication](#admin-authentication)
+    - [`POST /v1/admin/login`](#post-v1adminlogin)
+    - [`POST /v1/admin/logout`](#post-v1adminlogout)
+    - [`GET /v1/admin/session`](#get-v1adminsession)
+    - [`GET /v1/admin/meta`](#get-v1adminmeta)
+  - [Users](#users)
+    - [`POST /v1/admin/users`](#post-v1adminusers)
+    - [`POST /v1/admin/user`](#post-v1adminuser)
+    - [`POST /v1/admin/update_user`](#post-v1adminupdate_user)
+    - [`POST /v1/admin/delete_user`](#post-v1admindelete_user)
+    - [`POST /v1/admin/verification_requests`](#post-v1adminverification_requests)
+  - [Access Control](#access-control)
+    - [`POST /v1/admin/revoke_access`](#post-v1adminrevoke_access)
+    - [`POST /v1/admin/enable_access`](#post-v1adminenable_access)
+    - [`POST /v1/admin/invite_members`](#post-v1admininvite_members)
+  - [Webhooks](#webhooks)
+    - [`POST /v1/admin/add_webhook`](#post-v1adminadd_webhook)
+    - [`POST /v1/admin/update_webhook`](#post-v1adminupdate_webhook)
+    - [`POST /v1/admin/delete_webhook`](#post-v1admindelete_webhook)
+    - [`POST /v1/admin/webhook`](#post-v1adminwebhook)
+    - [`POST /v1/admin/webhooks`](#post-v1adminwebhooks)
+    - [`POST /v1/admin/webhook_logs`](#post-v1adminwebhook_logs)
+    - [`POST /v1/admin/test_endpoint`](#post-v1admintest_endpoint)
+  - [Email Templates](#email-templates)
+    - [`POST /v1/admin/add_email_template`](#post-v1adminadd_email_template)
+    - [`POST /v1/admin/update_email_template`](#post-v1adminupdate_email_template)
+    - [`POST /v1/admin/delete_email_template`](#post-v1admindelete_email_template)
+    - [`POST /v1/admin/email_templates`](#post-v1adminemail_templates)
+  - [Audit Logs](#audit-logs)
+    - [`POST /v1/admin/audit_logs`](#post-v1adminaudit_logs)
+  - [Authorization (FGA)](#authorization-fga)
+    - [`GET /v1/admin/fga/model`](#get-v1adminfgamodel)
+    - [`POST /v1/admin/fga/model`](#post-v1adminfgamodel)
+    - [`POST /v1/admin/fga/tuples`](#post-v1-admin-fga-tuples)
+    - [`POST /v1/admin/fga/tuples/delete`](#post-v1adminfgatuplesdelete)
+    - [`POST /v1/admin/fga/tuples/read`](#post-v1adminfgatuplesread)
+    - [`POST /v1/admin/fga/list_users`](#post-v1adminfgalist_users)
+    - [`POST /v1/admin/fga/expand`](#post-v1adminfgaexpand)
+    - [`POST /v1/admin/fga/reset`](#post-v1adminfgareset)
 - [Errors](#errors)
 - [See also](#see-also)
 
@@ -78,14 +118,11 @@ require the admin secret / admin session. See [GraphQL API](./graphql-api) for t
 > automatically; server-side clients should set `Origin` explicitly. The official SDKs do
 > this for you.
 
-## Endpoint reference
+## Public API Endpoints
 
 Every endpoint below accepts/returns the same fields as its GraphQL counterpart. For the
 full field-by-field breakdown of each request and response, follow the linked anchor in
 the [GraphQL API reference](./graphql-api).
-
-Super-admin-only operations (the `_fga_*` model/tuple management mutations, env, users,
-webhooks, etc.) are **not** part of the REST surface — they remain GraphQL-only.
 
 > **Migration in progress.** The remaining authentication operations — `login`,
 > `magic_link_login`, `verify_email`, `resend_verify_email`, `verify_otp`, `resend_otp`,
@@ -217,6 +254,379 @@ curl -X POST https://auth.example.com/v1/list_permissions \
 
 `truncated` is `true` when the result was capped at **1000** entries and more permissions
 exist — narrow the query with `relation` / `object_type` to page through them.
+
+## Authorizer Admin API Endpoints
+
+All admin endpoints require super-admin authentication via the `x-authorizer-admin-secret` request header or an `authorizer.admin` session cookie (set by `POST /v1/admin/login`). Except `POST /v1/admin/login`, which may be called without an existing session. The operations are grouped by domain below; each mirrors its GraphQL counterpart for request/response fields.
+
+> **Note:** In the current release, admin endpoints are REST-only; they are not yet exposed over native gRPC (they return `UNIMPLEMENTED` if called via gRPC). Use the REST endpoints or the [GraphQL API](./graphql-api) for admin operations.
+
+### Admin Authentication
+
+#### `POST /v1/admin/login`
+
+Authenticate as super-admin with the admin secret. Returns a session token.
+
+**Request body**
+
+| Field           | Type     | Description             | Required |
+| --------------- | -------- | ----------------------- | -------- |
+| `admin_secret`  | `string` | The admin secret value. | yes      |
+
+**Response** `{ message: string }`
+
+#### `POST /v1/admin/logout`
+
+Invalidate the current admin session.
+
+**Response** `{ message: string }`
+
+#### `GET /v1/admin/session`
+
+Verify the current admin session is valid.
+
+**Response** `{ message: string }`
+
+#### `GET /v1/admin/meta`
+
+Get admin-level metadata about the server (version, feature flags).
+
+**Response** — same as [`GET /v1/meta`](#get-v1meta) but with admin-only fields
+
+### Users
+
+#### `POST /v1/admin/users`
+
+List all users with pagination.
+
+**Request body**
+
+| Field        | Type                | Description  | Required |
+| ------------ | ------------------- | ------------ | -------- |
+| `pagination` | `{ page, limit }`   | Page & limit. | no       |
+
+**Response** `{ users: User[], pagination: { page, limit, total, offset } }`
+
+#### `POST /v1/admin/user`
+
+Get a specific user by id or email.
+
+**Request body**
+
+| Field | Type     | Description     | Required |
+| ----- | -------- | --------------- | -------- |
+| `id`  | `string` | User id.        | no       |
+| `email` | `string` | User email.    | no       |
+
+**Response** `User`
+
+#### `POST /v1/admin/update_user`
+
+Update user profile fields (email, roles, name, etc.).
+
+**Request body** — see [`_update_user`](./graphql-api#_update_user) for the full field list.
+
+**Response** `User`
+
+#### `POST /v1/admin/delete_user`
+
+Delete a user by email (and all associated OTP/verification data).
+
+**Request body**
+
+| Field   | Type     | Description | Required |
+| ------- | -------- | ----------- | -------- |
+| `email` | `string` | User email. | yes      |
+
+**Response** `{ message: string }`
+
+#### `POST /v1/admin/verification_requests`
+
+List pending verification requests (email, phone OTP, etc.) with optional pagination.
+
+**Request body**
+
+| Field        | Type              | Description  | Required |
+| ------------ | ----------------- | ------------ | -------- |
+| `pagination` | `{ page, limit }` | Page & limit. | no       |
+
+**Response** `{ verification_requests: VerificationRequest[], pagination: { ... } }`
+
+### Access Control
+
+#### `POST /v1/admin/revoke_access`
+
+Revoke a user's access (set revoked_timestamp), firing the `user.access_revoked` webhook.
+
+**Request body**
+
+| Field   | Type     | Description | Required |
+| ------- | -------- | ----------- | -------- |
+| `user_id` | `string` | User id.  | yes      |
+
+**Response** `{ message: string }`
+
+#### `POST /v1/admin/enable_access`
+
+Re-enable a previously revoked user (clear revoked_timestamp), firing the `user.access_enabled` webhook.
+
+**Request body**
+
+| Field   | Type     | Description | Required |
+| ------- | -------- | ----------- | -------- |
+| `user_id` | `string` | User id.  | yes      |
+
+**Response** `{ message: string }`
+
+#### `POST /v1/admin/invite_members`
+
+Invite users to the platform by email, sending them an invitation link.
+
+**Request body**
+
+| Field          | Type       | Description                            | Required |
+| -------------- | ---------- | -------------------------------------- | -------- |
+| `emails`       | `string[]` | Email addresses to invite.             | yes      |
+| `redirect_uri` | `string`   | Where to redirect after signup.        | no       |
+
+**Response** `{ message: string }`
+
+### Webhooks
+
+#### `POST /v1/admin/add_webhook`
+
+Register a new webhook for an event.
+
+**Request body** — see [`_add_webhook`](./graphql-api#_add_webhook) for field details.
+
+**Response** `{ message: string }`
+
+#### `POST /v1/admin/update_webhook`
+
+Update an existing webhook (endpoint, headers, enabled state, etc.).
+
+**Request body** — see [`_update_webhook`](./graphql-api#_update_webhook) for field details.
+
+**Response** `{ message: string }`
+
+#### `POST /v1/admin/delete_webhook`
+
+Delete a webhook by id.
+
+**Request body**
+
+| Field | Type     | Description  | Required |
+| ----- | -------- | ------------ | -------- |
+| `id`  | `string` | Webhook id.  | yes      |
+
+**Response** `{ message: string }`
+
+#### `POST /v1/admin/webhook`
+
+Get a webhook by id.
+
+**Request body**
+
+| Field | Type     | Description  | Required |
+| ----- | -------- | ------------ | -------- |
+| `id`  | `string` | Webhook id.  | yes      |
+
+**Response** `Webhook`
+
+#### `POST /v1/admin/webhooks`
+
+List all webhooks with pagination.
+
+**Request body**
+
+| Field        | Type              | Description  | Required |
+| ------------ | ----------------- | ------------ | -------- |
+| `pagination` | `{ page, limit }` | Page & limit. | no       |
+
+**Response** `{ webhooks: Webhook[], pagination: { ... } }`
+
+#### `POST /v1/admin/webhook_logs`
+
+List webhook delivery logs with optional pagination and webhook_id filter.
+
+**Request body**
+
+| Field        | Type              | Description      | Required |
+| ------------ | ----------------- | -------------- | -------- |
+| `pagination` | `{ page, limit }` | Page & limit.  | no       |
+| `webhook_id` | `string`          | Filter by hook. | no       |
+
+**Response** `{ webhook_logs: WebhookLog[], pagination: { ... } }`
+
+#### `POST /v1/admin/test_endpoint`
+
+Send a test webhook payload to an endpoint and return the response.
+
+**Request body**
+
+| Field        | Type                | Description          | Required |
+| ------------ | ------------------- | -------------------- | -------- |
+| `event_name` | `string`            | Event to simulate.   | yes      |
+| `endpoint`   | `string`            | URL to call.         | yes      |
+| `headers`    | `map[string]string` | Extra HTTP headers.  | no       |
+
+**Response** `{ http_status: int, response: string }`
+
+### Email Templates
+
+#### `POST /v1/admin/add_email_template`
+
+Create a new email template for an event.
+
+**Request body** — see [`_add_email_template`](./graphql-api#_add_email_template) for field details.
+
+**Response** `{ message: string }`
+
+#### `POST /v1/admin/update_email_template`
+
+Update an email template.
+
+**Request body** — see [`_update_email_template`](./graphql-api#_update_email_template) for field details.
+
+**Response** `{ message: string }`
+
+#### `POST /v1/admin/delete_email_template`
+
+Delete an email template by id.
+
+**Request body**
+
+| Field | Type     | Description  | Required |
+| ----- | -------- | ------------ | -------- |
+| `id`  | `string` | Template id. | yes      |
+
+**Response** `{ message: string }`
+
+#### `POST /v1/admin/email_templates`
+
+List email templates with pagination.
+
+**Request body**
+
+| Field        | Type              | Description  | Required |
+| ------------ | ----------------- | ------------ | -------- |
+| `pagination` | `{ page, limit }` | Page & limit. | no       |
+
+**Response** `{ email_templates: EmailTemplate[], pagination: { ... } }`
+
+### Audit Logs
+
+#### `POST /v1/admin/audit_logs`
+
+Retrieve audit log entries with optional filtering and pagination.
+
+**Request body**
+
+| Field        | Type              | Description              | Required |
+| ------------ | ----------------- | ----------------------- | -------- |
+| `pagination` | `{ page, limit }` | Page & limit.            | no       |
+| `actor_id`   | `string`          | Filter by actor id.      | no       |
+| `action`     | `string`          | Filter by action type.   | no       |
+| `resource`   | `string`          | Filter by resource type. | no       |
+
+**Response** `{ audit_logs: AuditLog[], pagination: { ... } }`
+
+### Authorization (FGA)
+
+Manage the embedded fine-grained authorization (FGA) engine: the authorization model and relationship tuples. See [Authorization (FGA)](./authorization) for the conceptual model.
+
+#### `GET /v1/admin/fga/model`
+
+Retrieve the active authorization model as FGA DSL. An empty store returns an empty model (not an error).
+
+**Response** `{ id: string, dsl: string }`
+
+#### `POST /v1/admin/fga/model`
+
+Install a new authorization model version from FGA DSL. Models are versioned and append-only.
+
+**Request body**
+
+| Field | Type     | Description | Required |
+| ----- | -------- | ----------- | -------- |
+| `dsl` | `string` | FGA DSL.    | yes      |
+
+**Response** `{ id: string, dsl: string }`
+
+#### `POST /v1/admin/fga/tuples` {#post-v1-admin-fga-tuples}
+
+Write (persist) relationship tuples.
+
+**Request body**
+
+| Field   | Type                      | Description         | Required |
+| ------- | ------------------------- | ------------------- | -------- |
+| `tuples` | `{ user, relation, object }[]` | Tuples to write.  | yes      |
+
+**Response** `{ message: string }`
+
+#### `POST /v1/admin/fga/tuples/delete`
+
+Delete relationship tuples.
+
+**Request body**
+
+| Field   | Type                      | Description         | Required |
+| ------- | ------------------------- | ------------------- | -------- |
+| `tuples` | `{ user, relation, object }[]` | Tuples to delete. | yes      |
+
+**Response** `{ message: string }`
+
+#### `POST /v1/admin/fga/tuples/read`
+
+Read stored tuples with optional filtering and pagination.
+
+**Request body**
+
+| Field               | Type      | Description              | Required |
+| ------------------- | --------- | ------------------------ | -------- |
+| `user`              | `string`  | Filter by user.          | no       |
+| `relation`          | `string`  | Filter by relation.      | no       |
+| `object`            | `string`  | Filter by object.        | no       |
+| `page_size`         | `int`     | Max tuples per page.     | no       |
+| `continuation_token`| `string`  | Pagination token.        | no       |
+
+**Response** `{ tuples: { user, relation, object }[], continuation_token: string }`
+
+#### `POST /v1/admin/fga/list_users`
+
+List fully-qualified user ids that have a relation on an object (reveals the access graph; admin-only).
+
+**Request body**
+
+| Field      | Type     | Description            | Required |
+| ---------- | -------- | ---------------------- | -------- |
+| `object`   | `string` | Object to inspect.     | yes      |
+| `relation` | `string` | Relation to resolve.   | yes      |
+| `user_type`| `string` | Type of users to list. | yes      |
+
+**Response** `{ users: string[] }`
+
+#### `POST /v1/admin/fga/expand`
+
+Expand the relationship/userset tree for a relation on an object (admin-only; useful for debugging). Returns the OpenFGA userset tree as a JSON string.
+
+**Request body**
+
+| Field      | Type     | Description          | Required |
+| ---------- | -------- | -------------------- | -------- |
+| `relation` | `string` | Relation to expand.  | yes      |
+| `object`   | `string` | Object to expand on. | yes      |
+
+**Response** `{ tree: string }`
+
+#### `POST /v1/admin/fga/reset`
+
+Delete the entire fine-grained authorization store (model, all versions, and all tuples) and start fresh. Refused if any tuples still exist. Destructive and audited.
+
+**Request body** — empty
+
+**Response** `{ message: string }`
 
 ## Errors
 

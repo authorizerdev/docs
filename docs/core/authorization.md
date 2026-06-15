@@ -271,7 +271,7 @@ mutation {
 ```
 
 Full parameter tables and examples for every operation live in the
-[GraphQL API reference](./graphql-api#authorization-admin).
+[GraphQL API reference](./graphql-api#authorization-fga).
 
 ---
 
