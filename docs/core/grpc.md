@@ -18,8 +18,18 @@ Table of Contents
 - [Public Methods](#public-methods)
   - [`Meta`](#meta)
   - [`Signup`](#signup)
+  - [`Login`](#login)
+  - [`MagicLinkLogin`](#magiclinklogin)
+  - [`VerifyEmail`](#verifyemail)
+  - [`ResendVerifyEmail`](#resendverifyemail)
+  - [`VerifyOtp`](#verifyotp)
+  - [`ResendOtp`](#resendotp)
+  - [`ForgotPassword`](#forgotpassword)
+  - [`ResetPassword`](#resetpassword)
   - [`Session`](#session)
   - [`Profile`](#profile)
+  - [`UpdateProfile`](#updateprofile)
+  - [`DeactivateAccount`](#deactivateaccount)
   - [`Logout`](#logout)
   - [`Revoke`](#revoke)
   - [`ValidateJwtToken`](#validatejwttoken)
@@ -129,12 +139,6 @@ languages.
 
 ## Public Methods
 
-> The gRPC / REST surface is being migrated incrementally. The methods below are
-> implemented today; the remaining authentication operations (login, magic-link, OTP,
-> email verification, forgot/reset password, profile update, account deactivation) are
-> currently served by the [GraphQL API](./graphql-api) and return `UNIMPLEMENTED` over
-> gRPC until their migration lands.
-
 Each message mirrors its GraphQL/REST counterpart — see the linked
 [GraphQL API reference](./graphql-api) anchor for field-level details.
 
@@ -146,6 +150,38 @@ Each message mirrors its GraphQL/REST counterpart — see the linked
 
 *Public.* Register a new user. Mirrors [`signup`](./graphql-api#signup).
 
+### `Login`
+
+*Public.* Authenticate with email/phone + password. Returns tokens, or an MFA challenge flag when OTP/TOTP is enabled. Mirrors [`login`](./graphql-api#login).
+
+### `MagicLinkLogin`
+
+*Public.* Start a passwordless login; emails a magic link. Mirrors [`magic_link_login`](./graphql-api#magic_link_login).
+
+### `VerifyEmail`
+
+*Public.* Complete email verification using the token from the verification email. Mirrors [`verify_email`](./graphql-api#verify_email).
+
+### `ResendVerifyEmail`
+
+*Public.* Re-send the email-verification message. Mirrors [`resend_verify_email`](./graphql-api#resend_verify_email).
+
+### `VerifyOtp`
+
+*Public.* Complete an MFA challenge by submitting the email/phone OTP. Mirrors [`verify_otp`](./graphql-api#verify_otp).
+
+### `ResendOtp`
+
+*Public.* Re-send the MFA OTP. Mirrors [`resend_otp`](./graphql-api#resend_otp).
+
+### `ForgotPassword`
+
+*Public.* Start password reset; emails a reset link. Mirrors [`forgot_password`](./graphql-api#forgot_password).
+
+### `ResetPassword`
+
+*Public.* Set a new password using the reset token. Mirrors [`reset_password`](./graphql-api#reset_password).
+
 ### `Session`
 
 *Authenticated.* Refresh / fetch the current session. Mirrors [`session`](./graphql-api#session).
@@ -153,6 +189,14 @@ Each message mirrors its GraphQL/REST counterpart — see the linked
 ### `Profile`
 
 *Authenticated.* The authenticated user's profile. Mirrors [`profile`](./graphql-api#profile).
+
+### `UpdateProfile`
+
+*Authenticated.* Update the authenticated user's profile. Mirrors [`update_profile`](./graphql-api#update_profile).
+
+### `DeactivateAccount`
+
+*Authenticated.* Deactivate (soft-delete) the authenticated user's account. Mirrors [`deactivate_account`](./graphql-api#deactivate_account).
 
 ### `Logout`
 
@@ -384,7 +428,6 @@ statuses. Common cases:
 | `PERMISSION_DENIED`     | Explicit `user` not permitted for the caller.        |
 | `FAILED_PRECONDITION`   | FGA not enabled (`--fga-store` unset).               |
 | `INVALID_ARGUMENT`      | Validation failure (e.g. `> 100` checks).            |
-| `UNIMPLEMENTED`         | Method not yet migrated to gRPC — use GraphQL.       |
 
 ## See also
 

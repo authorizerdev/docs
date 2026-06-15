@@ -21,8 +21,8 @@ resistance.
 > the same service layer, so they behave identically.
 
 > **Availability:** the `/v1` REST gateway is mounted only when the gRPC server is enabled
-> (the default). The surface is being migrated incrementally — see
-> [Available endpoints](#public-api-endpoints) below for what is live today.
+> (the default). It mirrors the full public and admin service surface — see
+> [Available endpoints](#public-api-endpoints) below.
 
 Table of Contents
 
@@ -30,8 +30,18 @@ Table of Contents
 - [Authentication](#authentication)
 - [Public Endpoints](#public-api-endpoints)
   - [`POST /v1/signup`](#post-v1signup)
+  - [`POST /v1/login`](#post-v1login)
+  - [`POST /v1/magic_link_login`](#post-v1magic_link_login)
+  - [`POST /v1/verify_email`](#post-v1verify_email)
+  - [`POST /v1/resend_verify_email`](#post-v1resend_verify_email)
+  - [`POST /v1/verify_otp`](#post-v1verify_otp)
+  - [`POST /v1/resend_otp`](#post-v1resend_otp)
+  - [`POST /v1/forgot_password`](#post-v1forgot_password)
+  - [`POST /v1/reset_password`](#post-v1reset_password)
   - [`POST /v1/logout`](#post-v1logout)
   - [`GET /v1/profile`](#get-v1profile)
+  - [`POST /v1/update_profile`](#post-v1update_profile)
+  - [`POST /v1/deactivate_account`](#post-v1deactivate_account)
   - [`POST /v1/session`](#post-v1session)
   - [`POST /v1/revoke`](#post-v1revoke)
   - [`POST /v1/validate_jwt_token`](#post-v1validate_jwt_token)
@@ -124,15 +134,49 @@ Every endpoint below accepts/returns the same fields as its GraphQL counterpart.
 full field-by-field breakdown of each request and response, follow the linked anchor in
 the [GraphQL API reference](./graphql-api).
 
-> **Migration in progress.** The remaining authentication operations — `login`,
-> `magic_link_login`, `verify_email`, `resend_verify_email`, `verify_otp`, `resend_otp`,
-> `forgot_password`, `reset_password`, `update_profile`, and `deactivate_account` — are
-> defined in the schema but not yet served over REST/gRPC; they return `501`/`UNIMPLEMENTED`
-> for now. Use the [GraphQL API](./graphql-api) for these flows until their migration lands.
-
 ### `POST /v1/signup`
 
 Register a new user. Request/response fields match [`signup`](./graphql-api#signup).
+
+### `POST /v1/login`
+
+Authenticate with email/phone + password. Returns tokens, or an MFA challenge flag
+(`should_show_email_otp_screen` / `should_show_totp_screen`) when OTP/TOTP is enabled.
+Mirrors [`login`](./graphql-api#login).
+
+```bash
+curl -X POST https://auth.example.com/v1/login \
+  -H "Content-Type: application/json" \
+  -d '{ "email": "jane@example.com", "password": "Test@123", "scope": ["openid", "profile", "email"] }'
+```
+
+### `POST /v1/magic_link_login`
+
+Start a passwordless login; emails a magic link. Mirrors [`magic_link_login`](./graphql-api#magic_link_login).
+
+### `POST /v1/verify_email`
+
+Complete email verification using the token from the verification email. Mirrors [`verify_email`](./graphql-api#verify_email).
+
+### `POST /v1/resend_verify_email`
+
+Re-send the email-verification message. Mirrors [`resend_verify_email`](./graphql-api#resend_verify_email).
+
+### `POST /v1/verify_otp`
+
+Complete an MFA challenge by submitting the email/phone OTP. Mirrors [`verify_otp`](./graphql-api#verify_otp).
+
+### `POST /v1/resend_otp`
+
+Re-send the MFA OTP. Mirrors [`resend_otp`](./graphql-api#resend_otp).
+
+### `POST /v1/forgot_password`
+
+Start password reset; emails a reset link. Mirrors [`forgot_password`](./graphql-api#forgot_password).
+
+### `POST /v1/reset_password`
+
+Set a new password using the reset token. Mirrors [`reset_password`](./graphql-api#reset_password).
 
 ### `POST /v1/logout`
 
@@ -141,6 +185,14 @@ Invalidate the current session *(auth)*. Mirrors [`logout`](./graphql-api#logout
 ### `GET /v1/profile`
 
 Get the authenticated user's profile *(auth)*. Mirrors [`profile`](./graphql-api#profile).
+
+### `POST /v1/update_profile`
+
+Update the authenticated user's profile *(auth)*. Mirrors [`update_profile`](./graphql-api#update_profile).
+
+### `POST /v1/deactivate_account`
+
+Deactivate (soft-delete) the authenticated user's account *(auth)*. Mirrors [`deactivate_account`](./graphql-api#deactivate_account).
 
 ### `POST /v1/session`
 
@@ -259,7 +311,7 @@ exist — narrow the query with `relation` / `object_type` to page through them.
 
 All admin endpoints require super-admin authentication via the `x-authorizer-admin-secret` request header or an `authorizer.admin` session cookie (set by `POST /v1/admin/login`). Except `POST /v1/admin/login`, which may be called without an existing session. The operations are grouped by domain below; each mirrors its GraphQL counterpart for request/response fields.
 
-> **Note:** In the current release, admin endpoints are REST-only; they are not yet exposed over native gRPC (they return `UNIMPLEMENTED` if called via gRPC). Use the REST endpoints or the [GraphQL API](./graphql-api) for admin operations.
+> **Note:** Admin operations are available over all three surfaces — REST (below), native gRPC (`AuthorizerAdminService`, see the [gRPC API](./grpc#authorizer-admin-methods)), and the [GraphQL API](./graphql-api) (the `_`-prefixed operations).
 
 ### Admin Authentication
 
@@ -648,7 +700,6 @@ Common cases:
 | Explicit `user` not permitted for caller   | `403 Forbidden`    |
 | FGA not enabled (`--fga-store` unset)      | `400 Bad Request`  |
 | Validation failure (e.g. `> 100` checks)   | `400 Bad Request`  |
-| Endpoint not yet migrated to REST/gRPC     | `501 Not Implemented` |
 
 ## See also
 
