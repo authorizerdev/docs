@@ -13,57 +13,63 @@ You can play with GraphQL API using the GraphQL playground that comes with your 
 
 Table of Contents
 
-- [GraphQL API](#queries)
-  - [Queries](#queries)
-    - [`meta`](#meta)
-    - [`session`](#session)
-    - [`profile`](#profile)
-    - [`validate_jwt_token`](#validate_jwt_token)
-    - [`validate_session`](#validate_session)
-    - [`check_permissions`](#check_permissions)
-    - [`list_permissions`](#list_permissions)
-    - [`_users`](#_users)
-    - [`_user`](#_user)
-    - [`_verification_requests`](#_verification_requests)
-    - [`_admin_session`](#_admin_session)
-    - [`_env`](#_env)
-    - [`_webhook`](#_webhook)
-    - [`_webhooks`](#_webhooks)
-    - [`_webhook_logs`](#_webhook_logs)
-    - [`_email_templates`](#_email_templates)
-  - [Mutations](#mutations)
-    - [`signup`](#signup)
-    - [`login`](#login)
-    - [`magic_link_login`](#magic_link_login)
-    - [`logout`](#logout)
-    - [`update_profile`](#update_profile)
-    - [`verify_email`](#verify_email)
-    - [`resend_verify_email`](#resend_verify_email)
-    - [`forgot_password`](#forgot_password)
-    - [`reset_password`](#reset_password)
-    - [`revoke`](#revoke)
-    - [`verify_otp`](#verify_otp)
-    - [`resend_otp`](#resend_otp)
-    - [`verify_totp`](#verify_totp)
-    - [`deactivate_account`](#deactivate_account)
-    - [`_admin_signup`](#_admin_signup)
-    - [`_admin_login`](#_admin_login)
-    - [`_admin_logout`](#_admin_logout)
-    - [`_update_env`](#_update_env)
-    - [`_update_user`](#_update_user)
-    - [`_delete_user`](#_delete_user)
-    - [`_invite_members`](#_invite_members)
-    - [`_revoke_access`](#_revoke_access)
-    - [`_enable_access`](#_enable_access)
-    - [`_generate_jwt_keys`](#_generate_jwt_keys)
-    - [`_test_endpoint`](#_test_endpoint)
-    - [`_add_webhook`](#_add_webhook)
-    - [`_update_webhook`](#_update_webhook)
-    - [`_delete_webhook`](#_delete_webhook)
-    - [`_add_email_template`](#_add_email_template)
-    - [`_update_email_template`](#_update_email_template)
-    - [`_delete_email_template`](#_delete_email_template)
-    - [Authorization (admin)](#authorization-admin)
+- [GraphQL API](./graphql-api)
+  - [Public APIs](#public-apis)
+    - [Queries](#queries)
+      - [`meta`](#meta)
+      - [`session`](#session)
+      - [`profile`](#profile)
+      - [`validate_jwt_token`](#validate_jwt_token)
+      - [`validate_session`](#validate_session)
+      - [`check_permissions`](#check_permissions)
+      - [`list_permissions`](#list_permissions)
+    - [Mutations](#mutations)
+      - [`signup`](#signup)
+      - [`login`](#login)
+      - [`magic_link_login`](#magic_link_login)
+      - [`logout`](#logout)
+      - [`update_profile`](#update_profile)
+      - [`verify_email`](#verify_email)
+      - [`resend_verify_email`](#resend_verify_email)
+      - [`forgot_password`](#forgot_password)
+      - [`reset_password`](#reset_password)
+      - [`revoke`](#revoke)
+      - [`verify_otp`](#verify_otp)
+      - [`resend_otp`](#resend_otp)
+      - [`verify_totp`](#verify_totp)
+      - [`deactivate_account`](#deactivate_account)
+  - [Authorizer Admin APIs](#authorizer-admin-apis)
+    - [Admin Authentication](#admin-authentication)
+      - [`_admin_login`](#_admin_login)
+      - [`_admin_logout`](#_admin_logout)
+      - [`_admin_session`](#_admin_session)
+      - [`_admin_meta`](#_admin_meta)
+    - [Users](#users)
+      - [`_users`](#_users)
+      - [`_user`](#_user)
+      - [`_update_user`](#_update_user)
+      - [`_delete_user`](#_delete_user)
+      - [`_verification_requests`](#_verification_requests)
+    - [Access Control](#access-control)
+      - [`_revoke_access`](#_revoke_access)
+      - [`_enable_access`](#_enable_access)
+      - [`_invite_members`](#_invite_members)
+    - [Webhooks](#webhooks)
+      - [`_add_webhook`](#_add_webhook)
+      - [`_update_webhook`](#_update_webhook)
+      - [`_delete_webhook`](#_delete_webhook)
+      - [`_webhook`](#_webhook)
+      - [`_webhooks`](#_webhooks)
+      - [`_webhook_logs`](#_webhook_logs)
+      - [`_test_endpoint`](#_test_endpoint)
+    - [Email Templates](#email-templates)
+      - [`_add_email_template`](#_add_email_template)
+      - [`_update_email_template`](#_update_email_template)
+      - [`_delete_email_template`](#_delete_email_template)
+      - [`_email_templates`](#_email_templates)
+    - [Audit Logs](#audit-logs)
+      - [`_audit_logs`](#_audit_logs)
+    - [Authorization (FGA)](#authorization-fga)
       - [`_fga_write_model`](#_fga_write_model)
       - [`_fga_get_model`](#_fga_get_model)
       - [`_fga_write_tuples`](#_fga_write_tuples)
@@ -73,7 +79,9 @@ Table of Contents
       - [`_fga_expand`](#_fga_expand)
       - [`_fga_reset`](#_fga_reset)
 
-## Queries
+## Public APIs
+
+### Queries
 
 ### `meta`
 
@@ -351,356 +359,8 @@ query {
 
 `FgaTupleInput` (used by `contextual_tuples` above and by the admin operations) is `{ user: String!, relation: String!, object: String! }`.
 
-### `_user`
 
-Query to get a specific user by either id or email.
-
-> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer.admin` as http only cookie.
-
-```json
-{
-  "x-authorizer-admin-secret": "ADMIN_SECRET"
-}
-```
-
-It requires either of following parameters
-
-**Request Param**
-
-| Key     | Description            | Required |
-| ------- | ---------------------- | -------- |
-| `id`    | Identifier of the user | false    |
-| `email` | User's email address   | false    |
-
-**Sample Query**
-
-```graphql
-query {
-  _user(params: {
-    id: '123-123123-1231231'
-  }) {
-    id
-    email
-  }
-}
-```
-
-It returns the whole `User` object mentioned in [profile](#profile) query section
-
-### `_users`
-
-Query to get all the `_users`. This query is only allowed for super admins. It returns array of users `Users` with below mentioned keys.
-
-> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer.admin` as http only cookie.
-
-```json
-{
-  "x-authorizer-admin-secret": "ADMIN_SECRET"
-}
-```
-
-It can take optional `params` input of type `PaginatedInput` with following keys
-
-**Request Params**
-
-| Key     | Description                  | Required | Default |
-| ------- | ---------------------------- | -------- | ------- |
-| `page`  | Number of page that you want | false    | 1       |
-| `limit` | Number of rows that you want | false    | 10      |
-
-**Sample Query**
-
-```graphql
-query {
-  _users(params: {
-    pagination: {
-      page: 2
-      limit: 10
-    }
-  }) {
-    pagination: {
-      offset
-      total
-      page
-      limit
-    }
-    users {
-      id
-      given_name
-      family_name
-      email
-      picture
-      roles
-    }
-  }
-}
-```
-
-### `_verification_requests`
-
-Query to get all the `_verification_requests`. This query is only allowed for super admins. It returns array of verification requests `[VerificationRequest!]!` with following keys.
-
-> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer-admin` as http only cookie.
-
-```json
-{
-  "x-authorizer-admin-secret": "ADMIN_SECRET"
-}
-```
-
-It can take optional `params` input of type `PaginatedInput` with following keys
-
-**Request Params**
-
-| Key     | Description                  | Required | Default |
-| ------- | ---------------------------- | -------- | ------- |
-| `page`  | Number of page that you want | false    | 1       |
-| `limit` | Number of rows that you want | false    | 10      |
-
-**Sample Query**
-
-```graphql
-query {
-  _verification_requests(params: { pagination: { limit: 10, page: 2 } }) {
-    pagination {
-      limit
-      offset
-      page
-    }
-    verification_requests {
-      id
-      token
-      email
-      expires
-      identifier
-    }
-  }
-}
-```
-
-### `_admin_session`
-
-Query to get admin session for dashboard
-
-> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer-admin` as http only cookie.
-
-```json
-{
-  "x-authorizer-admin-secret": "ADMIN_SECRET"
-}
-```
-
-| Key       | Description                          |
-| --------- | ------------------------------------ |
-| `message` | Success response message from server |
-
-**Sample Query**
-
-```graphql
-query {
-  _admin_session {
-    message
-  }
-}
-```
-
-### `_env`
-
-Query to get all the environment variables.
-
-> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer-admin` as http only cookie.
-
-```json
-{
-  "x-authorizer-admin-secret": "ADMIN_SECRET"
-}
-```
-
-All the environment variable values can be obtained using this query.
-
-**Sample Query**
-
-```graphql
-query {
-  _env {
-    DATABASE_TYPE
-    DATABASE_URL
-    DATABASE_NAME
-    CLIENT_ID
-   CLIENT_SECRET
-    ...
-  }
-}
-```
-
-### `_webhook`
-
-Query to get webhook by its identifier. This query is allowed for admins only. It accepts `params` of type `WebhookRequest` with following keys and returns `Webhook`
-
-> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer-admin` as http only cookie.
-
-**Request Params**
-
-| Key  | Description               | Required |
-| ---- | ------------------------- | -------- |
-| `id` | Identifier of the webhook | `true`   |
-
-**Response**
-
-| Key          | Description                                                                |
-| ------------ | -------------------------------------------------------------------------- |
-| `id`         | Identifier of the webhook                                                  |
-| `event_name` | Event for which the webhook will be executed                               |
-| `endpoint`   | Endpoint that is to be called                                              |
-| `enabled`    | Boolean to know if webhook is enabled or disabled                          |
-| `headers`    | JSON key, value pair object with the set of headers to be sent for webhook |
-| `created_at` | Time at which the webhook entry was created                                |
-| `updated_at` | Time at which the webhook entry was updated                                |
-
-**Sample Query**
-
-```graphql
-query {
-  _webhook(params: { id: "123-adfa-123412-asdfasda" }) {
-    id
-    event_name
-  }
-}
-```
-
-### `_webhooks`
-
-Query to get list of webhooks. This query is allowed for admins only.
-
-> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer-admin` as http only cookie.
-
-It can take optional `params` input of type `PaginatedInput` with following keys
-
-**Request Params**
-
-| Key     | Description                  | Required | Default |
-| ------- | ---------------------------- | -------- | ------- |
-| `page`  | Number of page that you want | false    | 1       |
-| `limit` | Number of rows that you want | false    | 10      |
-
-**Response**
-
-It returns response of type `Webhooks` with following keys
-
-| Key        | Description                                             |
-| ---------- | ------------------------------------------------------- |
-| pagination | object with `limit`, `page`, `offset` & `total` value   |
-| webhooks   | List of webhook with params mentioned [here](#_webhook) |
-
-**Sample Query**
-
-```graphql
-_webhooks(params: {limit: 10, page: 1}) {
-  pagination {
-    limit
-    offset
-    total
-  }
-  webhooks {
-    id
-    event_name
-    endpoint
-  }
-}
-```
-
-### `_webhook_logs`
-
-Query to get list of webhook logs. This query is allowed for admins only.
-
-> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer-admin` as http only cookie.
-
-It can take optional `params` input of type `ListWebhookLogRequest` with following keys
-
-**Request Params**
-
-| Key          | Description                         | Required | Default                |
-| ------------ | ----------------------------------- | -------- | ---------------------- |
-| `pagination` | Pagination object with limit & page | false    | `{limit: 10, page: 1}` |
-| `webhook_id` | Identifier for the webhook          | false    | null                   |
-
-**Response**
-
-It returns response of type `WebhookLogs` with following keys
-
-| Key          | Description                                                                                                |
-| ------------ | ---------------------------------------------------------------------------------------------------------- |
-| pagination   | object with `limit`, `page`, `offset` & `total` value                                                      |
-| webhook_logs | List of webhook log (`id`, `http_status`, `request`, `response`, `webhook_id`, `created_at`, `updated_at`) |
-
-**Sample Query**
-
-```graphql
-_webhook_logs(params: {
-  pagination: {
-    limit: 10
-  }
-  webhook_id: "test"
-}) {
-  pagination {
-    limit
-    offset
-    total
-  }
-  webhook_logs {
-    id
-    http_status
-    request
-    response
-    webhook_id
-  }
-}
-```
-
-### `_email_templates`
-
-Query to get list of email templates. This query is allowed for admins only.
-
-> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer-admin` as http only cookie.
-
-It can take optional `params` input of type `PaginatedInput` with following keys
-
-**Request Params**
-
-| Key     | Description                  | Required | Default |
-| ------- | ---------------------------- | -------- | ------- |
-| `page`  | Number of page that you want | false    | 1       |
-| `limit` | Number of rows that you want | false    | 10      |
-
-**Response**
-
-It returns response of type `EmailTemplates` with following keys
-
-| Key             | Description                                           |
-| --------------- | ----------------------------------------------------- |
-| pagination      | object with `limit`, `page`, `offset` & `total` value |
-| email_templates | List of email template                                |
-
-**Sample Query**
-
-```graphql
-_email_templates(params: {limit: 10, page: 1}) {
-  pagination {
-    limit
-    offset
-    total
-  }
-  webhooks {
-    id
-    template
-    event_name
-    created_at
-    updated_at
-  }
-}
-```
-
-## Mutations
+### Mutations
 
 ### `signup`
 
@@ -1196,9 +856,13 @@ mutation {
 }
 ```
 
----
+## Authorizer Admin APIs
 
-### `_admin_signup`
+All admin operations require super-admin authentication via either the `x-authorizer-admin-secret` header or the `authorizer.admin` HTTP-only session cookie (set by `_admin_login`). Except `_admin_login`, which may be called without an existing session. The same operations are also available over gRPC and REST through the `AuthorizerAdminService` (see the [gRPC](./grpc.md) and [REST](./rest-api.md) references).
+
+### Admin Authentication
+
+#### `_admin_login`
 
 Mutation to signup administrator. This only works if `ADMIN_SECRET` env is not set. It accepts `params` of type `AdminSignupInput` with following keys
 
@@ -1242,7 +906,7 @@ mutation {
 }
 ```
 
-### `_admin_logout`
+#### `_admin_logout`
 
 Mutation to logout administrator. It does not have any params
 
@@ -1260,7 +924,135 @@ mutation {
 }
 ```
 
-### `_update_env`
+#### `_admin_session`
+
+Query to get admin session for dashboard
+
+> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer-admin` as http only cookie.
+
+```json
+{
+  "x-authorizer-admin-secret": "ADMIN_SECRET"
+}
+```
+
+| Key       | Description                          |
+| --------- | ------------------------------------ |
+| `message` | Success response message from server |
+
+**Sample Query**
+
+```graphql
+query {
+  _admin_session {
+    message
+  }
+}
+```
+
+#### `_admin_meta`
+
+Query to get admin metadata (server info available to admins).
+
+**Sample Query**
+
+```graphql
+query {
+  _admin_meta {
+    version
+    client_id
+  }
+}
+```
+
+### Users
+
+#### `_users`
+
+Query to get all the `_users`. This query is only allowed for super admins. It returns array of users `Users` with below mentioned keys.
+
+> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer.admin` as http only cookie.
+
+```json
+{
+  "x-authorizer-admin-secret": "ADMIN_SECRET"
+}
+```
+
+It can take optional `params` input of type `PaginatedInput` with following keys
+
+**Request Params**
+
+| Key     | Description                  | Required | Default |
+| ------- | ---------------------------- | -------- | ------- |
+| `page`  | Number of page that you want | false    | 1       |
+| `limit` | Number of rows that you want | false    | 10      |
+
+**Sample Query**
+
+```graphql
+query {
+  _users(params: {
+    pagination: {
+      page: 2
+      limit: 10
+    }
+  }) {
+    pagination: {
+      offset
+      total
+      page
+      limit
+    }
+    users {
+      id
+      given_name
+      family_name
+      email
+      picture
+      roles
+    }
+  }
+}
+```
+
+#### `_user`
+
+Query to get a specific user by either id or email.
+
+> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer.admin` as http only cookie.
+
+```json
+{
+  "x-authorizer-admin-secret": "ADMIN_SECRET"
+}
+```
+
+It requires either of following parameters
+
+**Request Param**
+
+| Key     | Description            | Required |
+| ------- | ---------------------- | -------- |
+| `id`    | Identifier of the user | false    |
+| `email` | User's email address   | false    |
+
+**Sample Query**
+
+```graphql
+query {
+  _user(params: {
+    id: '123-123123-1231231'
+  }) {
+    id
+    email
+  }
+}
+```
+
+It returns the whole `User` object mentioned in [profile](#profile) query section
+
+#### `_update_user`
 
 Mutation to update environment variables. It accepts `params` of type `UpdateEnvInput` with keys present in environment variables
 
@@ -1324,7 +1116,7 @@ mutation {
 }
 ```
 
-### `_delete_user`
+#### `_delete_user`
 
 Mutation to delete user. This mutation is only allowed for super admins. It accepts `params` of type `DeleteUserInput` with following keys
 
@@ -1354,7 +1146,111 @@ mutation {
 }
 ```
 
-### `_invite_members`
+#### `_verification_requests`
+
+Query to get all the `_verification_requests`. This query is only allowed for super admins. It returns array of verification requests `[VerificationRequest!]!` with following keys.
+
+> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer-admin` as http only cookie.
+
+```json
+{
+  "x-authorizer-admin-secret": "ADMIN_SECRET"
+}
+```
+
+It can take optional `params` input of type `PaginatedInput` with following keys
+
+**Request Params**
+
+| Key     | Description                  | Required | Default |
+| ------- | ---------------------------- | -------- | ------- |
+| `page`  | Number of page that you want | false    | 1       |
+| `limit` | Number of rows that you want | false    | 10      |
+
+**Sample Query**
+
+```graphql
+query {
+  _verification_requests(params: { pagination: { limit: 10, page: 2 } }) {
+    pagination {
+      limit
+      offset
+      page
+    }
+    verification_requests {
+      id
+      token
+      email
+      expires
+      identifier
+    }
+  }
+}
+```
+
+### Access Control
+
+#### `_revoke_access`
+
+Mutation to revoke access of a given user. This mutation is only allowed for super admins. It accepts `params` of type `UpdateAccessInput` with following keys
+
+> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer-admin` as http only cookie.
+
+**Request Params**
+
+| Key       | Description                              | Required |
+| --------- | ---------------------------------------- | -------- |
+| `user_id` | Id of user whose access is to be revoked | true     |
+
+This mutation returns `Response` type with following keys
+
+**Response**
+
+| Key       | Description                         |
+| --------- | ----------------------------------- |
+| `message` | Success / Error message from server |
+
+**Sample Mutation**
+
+```graphql
+mutation {
+  _revoke_access(params: { user_id: "test" }) {
+    message
+  }
+}
+```
+
+#### `_enable_access`
+
+Mutation to enable access of a given user whose access revoked earlier. This mutation is only allowed for super admins. It accepts `params` of type `UpdateAccessInput` with following keys
+
+> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer-admin` as http only cookie.
+
+**Request Params**
+
+| Key       | Description                              | Required |
+| --------- | ---------------------------------------- | -------- |
+| `user_id` | Id of user whose access is to be enabled | true     |
+
+This mutation returns `Response` type with following keys
+
+**Response**
+
+| Key       | Description                         |
+| --------- | ----------------------------------- |
+| `message` | Success / Error message from server |
+
+**Sample Mutation**
+
+```graphql
+mutation {
+  _enable_access(params: { user_id: "test" }) {
+    message
+  }
+}
+```
+
+#### `_invite_members`
 
 Mutation to invite members. This mutation is only allowed for super admins. It accepts `params` of type `InviteMemberInput` with following keys
 
@@ -1385,100 +1281,9 @@ mutation {
 }
 ```
 
-### `_revoke_access`
+### Webhooks
 
-Mutation to revoke access of a given user. This mutation is only allowed for super admins. It accepts `params` of type `UpdateAccessInput` with following keys
-
-> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer-admin` as http only cookie.
-
-**Request Params**
-
-| Key       | Description                              | Required |
-| --------- | ---------------------------------------- | -------- |
-| `user_id` | Id of user whose access is to be revoked | true     |
-
-This mutation returns `Response` type with following keys
-
-**Response**
-
-| Key       | Description                         |
-| --------- | ----------------------------------- |
-| `message` | Success / Error message from server |
-
-**Sample Mutation**
-
-```graphql
-mutation {
-  _revoke_access(params: { user_id: "test" }) {
-    message
-  }
-}
-```
-
-### `_enable_access`
-
-Mutation to enable access of a given user whose access revoked earlier. This mutation is only allowed for super admins. It accepts `params` of type `UpdateAccessInput` with following keys
-
-> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer-admin` as http only cookie.
-
-**Request Params**
-
-| Key       | Description                              | Required |
-| --------- | ---------------------------------------- | -------- |
-| `user_id` | Id of user whose access is to be enabled | true     |
-
-This mutation returns `Response` type with following keys
-
-**Response**
-
-| Key       | Description                         |
-| --------- | ----------------------------------- |
-| `message` | Success / Error message from server |
-
-**Sample Mutation**
-
-```graphql
-mutation {
-  _enable_access(params: { user_id: "test" }) {
-    message
-  }
-}
-```
-
-### `_generate_jwt_keys`
-
-Mutation to generate new jwt keys based on given jwt algorithm. This mutation is only allowed for super admins. It accepts `params` of type `GenerateJWTKeysInput` with following keys
-
-> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer-admin` as http only cookie.
-
-**Request Params**
-
-| Key    | Description                                                                                                        | Required |
-| ------ | ------------------------------------------------------------------------------------------------------------------ | -------- |
-| `type` | JWT algorithm for which keys are to be generate. It supports HS256,HS384,HS512,RS256,RS384,RS512,ES256,ES384,ES512 | true     |
-
-This mutation returns `GenerateJWTKeysResponse` type with following keys
-
-**Response**
-
-| Key           | Description                                          |
-| ------------- | ---------------------------------------------------- |
-| `secret`      | In case of HMAC algorithm it returns secret          |
-| `public_key`  | In case of RSA / ECDSA it returns public key string  |
-| `private_key` | In case of RSA / ECDSA it returns private key string |
-
-**Sample Mutation**
-
-```graphql
-mutation {
-  _generate_jwt_keys(params: { type: "RS256" }) {
-    public_key
-    private_key
-  }
-}
-```
-
-### `_test_endpoint`
+#### `_test_endpoint`
 
 Mutation to test webhook endpoint. This mutation is allowed for admins only. It accepts `params` of type `TestEndpointRequest` with following keys and returns `TestEndpointResponse`
 
@@ -1524,7 +1329,7 @@ mutation {
 }
 ```
 
-### `_add_webhook`
+#### `_add_webhook`
 
 Mutation to add webhook. This mutation is allowed for admins only. It accepts `params` of type `AddWebhookRequest` with following keys
 
@@ -1570,7 +1375,7 @@ mutation {
 }
 ```
 
-### `_update_webhook`
+#### `_update_webhook`
 
 Mutation to update webhook. This mutation is allowed for admins only. It accepts `params` of type `UpdateWebhookRequest` with following keys
 
@@ -1608,7 +1413,7 @@ mutation {
 }
 ```
 
-### `_delete_webhook`
+#### `_delete_webhook`
 
 Mutation to delete webhook. This mutation is allowed for admins only. It accepts `params` of type `WebhookRequest` with following keys
 
@@ -1636,7 +1441,133 @@ mutation {
 }
 ```
 
-### `_add_email_template`
+#### `_webhook`
+
+Query to get webhook by its identifier. This query is allowed for admins only. It accepts `params` of type `WebhookRequest` with following keys and returns `Webhook`
+
+> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer-admin` as http only cookie.
+
+**Request Params**
+
+| Key  | Description               | Required |
+| ---- | ------------------------- | -------- |
+| `id` | Identifier of the webhook | `true`   |
+
+**Response**
+
+| Key          | Description                                                                |
+| ------------ | -------------------------------------------------------------------------- |
+| `id`         | Identifier of the webhook                                                  |
+| `event_name` | Event for which the webhook will be executed                               |
+| `endpoint`   | Endpoint that is to be called                                              |
+| `enabled`    | Boolean to know if webhook is enabled or disabled                          |
+| `headers`    | JSON key, value pair object with the set of headers to be sent for webhook |
+| `created_at` | Time at which the webhook entry was created                                |
+| `updated_at` | Time at which the webhook entry was updated                                |
+
+**Sample Query**
+
+```graphql
+query {
+  _webhook(params: { id: "123-adfa-123412-asdfasda" }) {
+    id
+    event_name
+  }
+}
+```
+
+#### `_webhooks`
+
+Query to get list of webhooks. This query is allowed for admins only.
+
+> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer-admin` as http only cookie.
+
+It can take optional `params` input of type `PaginatedInput` with following keys
+
+**Request Params**
+
+| Key     | Description                  | Required | Default |
+| ------- | ---------------------------- | -------- | ------- |
+| `page`  | Number of page that you want | false    | 1       |
+| `limit` | Number of rows that you want | false    | 10      |
+
+**Response**
+
+It returns response of type `Webhooks` with following keys
+
+| Key        | Description                                             |
+| ---------- | ------------------------------------------------------- |
+| pagination | object with `limit`, `page`, `offset` & `total` value   |
+| webhooks   | List of webhook with params mentioned [here](#_webhook) |
+
+**Sample Query**
+
+```graphql
+_webhooks(params: {limit: 10, page: 1}) {
+  pagination {
+    limit
+    offset
+    total
+  }
+  webhooks {
+    id
+    event_name
+    endpoint
+  }
+}
+```
+
+#### `_webhook_logs`
+
+Query to get list of webhook logs. This query is allowed for admins only.
+
+> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer-admin` as http only cookie.
+
+It can take optional `params` input of type `ListWebhookLogRequest` with following keys
+
+**Request Params**
+
+| Key          | Description                         | Required | Default                |
+| ------------ | ----------------------------------- | -------- | ---------------------- |
+| `pagination` | Pagination object with limit & page | false    | `{limit: 10, page: 1}` |
+| `webhook_id` | Identifier for the webhook          | false    | null                   |
+
+**Response**
+
+It returns response of type `WebhookLogs` with following keys
+
+| Key          | Description                                                                                                |
+| ------------ | ---------------------------------------------------------------------------------------------------------- |
+| pagination   | object with `limit`, `page`, `offset` & `total` value                                                      |
+| webhook_logs | List of webhook log (`id`, `http_status`, `request`, `response`, `webhook_id`, `created_at`, `updated_at`) |
+
+**Sample Query**
+
+```graphql
+_webhook_logs(params: {
+  pagination: {
+    limit: 10
+  }
+  webhook_id: "test"
+}) {
+  pagination {
+    limit
+    offset
+    total
+  }
+  webhook_logs {
+    id
+    http_status
+    request
+    response
+    webhook_id
+  }
+}
+```
+
+### Email Templates
+
+#### `_add_email_template`
 
 Mutation to add email template that will be used while sending emails. This mutation is allowed for admins only. It accepts `params` of type `AddEmailTemplateRequest` with following keys
 
@@ -1667,7 +1598,7 @@ mutation {
 }
 ```
 
-### `_update_email_template`
+#### `_update_email_template`
 
 Mutation to update email template. This mutation is allowed for admins only. It accepts `params` of type `UpdateEmailTemplateRequest` with following keys
 
@@ -1703,7 +1634,7 @@ mutation {
 }
 ```
 
-### `_delete_email_template`
+#### `_delete_email_template`
 
 Mutation to delete email template. This mutation is allowed for admins only. It accepts `params` of type `DeleteEmailTemplateRequest` with following keys
 
@@ -1731,7 +1662,95 @@ mutation {
 }
 ```
 
-### Authorization (admin)
+#### `_email_templates`
+
+Query to get list of email templates. This query is allowed for admins only.
+
+> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer-admin` as http only cookie.
+
+It can take optional `params` input of type `PaginatedInput` with following keys
+
+**Request Params**
+
+| Key     | Description                  | Required | Default |
+| ------- | ---------------------------- | -------- | ------- |
+| `page`  | Number of page that you want | false    | 1       |
+| `limit` | Number of rows that you want | false    | 10      |
+
+**Response**
+
+It returns response of type `EmailTemplates` with following keys
+
+| Key             | Description                                           |
+| --------------- | ----------------------------------------------------- |
+| pagination      | object with `limit`, `page`, `offset` & `total` value |
+| email_templates | List of email template                                |
+
+**Sample Query**
+
+```graphql
+_email_templates(params: {limit: 10, page: 1}) {
+  pagination {
+    limit
+    offset
+    total
+  }
+  webhooks {
+    id
+    template
+    event_name
+    created_at
+    updated_at
+  }
+}
+```
+
+### Audit Logs
+
+#### `_audit_logs`
+
+Query to get a paginated list of audit log entries. This query is allowed for admins only.
+
+> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer-admin` as http only cookie.
+
+It can take optional `params` input with pagination and filtering options.
+
+**Request Params**
+
+| Key          | Description                  | Required | Default |
+| ------------ | ---------------------------- | -------- | ------- |
+| `page`       | Number of page that you want | false    | 1       |
+| `limit`      | Number of rows that you want | false    | 10      |
+| `actor_id`   | Filter by actor ID           | false    | null    |
+| `action`     | Filter by action             | false    | null    |
+| `resource`   | Filter by resource type      | false    | null    |
+
+**Sample Query**
+
+```graphql
+query {
+  _audit_logs(params: {
+    pagination: { limit: 10, page: 1 },
+    actor_id: "user-123"
+  }) {
+    pagination {
+      limit
+      offset
+      page
+      total
+    }
+    entries {
+      id
+      actor_id
+      action
+      resource
+      created_at
+    }
+  }
+}
+```
+
+### Authorization (FGA)
 
 Manage the embedded FGA (ReBAC) engine: the authorization model and the relationship tuples. All require super-admin authentication (cookie or `X-Authorizer-Admin-Secret`). All admin authorization operations are namespaced with the `_fga_` prefix. See [Authorization (FGA)](./authorization) for the conceptual model.
 
