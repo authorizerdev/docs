@@ -858,7 +858,7 @@ mutation {
 
 ## Authorizer Admin APIs
 
-All admin operations require super-admin authentication via either the `x-authorizer-admin-secret` header or the `authorizer.admin` HTTP-only session cookie (set by `_admin_login`). Except `_admin_login`, which may be called without an existing session. Admin operations are not exposed over REST or gRPC in the current release.
+All admin operations require super-admin authentication via either the `x-authorizer-admin-secret` header or the `authorizer.admin` HTTP-only session cookie (set by `_admin_login`). Except `_admin_login`, which may be called without an existing session. The same operations are also available over gRPC and REST through the `AuthorizerAdminService` (see the [gRPC](./grpc.md) and [REST](./rest-api.md) references).
 
 ### Admin Authentication
 

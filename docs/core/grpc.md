@@ -180,7 +180,7 @@ Each message mirrors its GraphQL/REST counterpart — see the linked
 
 ## Authorizer Admin Methods
 
-The `AuthorizerAdminService` is served on the same gRPC port and address as `AuthorizerService`. All admin methods require super-admin authentication via request metadata (`authorization: Bearer <admin_token>`) or an admin session cookie. Except `AdminLogin`, which does not require an existing session.
+The `AuthorizerAdminService` is served on the same gRPC port and address as `AuthorizerService`. All admin methods require super-admin authentication via the `x-authorizer-admin-secret` request metadata (the admin secret configured with `--admin-secret`) or an `authorizer.admin` session cookie. Except `AdminLogin`, which does not require an existing session.
 
 ### Admin Authentication
 

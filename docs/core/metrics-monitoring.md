@@ -67,6 +67,9 @@ For routes that do not match a registered Gin pattern, `path` is recorded as `un
 |--------|------|--------|-------------|
 | `authorizer_auth_events_total` | Counter | `event`, `status` | Authentication event count |
 | `authorizer_active_sessions` | Gauge | — | Approximate active session count |
+| `authorizer_api_operations_total` | Counter | `protocol`, `operation`, `status` | API operations served, attributed to the protocol they came in on |
+
+The `protocol` label on `authorizer_api_operations_total` is one of `graphql`, `grpc`, or `rest` (the `rest` value covers calls made through the grpc-gateway `/v1/*` surface). `operation` is the gRPC method / GraphQL operation name and `status` is `ok` or `error`. The same protocol is also recorded on each audit-log entry (under the `protocol` key of the entry's `metadata` field), so operations are attributable to their transport in both metrics and the audit trail.
 
 **Auth event values:**
 
