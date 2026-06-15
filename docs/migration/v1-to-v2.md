@@ -442,58 +442,66 @@ You may see the same error for `authorizer_otps`, and for the `phone_number`
 column of either table (`uni_authorizer_users_phone_number`,
 `uni_authorizer_otps_email`, `uni_authorizer_otps_phone_number`).
 
-Depending on which v1 release created your database, the old uniqueness lives
-either as a **constraint** named `<table>_<column>_key` (e.g.
-`authorizer_users_email_key`) **or** as a standalone **unique index** named
-`idx_<table>_<column>` (e.g. `idx_authorizer_otps_phone_number`). You may need
-to clear both forms.
+Depending on which v1 release created your database, the old uniqueness can take
+any of these forms:
+
+- a **UNIQUE constraint** under almost any name — `authorizer_users_email_key`
+  (the Postgres default), `idx_authorizer_otps_phone_number` (a v1
+  `gorm:"uniqueIndex"` that the database promoted to a constraint), or a custom
+  name from a hand-rolled migration; **or**
+- a standalone **UNIQUE index** created with `CREATE UNIQUE INDEX`.
+
+:::warning
+A constraint's backing index **cannot** be removed with `DROP INDEX` — Postgres
+rejects it with `cannot drop index ... because constraint ... requires it`. Use
+`DROP CONSTRAINT` for those (the index disappears with the constraint).
+:::
 
 #### Fix
 
-Recent v2 releases **drop these stale unique constraints and indexes
-automatically** at startup before running the migration, so no action is
-required — just upgrade to the latest server build.
+Authorizer **drops these stale unique objects automatically** at startup — by
+their *real* names, whatever they are — before running the migration. On a
+current build no action is required; just upgrade to the latest server.
 
-If you are on an earlier build that still fails with the error above, clear them
-manually once, then restart.
+If you are pinned to an older build that still fails with the error above, clear
+them manually once, then restart.
 
-First, list what actually exists on your instance — both unique constraints and
-unique indexes on these columns:
+**1. List the real names** of the single-column unique objects on these columns:
 
 ```sql
 -- Postgres / Yugabyte / CockroachDB
-SELECT conrelid::regclass AS "table", conname AS unique_constraint
+-- (a) UNIQUE constraints — drop each with ALTER TABLE ... DROP CONSTRAINT
+SELECT conrelid::regclass AS "table", conname AS name
 FROM pg_constraint
 WHERE conrelid IN ('authorizer_users'::regclass, 'authorizer_otps'::regclass)
   AND contype = 'u';
 
-SELECT tablename AS "table", indexname AS unique_index
-FROM pg_indexes
-WHERE tablename IN ('authorizer_users', 'authorizer_otps')
-  AND indexdef ILIKE '%UNIQUE%'
-  AND indexdef ~ '\((email|phone_number)\)';
+-- (b) standalone UNIQUE indexes (NOT backed by a constraint) — drop with DROP INDEX
+SELECT t.relname AS "table", i.relname AS name
+FROM pg_index ix
+JOIN pg_class i ON i.oid = ix.indexrelid
+JOIN pg_class t ON t.oid = ix.indrelid
+JOIN pg_attribute a ON a.attrelid = t.oid AND a.attnum = ANY (ix.indkey)
+WHERE t.relname IN ('authorizer_users', 'authorizer_otps')
+  AND ix.indisunique AND NOT ix.indisprimary
+  AND a.attname IN ('email', 'phone_number')
+  AND NOT EXISTS (SELECT 1 FROM pg_constraint c WHERE c.conindid = ix.indexrelid);
 ```
 
-Then drop whatever the queries return:
+**2. Drop them** — `DROP CONSTRAINT` for every name from query (a), `DROP INDEX`
+for every name from query (b). For example:
 
 ```sql
--- unique CONSTRAINTs (no-op if absent)
 ALTER TABLE authorizer_users DROP CONSTRAINT IF EXISTS authorizer_users_email_key;
-ALTER TABLE authorizer_users DROP CONSTRAINT IF EXISTS authorizer_users_phone_number_key;
-ALTER TABLE authorizer_otps  DROP CONSTRAINT IF EXISTS authorizer_otps_email_key;
-ALTER TABLE authorizer_otps  DROP CONSTRAINT IF EXISTS authorizer_otps_phone_number_key;
-
--- standalone unique INDEXes (no-op if absent)
-DROP INDEX IF EXISTS idx_authorizer_users_email;
-DROP INDEX IF EXISTS idx_authorizer_users_phone_number;
+ALTER TABLE authorizer_otps  DROP CONSTRAINT IF EXISTS idx_authorizer_otps_phone_number;
+-- ...one line per name from query (a), across both tables, then for query (b):
 DROP INDEX IF EXISTS idx_authorizer_otps_email;
-DROP INDEX IF EXISTS idx_authorizer_otps_phone_number;
 ```
 
-On **MySQL / MariaDB** these are unique indexes — drop them with
-`ALTER TABLE authorizer_users DROP INDEX email;` (and likewise for
-`phone_number` / `authorizer_otps`). **SQLite** and the NoSQL backends are
-unaffected.
+On **MySQL / MariaDB** these are unique indexes — list them with
+`SHOW INDEX FROM authorizer_users WHERE Non_unique = 0;` and drop with
+`ALTER TABLE authorizer_users DROP INDEX <name>;`. **SQLite** and the NoSQL
+backends are unaffected.
 
 :::note
 This only removes a constraint that v2 no longer uses. Duplicate emails and
