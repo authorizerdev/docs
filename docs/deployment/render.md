@@ -59,6 +59,7 @@ Update the start command to pass CLI flags:
 
 ```bash
 ./build/server \
+  --http-port=$PORT \
   --database-type=$DATABASE_TYPE \
   --database-url=$DATABASE_URL \
   --jwt-type=$JWT_TYPE \
@@ -67,5 +68,13 @@ Update the start command to pass CLI flags:
   --client-id=$CLIENT_ID \
   --client-secret=$CLIENT_SECRET
 ```
+
+:::caution Bind the platform's `$PORT`
+Render injects a `$PORT` and routes the service to it; the server does **not** read `$PORT` on its own, so pass `--http-port=$PORT`. The published [`authorizer-render`](https://github.com/authorizerdev/authorizer-render) image already does this.
+:::
+
+### Ports on Render
+
+A Render web service exposes **one** HTTP port (`$PORT`), which serves the **whole API** — GraphQL plus the REST `/v1/*` surface (the gRPC service proxied in-process), OAuth, and the login UI. Keep metrics (`8081`) internal. To expose **native gRPC (`9091`)**, run it as a **separate** Render service pointed at the gRPC port (Render routes one port per service). Most clients should just use REST/GraphQL. See [gRPC API](../core/grpc) and [Docker ports](./docker#docker-ports-exposure).
 
 ![Render step 2](/img/render_2.png)

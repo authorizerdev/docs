@@ -52,8 +52,16 @@ Use `REDIS_URL` for shared sessions and rate limits across dynos ([rate limiting
 Update the Procfile or startup command to pass CLI flags:
 
 ```
-web: ./build/server --database-type=$DATABASE_TYPE --database-url=$DATABASE_URL --jwt-type=$JWT_TYPE --jwt-secret=$JWT_SECRET --admin-secret=$ADMIN_SECRET --client-id=$CLIENT_ID --client-secret=$CLIENT_SECRET
+web: ./build/server --http-port=$PORT --database-type=$DATABASE_TYPE --database-url=$DATABASE_URL --jwt-type=$JWT_TYPE --jwt-secret=$JWT_SECRET --admin-secret=$ADMIN_SECRET --client-id=$CLIENT_ID --client-secret=$CLIENT_SECRET
 ```
+
+:::caution Bind the platform's `$PORT`
+Heroku assigns a **dynamic** `$PORT` and routes HTTPS only to that port; the server does **not** read `$PORT` on its own, so you **must** pass `--http-port=$PORT`. Without it the dyno binds `8080`, the router can't reach it, and boot fails (`R10`). The published [`authorizer-heroku`](https://github.com/authorizerdev/authorizer-heroku) image already does this.
+:::
+
+### Ports on Heroku
+
+A Heroku web dyno exposes **one** HTTP port (`$PORT`). That single port serves the **entire API** — GraphQL (`/graphql`) and the REST `/v1/*` surface (which proxies the gRPC service in-process), plus OAuth and the login UI. **Native gRPC (`9091`) and metrics (`8081`) cannot be published** on a single-port dyno; the listeners still run inside the dyno but Heroku's router won't route to them. Use REST/GraphQL for all clients; if you need native gRPC, deploy on a multi-port platform ([Fly.io](./fly-io), [Koyeb](./koyeb)) or Kubernetes. See [gRPC API](../core/grpc) and [Docker ports](./docker#docker-ports-exposure).
 
 ---
 

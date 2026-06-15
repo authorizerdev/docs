@@ -55,6 +55,7 @@ Update the start command to pass CLI flags:
 
 ```bash
 ./build/server \
+  --http-port=$PORT \
   --database-type=$DATABASE_TYPE \
   --database-url=$DATABASE_URL \
   --jwt-type=$JWT_TYPE \
@@ -63,6 +64,14 @@ Update the start command to pass CLI flags:
   --client-id=$CLIENT_ID \
   --client-secret=$CLIENT_SECRET
 ```
+
+:::caution Bind the platform's `$PORT`
+Railway injects a `$PORT` and routes its public domain to it; the server does **not** read `$PORT` on its own, so pass `--http-port=$PORT`. The published [`authorizer-railway`](https://github.com/authorizerdev/authorizer-railway) image already does this.
+:::
+
+### Ports on Railway
+
+Railway's public domain maps to the **one** HTTP port (`$PORT`), which serves the **whole API** — GraphQL plus the REST `/v1/*` surface (the gRPC service proxied in-process), OAuth, and the login UI. Keep metrics (`8081`) on Railway's **private network** and scrape it from another service; never expose it publicly. To expose **native gRPC (`9091`)**, add a [Railway TCP Proxy](https://docs.railway.app/guides/public-networking#tcp-proxy) pointed at `9091`. Most clients don't need this — use REST/GraphQL. See [gRPC API](../core/grpc) and [Docker ports](./docker#docker-ports-exposure).
 
 ## Update Instance
 

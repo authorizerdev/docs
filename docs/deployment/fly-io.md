@@ -108,6 +108,27 @@ auto_rollback = true
     timeout = "2s"
 ```
 
+The single `8080` service above serves the **whole API** — GraphQL plus the REST `/v1/*` surface (the gRPC service proxied in-process), OAuth, and the login UI — and is all most deployments need.
+
+#### Optional: expose native gRPC
+
+Unlike single-port platforms, Fly can publish multiple ports by adding more `[[services]]` blocks. To expose the **native gRPC** listener (`9091`) for binary/HTTP2 clients, append a second service — `h2_backend` makes Fly's proxy speak HTTP/2 to the app:
+
+```toml
+[[services]]
+  internal_port = 9091
+  protocol = "tcp"
+
+  [[services.ports]]
+    handlers = ["tls"]
+    port = 443
+    # h2_backend keeps the connection HTTP/2 end-to-end (required for gRPC)
+    [services.ports.tls_options]
+      alpn = ["h2"]
+```
+
+Keep metrics (`8081`) **off** the public proxy — scrape it over Fly's private 6PN network, or use a `[metrics]` block (`port = 8081`, `path = "/metrics"`). See [gRPC API](../core/grpc) and [Docker ports](./docker#docker-ports-exposure).
+
 ### Step 6: Configure secrets
 
 ```bash

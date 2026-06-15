@@ -53,6 +53,7 @@ Update the start command to pass CLI flags:
 
 ```bash
 ./build/server \
+  --http-port=$PORT \
   --database-type=$DATABASE_TYPE \
   --database-url=$DATABASE_URL \
   --jwt-type=$JWT_TYPE \
@@ -61,5 +62,13 @@ Update the start command to pass CLI flags:
   --client-id=$CLIENT_ID \
   --client-secret=$CLIENT_SECRET
 ```
+
+:::caution Bind the port
+The deploy button sets `PORT=8000` and exposes `8000;http`. Pass `--http-port=$PORT` so the server binds the port Koyeb routes to — the server does **not** read `$PORT` on its own.
+:::
+
+### Ports on Koyeb
+
+The `8000;http` port serves the **whole API** — GraphQL plus the REST `/v1/*` surface (the gRPC service proxied in-process), OAuth, and the login UI. Koyeb supports **multiple ports with per-port protocols**, so to expose **native gRPC** add a second port mapped to `9091` with the **`http2`** protocol (`ports=8000;http;/&ports=9091;http2`, or add it in the service's **Ports** settings). Keep metrics (`8081`) unexposed. Most clients don't need native gRPC — use REST/GraphQL. See [gRPC API](../core/grpc) and [Docker ports](./docker#docker-ports-exposure).
 
 ![Koyeb authorizer URL](/img/koyeb_authorizer_url.png)
