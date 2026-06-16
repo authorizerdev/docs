@@ -92,10 +92,30 @@ Table of Contents
 | TLS                   | `--grpc-tls-cert` + `--grpc-tls-key`; `--grpc-insecure` for dev    |
 | Server reflection     | `--enable-grpc-reflection` (default `true`)                        |
 | Health checking       | `grpc.health.v1.Health` (always registered)                       |
+| JSON field casing (REST)| `snake_case` via `UseProtoNames` — payloads match GraphQL byte-for-byte |
 
-The gRPC server is enabled by default. Auth flows over gRPC exactly as it does over REST:
+The gRPC server is enabled by default. Auth flows over gRPC exactly as they do over REST:
 attach the user's credential as request metadata —
-`authorization: Bearer <access_token>` — or a session cookie.
+`authorization: Bearer <access_token>` — or forward the `cookie` header from a browser
+session.
+
+### Session cookies over gRPC and REST
+
+Cookie-setting flows (`Signup`, `Login`, `Session`, `VerifyEmail`, `VerifyOtp`, and MFA
+challenge paths) emit session/MFA cookies as `set-cookie` **gRPC response metadata**. Over
+native gRPC, clients that need cookie-based auth must read these metadata headers and
+forward the `Cookie` value on subsequent calls. Over REST, the grpc-gateway promotes them
+to real `Set-Cookie` HTTP headers (previously they surfaced as
+`Grpc-Metadata-Set-Cookie`, which browsers ignored).
+
+| Cookie | gRPC metadata / REST header | Set by |
+| ------ | --------------------------- | ------ |
+| App session (`cookie_session`, `cookie_session_domain`) | `set-cookie` → `Set-Cookie` | `Signup`, `Login`, `Session`, `VerifyEmail`, `VerifyOtp` |
+| MFA challenge (`mfa`) | `set-cookie` → `Set-Cookie` | `Login`, `ForgotPassword`, `ResendOtp` when MFA is required |
+| Admin session (`authorizer-admin`) | `set-cookie` → `Set-Cookie` | `AdminLogin`, `AdminSession` |
+
+Admin auth also accepts `x-authorizer-admin-secret` as incoming metadata (mirrored from
+the REST `X-Authorizer-Admin-Secret` header).
 
 ## Protobuf schema
 
@@ -145,9 +165,19 @@ Each message mirrors its GraphQL/REST counterpart — see the linked
 > **Response types.** Methods return the bare domain message — there is no per-RPC wrapper.
 > `Signup`, `Login`, `VerifyEmail`, `VerifyOtp`, and `Session` return `AuthResponse`;
 > `Profile` returns `User`; `Meta` returns `Meta`. This keeps the gRPC, REST, and GraphQL
-> payloads identical. Cookie-setting flows (login/signup/session/verify_\*, and the MFA
-> challenge flows) emit the session/MFA cookies as `set-cookie` response metadata, which the
-> REST gateway promotes to real `Set-Cookie` headers.
+> payloads identical (snake_case field names, no `auth` / `user` / `meta` envelope keys).
+> Request messages are likewise flat — send the RPC input fields directly.
+>
+> Example — `Login` returns a flat `AuthResponse` (not `{ "auth": { … } }`):
+>
+> ```json
+> {
+>   "message": "Logged in successfully",
+>   "access_token": "eyJhbGciOiJIUzI1NiIs…",
+>   "expires_in": 1718534400,
+>   "user": { "id": "…", "email": "jane@example.com" }
+> }
+> ```
 
 ### `Meta`
 
@@ -386,7 +416,12 @@ With reflection enabled you can explore and call the service directly:
 grpcurl -plaintext localhost:9091 list
 
 # Describe a method
-grpcurl -plaintext localhost:9091 describe authorizer.v1.AuthorizerService.CheckPermissions
+grpcurl -plaintext localhost:9091 describe authorizer.v1.AuthorizerService.Login
+
+# Login (public) — response is a flat AuthResponse; check -H for set-cookie metadata
+grpcurl -plaintext \
+  -d '{"email":"jane@example.com","password":"Test@123"}' \
+  localhost:9091 authorizer.v1.AuthorizerService/Login
 
 # Check permissions (authenticated)
 grpcurl -plaintext \
