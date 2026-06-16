@@ -77,6 +77,7 @@ const sidebars: SidebarsConfig = {
       items: [
         'sdks/authorizer-js/index',
         'sdks/authorizer-js/functions',
+        'sdks/authorizer-js/admin',
       ],
     },
     {
@@ -95,6 +96,7 @@ const sidebars: SidebarsConfig = {
       items: [
         'sdks/authorizer-go/index',
         'sdks/authorizer-go/example',
+        'sdks/authorizer-go/admin',
       ],
     },
     {
@@ -104,6 +106,7 @@ const sidebars: SidebarsConfig = {
         'sdks/authorizer-python/index',
         'sdks/authorizer-python/functions',
         'sdks/authorizer-python/fga',
+        'sdks/authorizer-python/admin',
       ],
     },
     {
