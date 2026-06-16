@@ -111,8 +111,11 @@ Authenticated endpoints accept the user's credentials in either of two ways — 
 the GraphQL API does:
 
 - **Bearer token** — `Authorization: Bearer <access_token>`
-- **Session cookie** — the `Set-Cookie` returned by `login`/`session` is honored on
-  subsequent calls.
+- **Session cookie** — the `Set-Cookie` headers returned by `signup`, `login`, `session`,
+  `verify_email`, and `verify_otp` are honored on subsequent calls. MFA-challenge flows
+  (`login`/`forgot_password`/`resend_otp` when OTP/TOTP is required) set a short-lived MFA
+  cookie the same way. Browser clients store and resend these automatically; the cookie
+  pair is host-scoped and domain-scoped, exactly as on the GraphQL surface.
 
 ```bash
 curl -X GET https://auth.example.com/v1/profile \
@@ -133,6 +136,14 @@ require the admin secret / admin session. See [GraphQL API](./graphql-api) for t
 Every endpoint below accepts/returns the same fields as its GraphQL counterpart. For the
 full field-by-field breakdown of each request and response, follow the linked anchor in
 the [GraphQL API reference](./graphql-api).
+
+> **Response shape — no envelope wrapper.** Each endpoint returns the bare domain object,
+> byte-identical to the GraphQL response. `signup`, `login`, `verify_email`, `verify_otp`,
+> and `session` return the `AuthResponse` fields at the top level
+> (`{ "message", "access_token", "id_token", "refresh_token", "expires_in", "user", … }`) —
+> **not** wrapped under an `auth` key. `profile` returns the `User` object directly and
+> `meta` returns the `Meta` object directly. The remaining endpoints return
+> `{ "message": "…" }` (or their documented fields).
 
 ### `POST /v1/signup`
 

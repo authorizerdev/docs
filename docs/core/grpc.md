@@ -100,8 +100,8 @@ attach the user's credential as request metadata —
 ## Protobuf schema
 
 The schema is published to the **[Buf Schema Registry](https://buf.build/authorizerdev/authorizer)**
-as the module `buf.build/authorizerdev/authorizer` (package `authorizer.v1`, with shared
-messages in `authorizer.common.v1`). You can generate a typed client for any language
+as the module `buf.build/authorizerdev/authorizer` (all messages live in a single
+`authorizer.v1` package). You can generate a typed client for any language
 without copying `.proto` files around:
 
 ```yaml
@@ -141,6 +141,13 @@ languages.
 
 Each message mirrors its GraphQL/REST counterpart — see the linked
 [GraphQL API reference](./graphql-api) anchor for field-level details.
+
+> **Response types.** Methods return the bare domain message — there is no per-RPC wrapper.
+> `Signup`, `Login`, `VerifyEmail`, `VerifyOtp`, and `Session` return `AuthResponse`;
+> `Profile` returns `User`; `Meta` returns `Meta`. This keeps the gRPC, REST, and GraphQL
+> payloads identical. Cookie-setting flows (login/signup/session/verify_\*, and the MFA
+> challenge flows) emit the session/MFA cookies as `set-cookie` response metadata, which the
+> REST gateway promotes to real `Set-Cookie` headers.
 
 ### `Meta`
 
