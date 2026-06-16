@@ -28,6 +28,7 @@ Table of Contents
 
 - [Base URL & transport](#base-url--transport)
 - [Authentication](#authentication)
+  - [Session cookies](#session-cookies)
 - [Public Endpoints](#public-api-endpoints)
   - [`POST /v1/signup`](#post-v1signup)
   - [`POST /v1/login`](#post-v1login)
@@ -100,6 +101,7 @@ Table of Contents
 | HTTP port       | `--http-port` (default `8080`)                                         |
 | Content type    | `application/json` for request and response bodies                     |
 | Field casing    | `snake_case` (proto field names), matching the GraphQL field names     |
+| Request bodies  | Flat JSON object — the RPC request message fields at the top level (no wrapper) |
 | gRPC port       | `--grpc-port` (default `9091`) — same operations over native gRPC      |
 
 So if your instance is at `https://auth.example.com`, the permission-check endpoint is
@@ -111,17 +113,60 @@ Authenticated endpoints accept the user's credentials in either of two ways — 
 the GraphQL API does:
 
 - **Bearer token** — `Authorization: Bearer <access_token>`
-- **Session cookie** — the `Set-Cookie` returned by `login`/`session` is honored on
-  subsequent calls.
+- **Session cookie** — see [Session cookies](#session-cookies) below
 
 ```bash
 curl -X GET https://auth.example.com/v1/profile \
   -H "Authorization: Bearer $ACCESS_TOKEN"
 ```
 
-Super-admin-only operations (the `_fga_*` model/tuple management mutations, env, users,
-webhooks, etc.) are **not** part of the REST surface — they remain GraphQL-only and
-require the admin secret / admin session. See [GraphQL API](./graphql-api) for those.
+Super-admin endpoints live under `/v1/admin/*` (see [Authorizer Admin API Endpoints](#authorizer-admin-api-endpoints)).
+They accept the same two mechanisms as GraphQL admin calls: `x-authorizer-admin-secret` or
+the `authorizer-admin` HTTP-only session cookie set by `POST /v1/admin/login`.
+
+### Session cookies
+
+Cookie-based auth works the same over REST as over GraphQL. On successful auth the server
+returns real `Set-Cookie` response headers (not `Grpc-Metadata-Set-Cookie`). Browser clients
+should send `credentials: 'include'` on `fetch` (or the equivalent in your HTTP client) so
+the cookie is stored and resent automatically.
+
+| Cookie name | Set by | Purpose |
+| ----------- | ------ | ------- |
+| `cookie_session`, `cookie_session_domain` | `signup`, `login`, `session`, `verify_email`, `verify_otp` | App session pair (HTTP-only; host-scoped + domain-scoped) |
+| `mfa` | `login`, `forgot_password`, `resend_otp` when MFA is required | Short-lived MFA challenge session |
+| `authorizer-admin` | `POST /v1/admin/login`, `GET /v1/admin/session` | Super-admin session |
+
+**Browser example** — login and call an authenticated endpoint with the session cookie:
+
+```javascript
+// 1. Login — browser stores Set-Cookie automatically
+await fetch('https://auth.example.com/v1/login', {
+  method: 'POST',
+  credentials: 'include',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ email: 'jane@example.com', password: 'Test@123' }),
+});
+
+// 2. Subsequent calls — cookie sent automatically
+const profile = await fetch('https://auth.example.com/v1/profile', {
+  credentials: 'include',
+});
+```
+
+**curl example** — capture cookies in a jar and reuse them:
+
+```bash
+curl -c cookies.txt -X POST https://auth.example.com/v1/login \
+  -H "Content-Type: application/json" \
+  -d '{ "email": "jane@example.com", "password": "Test@123" }'
+
+curl -b cookies.txt https://auth.example.com/v1/profile
+```
+
+Server-side REST clients that are not behind a browser should forward the `Cookie` header
+on authenticated calls, or use a bearer token from the `access_token` field in the JSON
+response body instead.
 
 > **CSRF note:** From `v2.3.0` onward, state-changing `POST` requests are rejected with
 > `403` unless they carry an `Origin` (or `Referer`) header. Browsers send this
@@ -133,6 +178,42 @@ require the admin secret / admin session. See [GraphQL API](./graphql-api) for t
 Every endpoint below accepts/returns the same fields as its GraphQL counterpart. For the
 full field-by-field breakdown of each request and response, follow the linked anchor in
 the [GraphQL API reference](./graphql-api).
+
+> **Response shape — no envelope wrapper.** Each endpoint returns the bare domain object,
+> byte-identical to the GraphQL response. `signup`, `login`, `verify_email`, `verify_otp`,
+> and `session` return the `AuthResponse` fields at the top level
+> (`{ "message", "access_token", "id_token", "refresh_token", "expires_in", "user", … }`) —
+> **not** wrapped under an `auth` key. `profile` returns the `User` object directly (not
+> under `user`) and `meta` returns the `Meta` object directly (not under `meta`). The
+> remaining endpoints return `{ "message": "…" }` (or their documented fields).
+>
+> Example — `POST /v1/login` response (flat `AuthResponse`):
+>
+> ```json
+> {
+>   "message": "Logged in successfully",
+>   "access_token": "eyJhbGciOiJIUzI1NiIs…",
+>   "expires_in": 1718534400,
+>   "id_token": "eyJhbGciOiJIUzI1NiIs…",
+>   "refresh_token": "…",
+>   "user": {
+>     "id": "…",
+>     "email": "jane@example.com",
+>     "roles": ["user"]
+>   }
+> }
+> ```
+>
+> Example — `GET /v1/profile` response (flat `User`):
+>
+> ```json
+> {
+>   "id": "…",
+>   "email": "jane@example.com",
+>   "roles": ["user"],
+>   "given_name": "Jane"
+> }
+> ```
 
 ### `POST /v1/signup`
 
@@ -317,7 +398,8 @@ All admin endpoints require super-admin authentication via the `x-authorizer-adm
 
 #### `POST /v1/admin/login`
 
-Authenticate as super-admin with the admin secret. Returns a session token.
+Authenticate as super-admin with the admin secret. Sets the `authorizer-admin` session
+cookie via `Set-Cookie` (same as GraphQL `_admin_login`).
 
 **Request body**
 
@@ -682,24 +764,28 @@ Delete the entire fine-grained authorization store (model, all versions, and all
 
 ## Errors
 
-REST errors follow the grpc-gateway convention: a non-`200` HTTP status with a JSON body
-containing a `code` and `message`.
+REST errors return a non-`200` HTTP status with a stable JSON envelope:
 
 ```json
 {
-  "code": 7,
+  "code": "failed_precondition",
   "message": "fga is not enabled on this server"
 }
 ```
 
+`code` is a snake_case gRPC status token (for example `invalid_argument`, `unauthenticated`,
+`permission_denied`, `not_found`, `method_not_allowed`). `message` is a human-readable
+description.
+
 Common cases:
 
-| Situation                                  | HTTP status        |
-| ------------------------------------------ | ------------------ |
-| Missing/invalid credentials                | `401 Unauthorized` |
-| Explicit `user` not permitted for caller   | `403 Forbidden`    |
-| FGA not enabled (`--fga-store` unset)      | `400 Bad Request`  |
-| Validation failure (e.g. `> 100` checks)   | `400 Bad Request`  |
+| Situation                                  | HTTP status        | `code` (typical)        |
+| ------------------------------------------ | ------------------ | ----------------------- |
+| Missing/invalid credentials                | `401 Unauthorized` | `unauthenticated`       |
+| Explicit `user` not permitted for caller   | `403 Forbidden`    | `permission_denied`     |
+| FGA not enabled (`--fga-store` unset)      | `400 Bad Request`  | `failed_precondition`   |
+| Validation failure (e.g. `> 100` checks)   | `400 Bad Request`  | `invalid_argument`      |
+| Wrong HTTP method (e.g. `GET` on `POST`)   | `405 Method Not Allowed` | `method_not_allowed` |
 
 ## See also
 
