@@ -28,7 +28,7 @@ Every incoming request is tracked by client IP address. Each IP is allowed a sus
 | `--rate-limit-fail-closed` | `false` | If `true`, rate-limit backend errors return **503** instead of allowing the request |
 
 ```bash
-./build/server \
+./authorizer \
   --rate-limit-rps=30 \
   --rate-limit-burst=20
 ```
@@ -38,7 +38,7 @@ Every incoming request is tracked by client IP address. Each IP is allowed a sus
 For high-traffic deployments, increase the limits:
 
 ```bash
-./build/server \
+./authorizer \
   --rate-limit-rps=50 \
   --rate-limit-burst=100
 ```
@@ -46,7 +46,7 @@ For high-traffic deployments, increase the limits:
 For stricter protection (e.g., a small internal deployment):
 
 ```bash
-./build/server \
+./authorizer \
   --rate-limit-rps=5 \
   --rate-limit-burst=10
 ```
@@ -56,7 +56,7 @@ For stricter protection (e.g., a small internal deployment):
 If your infrastructure already provides rate limiting (e.g., API gateway, CDN, or load balancer), you can disable it:
 
 ```bash
-./build/server \
+./authorizer \
   --rate-limit-rps=0
 ```
 
@@ -116,7 +116,7 @@ The `Retry-After: 1` header tells clients to wait at least 1 second before retry
 For deployments with multiple Authorizer replicas, configure Redis to ensure rate limits are shared:
 
 ```bash
-./build/server \
+./authorizer \
   --redis-url=redis://user:pass@redis-host:6379/0 \
   --rate-limit-rps=30 \
   --rate-limit-burst=20
@@ -129,7 +129,7 @@ When `--redis-url` is set, Authorizer automatically uses Redis for both session 
 Redis Cluster is also supported. Provide multiple URLs:
 
 ```bash
-./build/server \
+./authorizer \
   --redis-url="redis://node1:6379,node2:6380,node3:6381"
 ```
 

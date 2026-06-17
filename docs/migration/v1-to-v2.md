@@ -87,7 +87,7 @@ export DATABASE_TYPE=sqlite
 export DATABASE_URL=data.db
 export CLIENT_ID=...
 export CLIENT_SECRET=...
-./build/server
+./authorizer
 ```
 
 Or configure via dashboard after first run.
@@ -97,7 +97,7 @@ Or configure via dashboard after first run.
 Pass all config as **CLI arguments** when starting the server:
 
 ```bash
-./build/server \
+./authorizer \
   --database-type=sqlite \
   --database-url=data.db \
   --client-id=YOUR_CLIENT_ID \
@@ -125,7 +125,7 @@ To keep using env vars in your deployment:
 - **Option A:** Set env vars in your platform (Docker, K8s, Railway, etc.) and pass them into the process as arguments via a wrapper script or `envsubst`:
 
   ```bash
-  ./build/server \
+  ./authorizer \
     --database-type="$DATABASE_TYPE" \
     --database-url="$DATABASE_URL" \
     --client-id="$CLIENT_ID" \
@@ -144,7 +144,7 @@ docker run -p 8080:8080 \
   -e CLIENT_ID=... \
   -e CLIENT_SECRET=... \
   your-authorizer-image \
-  ./build/server \
+  ./authorizer \
     --database-type="$DATABASE_TYPE" \
     --database-url="$DATABASE_URL" \
     --client-id="$CLIENT_ID" \
@@ -344,7 +344,7 @@ The following flags are **new in v2** and help harden your deployment:
 To see all flags and defaults:
 
 ```bash
-./build/server --help
+./authorizer --help
 ```
 
 ### Breaking changes — April 2026 security batch
@@ -370,7 +370,7 @@ restarting. The strength of the secret is your responsibility — the
 server only enforces non-emptiness.
 
 ```bash
-./build/server --admin-secret="$(openssl rand -hex 32)" ...
+./authorizer --admin-secret="$(openssl rand -hex 32)" ...
 ```
 
 #### `--trusted-proxies` defaults to none
@@ -393,13 +393,13 @@ its first burst:
 
 ```bash
 # Behind nginx on the same host
-./build/server --trusted-proxies=127.0.0.1/32,::1/128 ...
+./authorizer --trusted-proxies=127.0.0.1/32,::1/128 ...
 
 # Inside a Kubernetes cluster
-./build/server --trusted-proxies=10.0.0.0/8 ...
+./authorizer --trusted-proxies=10.0.0.0/8 ...
 
 # Behind Cloudflare
-./build/server --trusted-proxies=$(cat cloudflare-ips.txt | paste -sd, -) ...
+./authorizer --trusted-proxies=$(cat cloudflare-ips.txt | paste -sd, -) ...
 ```
 
 See the new [Security Hardening](../core/security#trusted-proxies) page
@@ -537,7 +537,7 @@ If your app or dashboard calls `_update_env`, `_admin_signup`, or `_generate_jwt
 Example:
 
 ```dockerfile
-ENTRYPOINT [ "./build/server" ]
+ENTRYPOINT [ "./authorizer" ]
 CMD []
 ```
 
@@ -552,7 +552,7 @@ docker run -p 8080:8080 your-image \
   --admin-secret=...
 ```
 
-Or use a script inside the image that maps env to flags and then runs `./build/server ...`.
+Or use a script inside the image that maps env to flags and then runs `./authorizer ...`.
 
 ---
 

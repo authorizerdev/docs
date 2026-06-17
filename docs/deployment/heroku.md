@@ -52,7 +52,7 @@ Use `REDIS_URL` for shared sessions and rate limits across dynos ([rate limiting
 Update the Procfile or startup command to pass CLI flags:
 
 ```
-web: ./build/server --database-type=$DATABASE_TYPE --database-url=$DATABASE_URL --jwt-type=$JWT_TYPE --jwt-secret=$JWT_SECRET --admin-secret=$ADMIN_SECRET --client-id=$CLIENT_ID --client-secret=$CLIENT_SECRET
+web: ./authorizer --database-type=$DATABASE_TYPE --database-url=$DATABASE_URL --jwt-type=$JWT_TYPE --jwt-secret=$JWT_SECRET --admin-secret=$ADMIN_SECRET --client-id=$CLIENT_ID --client-secret=$CLIENT_SECRET
 ```
 
 ---

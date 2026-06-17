@@ -135,7 +135,7 @@ Authorizer supports two session stores:
 Example with Redis:
 
 ```bash
-./build/server \
+./authorizer \
   --database-type=sqlite \
   --database-url=test.db \
   --jwt-type=HS256 \

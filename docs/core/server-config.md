@@ -15,7 +15,7 @@ If you are migrating from v1, first skim the high-level [Migration v1 to v2](../
 ## 1. Core flags
 
 ```bash
-./build/server \
+./authorizer \
   --env=production \
   --http-port=8080 \
   --host=0.0.0.0 \
@@ -38,7 +38,7 @@ If you are migrating from v1, first skim the high-level [Migration v1 to v2](../
 ### Database
 
 ```bash
-./build/server \
+./authorizer \
   --database-type=postgres \
   --database-url="postgres://user:pass@host/db" \
   --database-name=authorizer \
@@ -55,7 +55,7 @@ Key flags:
 ### Session / cache
 
 ```bash
-./build/server \
+./authorizer \
   --redis-url=redis://user:pass@redis-host:6379/0
 ```
 
@@ -69,7 +69,7 @@ Key flags:
 These flags replace v1 env such as `CLIENT_ID`, `CLIENT_SECRET`, and app behavior toggles.
 
 ```bash
-./build/server \
+./authorizer \
   --client-id=YOUR_CLIENT_ID \
   --client-secret=YOUR_CLIENT_SECRET \
   --admin-secret=your-admin-secret \
@@ -96,7 +96,7 @@ These flags replace v1 env such as `CLIENT_ID`, `CLIENT_SECRET`, and app behavio
 Organization / UI:
 
 ```bash
-./build/server \
+./authorizer \
   --organization-name="Your Company" \
   --organization-logo="https://your-cdn/logo.png" \
   --enable-login-page=true \
@@ -115,7 +115,7 @@ Organization / UI:
 ### Roles and auth flows
 
 ```bash
-./build/server \
+./authorizer \
   --roles=user,admin \
   --default-roles=user \
   --protected-roles=admin \
@@ -135,7 +135,7 @@ See the [Auth behavior mapping](../migration/v1-to-v2#auth-behavior) for exact c
 ### Cookies
 
 ```bash
-./build/server \
+./authorizer \
   --app-cookie-secure=true \
   --admin-cookie-secure=true
 ```
@@ -147,7 +147,7 @@ Use `true` for HTTPS-only cookies in production.
 ## 5. JWT configuration
 
 ```bash
-./build/server \
+./authorizer \
   --jwt-type=HS256 \
   --jwt-secret=your-jwt-secret \
   --jwt-role-claim=role
@@ -156,7 +156,7 @@ Use `true` for HTTPS-only cookies in production.
 Or for asymmetric keys:
 
 ```bash
-./build/server \
+./authorizer \
   --jwt-type=RS256 \
   --jwt-private-key="$(cat /path/to/private.key)" \
   --jwt-public-key="$(cat /path/to/public.key)"
@@ -182,7 +182,7 @@ In v2, the `_generate_jwt_keys` mutation is deprecated and returns an error; con
 ### SMTP
 
 ```bash
-./build/server \
+./authorizer \
   --smtp-host=smtp.mailprovider.com \
   --smtp-port=587 \
   --smtp-username=user@example.com \
@@ -196,7 +196,7 @@ In v2, the `_generate_jwt_keys` mutation is deprecated and returns an error; con
 ### Twilio (SMS OTP)
 
 ```bash
-./build/server \
+./authorizer \
   --twilio-account-sid=AC... \
   --twilio-api-key=... \
   --twilio-api-secret=... \
@@ -210,7 +210,7 @@ In v2, the `_generate_jwt_keys` mutation is deprecated and returns an error; con
 Each provider uses its own set of flags:
 
 ```bash
-./build/server \
+./authorizer \
   --google-client-id=... \
   --google-client-secret=... \
   --google-scopes="openid,email,profile" \
@@ -235,7 +235,7 @@ Other supported providers follow the same pattern:
 ## 8. Rate limiting
 
 ```bash
-./build/server \
+./authorizer \
   --rate-limit-rps=30 \
   --rate-limit-burst=20 \
   --rate-limit-fail-closed=false
@@ -254,7 +254,7 @@ Rate limiting is always enabled by default. When `--redis-url` is set, limits ar
 New in v2:
 
 ```bash
-./build/server \
+./authorizer \
   --disable-admin-header-auth=true \
   --enable-graphql-introspection=false \
   --graphql-max-complexity=300 \
@@ -279,7 +279,7 @@ metric, labelled by limit kind. See
 ### Authorization (FGA)
 
 ```bash
-./build/server \
+./authorizer \
   --fga-store=postgres \
   --fga-store-url="postgres://user:pass@host/db" \
   --include-permissions-in-token=false \
@@ -298,7 +298,7 @@ Authorizer ships an embedded **OpenFGA** (ReBAC) engine. It is enabled by defaul
 ## 9. Security headers
 
 ```bash
-./build/server \
+./authorizer \
   --enable-hsts=true \
   --disable-csp=false
 ```
@@ -329,7 +329,7 @@ See the dedicated [Security Hardening](./security) page for:
 To list all available flags and their defaults, run:
 
 ```bash
-./build/server --help
+./authorizer --help
 ```
 
 For a v1 to v2 mapping table, see [Configuration Mapping](../migration/v1-to-v2#3-configuration-mapping-v1-env--v1-behavior-to-v2-cli-flags).

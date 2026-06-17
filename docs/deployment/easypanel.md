@@ -22,7 +22,7 @@ EasyPanel provides a template for deploying Authorizer. Deploy using the templat
 After deployment, update the start command to include the required v2 CLI flags:
 
 ```bash
-./build/server \
+./authorizer \
   --database-type=sqlite \
   --database-url=test.db \
   --jwt-type=HS256 \

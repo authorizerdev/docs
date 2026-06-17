@@ -47,7 +47,7 @@ Authorizer v2 focuses on simpler, more secure configuration and a cleaner operat
 ### Quick Start
 
 ```bash
-./build/server \
+./authorizer \
   --database-type=sqlite \
   --database-url=test.db \
   --jwt-type=HS256 \
@@ -96,17 +96,17 @@ See [Databases](./core/databases) for connection string formats.
 
 ### Frontend SDKs
 
-- [JavaScript / TypeScript](https://github.com/authorizerdev/authorizer-js) (v3 for Authorizer v2)
-- [React](https://github.com/authorizerdev/authorizer-react) (v2 for Authorizer v2)
+- [JavaScript / TypeScript](https://github.com/authorizerdev/authorizer-js) — v3.2.1; user + admin client; GraphQL + REST protocols
+- [React](https://github.com/authorizerdev/authorizer-react) — v2.1.0; `protocol` prop; pre-built login/signup/MFA components
 - [Vue](https://github.com/authorizerdev/authorizer-vue)
 - [Svelte](https://github.com/authorizerdev/authorizer-svelte)
-- [Flutter](https://github.com/nickolasgomez/authorizer-flutter-sdk)
+- [Flutter](https://github.com/nickolasgomez/authorizer-flutter-sdk) (community)
 
 ### Backend SDKs
 
-- [Golang](https://github.com/authorizerdev/authorizer-go)
-- [Python](https://github.com/authorizerdev/authorizer-python) (`pip install authorizer-py`)
-- [Node.js](https://github.com/authorizerdev/authorizer-js) (same package, works server-side)
+- [Go](https://github.com/authorizerdev/authorizer-go) — user + admin client; protocol selection (gRPC / REST / GraphQL); FGA helpers
+- [Python](https://github.com/authorizerdev/authorizer-python) — v0.2.0; sync + async; admin API (`pip install authorizer-py`)
+- [Node.js](https://github.com/authorizerdev/authorizer-js) — same package as the frontend SDK, works server-side
 
 See the [SDK reference](./sdks/authorizer-js) for usage docs.
 
@@ -121,3 +121,4 @@ See the [SDK reference](./sdks/authorizer-js) for usage docs.
 - WordPress plugin
 - AMI / Digital Ocean Droplet
 - Azure deployment
+- Vue / Svelte admin client and protocol parity with authorizer-js

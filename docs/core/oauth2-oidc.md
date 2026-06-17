@@ -42,7 +42,7 @@ This is the most common setup — an app delegates authentication to Authorizer 
 Before any client can use Authorizer for SSO, you need to tell the server which origins and redirect URIs are allowed.
 
 ```bash
-./build/server \
+./authorizer \
   --client-id=my-app \
   --client-secret="$(openssl rand -hex 32)" \
   --allowed-origins=https://app.example.com,http://localhost:3000 \
@@ -313,7 +313,7 @@ Auth0 calls third-party OIDC identity providers **Enterprise Connections**.
 1. **Register Auth0 as an Authorizer client.** In your Authorizer instance, set the `--client-id` and `--client-secret` that Auth0 will use, and include Auth0's callback URL in `--allowed-origins`:
 
    ```bash
-   ./build/server \
+   ./authorizer \
      --client-id=auth0-upstream \
      --client-secret="$(openssl rand -hex 32)" \
      --allowed-origins=https://YOUR_TENANT.auth0.com

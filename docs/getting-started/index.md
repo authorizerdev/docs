@@ -42,9 +42,9 @@ All examples below use these required variables. Replace with your own values fo
 git clone https://github.com/authorizerdev/authorizer.git
 cd authorizer
 
-go build -o build/server .
+go build -o build/authorizer .
 
-./build/server \
+./authorizer \
   --database-type=sqlite \
   --database-url=test.db \
   --jwt-type=HS256 \
@@ -111,7 +111,7 @@ tar -zxf AUTHORIZER_VERSION -c authorizer
 cd authorizer
 
 # Run with required flags
-./build/server \
+./authorizer \
   --database-type=sqlite \
   --database-url=test.db \
   --jwt-type=HS256 \
@@ -121,7 +121,7 @@ cd authorizer
   --client-secret=secret
 ```
 
-> For Mac users, grant permission: `xattr -d com.apple.quarantine build/server`
+> For Mac users, grant permission: `xattr -d com.apple.quarantine build/authorizer`
 
 See [Binary deployment](../deployment/binary) for systemd service setup.
 
@@ -164,7 +164,7 @@ After starting the server, open:
 For a quick local dev setup:
 
 ```bash
-./build/server \
+./authorizer \
   --env=development \
   --http-port=8080 \
   --database-type=sqlite \

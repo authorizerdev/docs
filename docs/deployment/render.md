@@ -58,7 +58,7 @@ See [Metrics & monitoring](../core/metrics-monitoring) and [Rate limiting](../co
 Update the start command to pass CLI flags:
 
 ```bash
-./build/server \
+./authorizer \
   --database-type=$DATABASE_TYPE \
   --database-url=$DATABASE_URL \
   --jwt-type=$JWT_TYPE \
