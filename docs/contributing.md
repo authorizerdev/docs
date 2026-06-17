@@ -49,7 +49,7 @@ Please ask as many questions as you need, either directly in the issue or on [Di
    > Note: if you don't have [`make`](https://www.ibm.com/docs/en/aix/7.2?topic=concepts-make-command), you can `cd` into `server` dir and build using the `go build` command
 5. Run binary with required flags:
    ```bash
-   ./build/server \
+   ./authorizer \
      --database-type=sqlite \
      --database-url=test.db \
      --jwt-type=HS256 \

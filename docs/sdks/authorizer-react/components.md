@@ -27,11 +27,16 @@ title: Components
 
 - `config`: Object to configure the `authorizer` backend URL and redirect URL. It accepts JSON object with following keys
 
-| Key                     | Type       | Description                                                                                                                | Required |
-| ----------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------- | -------- |
-| `authorizerURL`         | `string`   | Authorizer backend URL                                                                                                     | `true`   |
-| `redirectURL`           | `string`   | Frontend application URL or the page where you want to redirect user post login. Default value is `window.location.origin` | `true`   |
-| `onStateChangeCallback` | `function` | [optional] Async callback that is called whenever context state information changes.                                       | `false`  |
+| Key                     | Type                              | Description                                                                                                                          | Required |
+| ----------------------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | -------- |
+| `authorizerURL`         | `string`                          | Authorizer backend URL                                                                                                               | `true`   |
+| `redirectURL`           | `string`                          | Frontend application URL or the page where you want to redirect user post login. Default value is `window.location.origin`           | `true`   |
+| `clientID`              | `string`                          | Your client identifier (the value of `--client-id` flag used when starting the server)                                              | `false`  |
+| `protocol`              | `'graphql' \| 'rest'`             | Wire transport for API calls. Default is `'graphql'`. Use `'rest'` to route calls through the typed REST endpoints instead.          | `false`  |
+| `extraHeaders`          | `Record<string, string>`          | Optional headers added to every SDK request (e.g. `{ 'Origin': 'https://your-app.com' }`)                                           | `false`  |
+| `onStateChangeCallback` | `function`                        | Async callback that is called whenever context state information changes.                                                            | `false`  |
+
+> **Note:** `'grpc'` is not supported in `authorizer-react` because browsers cannot speak raw gRPC. Use `'graphql'` (default) or `'rest'`.
 
 ### Sample Usage
 
@@ -44,10 +49,12 @@ const App = () => {
       config={{
         authorizerURL: 'http://localhost:8080',
         redirectURL: window.location.origin,
+        clientID: 'YOUR_CLIENT_ID',
+        protocol: 'graphql', // or 'rest'
       }}
       onStateChangeCallback={async (newState) => {}}
     >
-      // REST of the components goes here.
+      {/* rest of your components */}
     </AuthorizerProvider>
   )
 }

@@ -67,7 +67,7 @@ image = "quay.io/authorizer/authorizer:latest"
 
 [experimental]
 cmd = [
-  "./build/server",
+  "./authorizer",
   "--database-type=postgres",
   "--database-url=postgres://user:pass@localhost:5432/authorizer",
   "--jwt-type=HS256",

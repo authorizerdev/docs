@@ -23,7 +23,7 @@ batch, you must address these two items before restarting:
    of the secret is your responsibility.
 
    ```bash
-   ./build/server --admin-secret="$(openssl rand -hex 32)" ...
+   ./authorizer --admin-secret="$(openssl rand -hex 32)" ...
    ```
 
 2. **`--trusted-proxies` defaults to none.** Rate limiting, audit logs,
@@ -35,7 +35,7 @@ batch, you must address these two items before restarting:
    real client IP.
 
    ```bash
-   ./build/server \
+   ./authorizer \
      --trusted-proxies=10.0.0.0/8,127.0.0.1/32 \
      ...
    ```
@@ -49,7 +49,7 @@ Everything else in this document is opt-in or already on by default.
 ## Admin authentication
 
 ```bash
-./build/server \
+./authorizer \
   --admin-secret="$(openssl rand -hex 32)" \
   --disable-admin-header-auth=true
 ```
@@ -68,7 +68,7 @@ Everything else in this document is opt-in or already on by default.
 ## Refresh tokens
 
 ```bash
-./build/server --refresh-token-expires-in=2592000
+./authorizer --refresh-token-expires-in=2592000
 ```
 
 - **`--refresh-token-expires-in`** (default `2592000`, 30 days): refresh
@@ -81,7 +81,7 @@ Everything else in this document is opt-in or already on by default.
 ## Trusted proxies
 
 ```bash
-./build/server --trusted-proxies=10.0.0.0/8,127.0.0.1/32
+./authorizer --trusted-proxies=10.0.0.0/8,127.0.0.1/32
 ```
 
 - **`--trusted-proxies`** (default empty, comma-separated CIDRs): list of
@@ -119,7 +119,7 @@ proxy you **must** set this flag, otherwise:
 ### CORS
 
 ```bash
-./build/server --allowed-origins=https://app.example.com,https://admin.example.com
+./authorizer --allowed-origins=https://app.example.com,https://admin.example.com
 ```
 
 - **`--allowed-origins`** (default `*`): comma-separated list of origins
@@ -178,7 +178,7 @@ configurable.
 ## Security response headers
 
 ```bash
-./build/server \
+./authorizer \
   --enable-hsts=true \
   --disable-csp=false
 ```
@@ -342,7 +342,7 @@ failed to decrypt stored TOTP secret; check that --jwt-secret has not changed si
 ## GraphQL hardening
 
 ```bash
-./build/server \
+./authorizer \
   --graphql-max-complexity=300 \
   --graphql-max-depth=15 \
   --graphql-max-aliases=30 \

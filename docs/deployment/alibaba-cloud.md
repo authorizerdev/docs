@@ -26,7 +26,7 @@ An [Alibaba Cloud account](https://www.alibabacloud.com/).
 After deployment, configure the required v2 variables in your instance:
 
 ```bash
-./build/server \
+./authorizer \
   --database-type=sqlite \
   --database-url=test.db \
   --jwt-type=HS256 \

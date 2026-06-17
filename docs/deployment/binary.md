@@ -23,13 +23,13 @@ You can either:
 git clone https://github.com/authorizerdev/authorizer.git
 cd authorizer
 
-go build -o build/server .
+go build -o build/authorizer .
 ```
 
 After extraction or build, you should have:
 
 ```bash
-./build/server
+./authorizer
 ```
 
 ---
@@ -45,7 +45,7 @@ At minimum, Authorizer v2 needs:
 Example for SQLite:
 
 ```bash
-./build/server \
+./authorizer \
   --env=production \
   --http-port=8080 \
   --database-type=sqlite \
@@ -77,7 +77,7 @@ Description=Authorizer v2
 Type=simple
 Restart=always
 RestartSec=5
-ExecStart=/path_to_authorizer_parent_folder/authorizer/build/server \
+ExecStart=/path_to_authorizer_parent_folder/authorizer/build/authorizer \
   --env=production \
   --http-port=8080 \
   --database-type=postgres \

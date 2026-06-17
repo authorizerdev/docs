@@ -31,7 +31,7 @@ For more information check [docs](https://docs.authorizer.dev/getting-started/)
 Start your Authorizer instance with the required CLI flags:
 
 ```bash
-./build/server \
+./authorizer \
   --database-type=sqlite \
   --database-url=test.db \
   --jwt-type=HS256 \

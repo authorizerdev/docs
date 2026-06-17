@@ -192,4 +192,4 @@ You no longer update server config via `_update_env` or dashboard; those are dep
 For a full list of available flags, see:
 
 - [Server Configuration (v2)](../core/server-config)
-- `./build/server --help` in the container image
+- `./authorizer --help` in the container image

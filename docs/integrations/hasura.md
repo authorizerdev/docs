@@ -28,7 +28,7 @@ You can also deploy Authorizer instance using
 
 > **Note:** If you are trying out with one click deployment options like railway then template is configured in a way that it will also deploy postgres + redis for you. For other deployment options, start the server with the required CLI flags:
 > ```bash
-> ./build/server --database-type=sqlite --database-url=test.db --jwt-type=HS256 --jwt-secret=test --admin-secret=admin --client-id=123456 --client-secret=secret
+> ./authorizer --database-type=sqlite --database-url=test.db --jwt-type=HS256 --jwt-secret=test --admin-secret=admin --client-id=123456 --client-secret=secret
 > ```
 > You can also configure `--redis-url` to have persisted sessions. For more information check [Server Configuration](/core/server-config).
 
@@ -39,7 +39,7 @@ In case of Hasura, we need to have database type as `postgres` / `mysql` or the 
 Configure your Authorizer instance using CLI flags at startup. In v2, all configuration is passed via CLI flags (no dashboard-based env configuration). For example:
 
 ```bash
-./build/server \
+./authorizer \
   --database-type=postgres \
   --database-url="postgres://user:pass@host:5432/authorizer" \
   --jwt-type=HS256 \

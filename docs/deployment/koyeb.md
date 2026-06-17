@@ -52,7 +52,7 @@ Add the following environment variables:
 Update the start command to pass CLI flags:
 
 ```bash
-./build/server \
+./authorizer \
   --database-type=$DATABASE_TYPE \
   --database-url=$DATABASE_URL \
   --jwt-type=$JWT_TYPE \

@@ -54,7 +54,7 @@ Set `REDIS_URL` when you use multiple instances so sessions and rate limits stay
 Update the start command to pass CLI flags:
 
 ```bash
-./build/server \
+./authorizer \
   --database-type=$DATABASE_TYPE \
   --database-url=$DATABASE_URL \
   --jwt-type=$JWT_TYPE \
