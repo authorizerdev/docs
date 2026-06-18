@@ -15,7 +15,7 @@ Deploy production ready Authorizer instance using one click deployment options a
 
 | **Infra provider** | **One-click link** | **Additional information** |
 | :----------------: | :----------------: | :------------------------: |
-| Railway.app | [![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template/nwXp1C?referralCode=FEF4uT) | [docs](https://docs.authorizer.dev/deployment/railway) |
+| Railway.app | [![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/authorizer-1?referralCode=FEF4uT&utm_medium=integration&utm_source=template&utm_campaign=generic) | [docs](https://docs.authorizer.dev/deployment/railway) |
 | Heroku | [![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/authorizerdev/authorizer-heroku) | [docs](https://docs.authorizer.dev/deployment/heroku) |
 | Render | [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/authorizerdev/authorizer-render) | [docs](https://docs.authorizer.dev/deployment/render) |
 | Koyeb | [![Deploy to Koyeb](https://www.koyeb.com/static/images/deploy/button.svg)](https://app.koyeb.com/deploy?name=authorizer&type=docker&image=docker.io/lakhansamani/authorizer&env[PORT]=8000&env[DATABASE_TYPE]=postgres&env[DATABASE_URL]=CHANGE_ME&ports=8000;http;/) | [docs](https://docs.authorizer.dev/deployment/koyeb) |

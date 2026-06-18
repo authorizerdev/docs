@@ -23,7 +23,7 @@ Deploy production ready Authorizer instance using [railway.app](https://github.c
 
 Click the button below to deploy an Authorizer instance to Railway quickly.
 
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template/nwXp1C?referralCode=FEF4uT)
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/authorizer-1?referralCode=FEF4uT&utm_medium=integration&utm_source=template&utm_campaign=generic)
 
 Follow the below steps after clicking the button:
 

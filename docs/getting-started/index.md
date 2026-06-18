@@ -141,7 +141,7 @@ See [Kubernetes deployment](../deployment/kubernetes) for full manifests and [He
 
 | Platform | Deploy Link |
 | -------- | ----------- |
-| Railway | [Deploy on Railway](https://railway.app/new/template/nwXp1C?referralCode=FEF4uT) |
+| Railway | [Deploy on Railway](https://railway.com/deploy/authorizer-1?referralCode=FEF4uT&utm_medium=integration&utm_source=template&utm_campaign=generic) |
 | Heroku | [Deploy to Heroku](https://heroku.com/deploy?template=https://github.com/authorizerdev/authorizer-heroku) |
 | Render | [Deploy to Render](https://render.com/deploy?repo=https://github.com/authorizerdev/authorizer-render) |
 | Koyeb | [Deploy to Koyeb](https://app.koyeb.com/deploy?name=authorizer&type=docker&image=quay.io/authorizer/authorizer&env[PORT]=8000&env[DATABASE_TYPE]=postgres&env[DATABASE_URL]=CHANGE_ME&ports=8000;http;/) |

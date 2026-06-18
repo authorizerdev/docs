@@ -17,7 +17,7 @@ A [Railway account](https://railway.app/).
 
 Deploy a production-ready Authorizer instance with PostgreSQL and Redis:
 
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template/nwXp1C?referralCode=FEF4uT)
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/authorizer-1?referralCode=FEF4uT&utm_medium=integration&utm_source=template&utm_campaign=generic)
 
 Before getting started, make sure you have given permission to Railway for further deployments as it will create a repository in your GitHub account.
 

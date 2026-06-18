@@ -22,7 +22,7 @@ Deploy a production-ready Authorizer instance using one of the one-click options
 
 | **Infra provider** | **One-click link** | **Additional information** |
 | :----------------: | :-----------------: | :----------------------------------------------------: |
-| Railway.app | [Deploy on Railway](https://railway.app/new/template/nwXp1C?referralCode=FEF4uT) | [docs](https://docs.authorizer.dev/deployment/railway) |
+| Railway.app | [Deploy on Railway](https://railway.com/deploy/authorizer-1?referralCode=FEF4uT&utm_medium=integration&utm_source=template&utm_campaign=generic) | [docs](https://docs.authorizer.dev/deployment/railway) |
 | Heroku | [Deploy to Heroku](https://heroku.com/deploy?template=https://github.com/authorizerdev/authorizer-heroku) | [docs](https://docs.authorizer.dev/deployment/heroku) |
 | Render | [Deploy to Render](https://render.com/deploy?repo=https://github.com/authorizerdev/authorizer-render) | [docs](https://docs.authorizer.dev/deployment/render) |
 
