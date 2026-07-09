@@ -27,10 +27,23 @@ const sidebars: SidebarsConfig = {
         'core/grpc',
         'core/mcp',
         'core/oauth2-oidc',
+        'core/client-registry',
         'core/sso-guide',
         'core/email',
         'core/rate-limiting',
         'core/metrics-monitoring',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Enterprise',
+      items: [
+        'enterprise/organizations',
+        'enterprise/org-sso-oidc',
+        'enterprise/org-saml',
+        'enterprise/scim',
+        'enterprise/token-exchange',
+        'enterprise/workload-identity',
       ],
     },
     {

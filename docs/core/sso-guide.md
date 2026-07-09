@@ -295,28 +295,49 @@ For detailed endpoint documentation, see the [OAuth 2.0 & OIDC reference](/core/
 
 ---
 
+## Enterprise & Workload Identity Features
+
+Several capabilities that used to live on this page's roadmap have shipped. Each has its own reference page:
+
+### Client Registry (Multiple Clients)
+
+Authorizer maintains a client registry: admins can register additional clients — machine service accounts with their own `client_id`, one-time-revealed `client_secret`, and a per-client scope allow-list — alongside the reserved interactive client. Service accounts authenticate via the OAuth2 `client_credentials` grant. See the [Client Registry guide](./client-registry).
+
+> Programmatic *self-service* registration (RFC 7591 Dynamic Client Registration) is still on the roadmap — today clients are registered by an admin via the admin API or dashboard.
+
+### Organizations
+
+Model tenants as organizations with per-org members and per-org roles, and attach per-org SSO and SCIM connections to them. See [Organizations](../enterprise/organizations).
+
+### Per-Organization SAML 2.0 SSO (SP)
+
+Authorizer acts as a SAML 2.0 Service Provider per organization: register a corporate IdP's entity ID, SSO URL, and signing certificate, and that org's users log in through their IdP with JIT provisioning. See [SAML SSO](../enterprise/org-saml).
+
+### Per-Organization OIDC SSO (Broker)
+
+The OIDC sibling of the SAML SP: Authorizer brokers a per-org upstream OIDC IdP (Okta, Entra ID, Google Workspace) as a Relying Party. See [OIDC SSO](../enterprise/org-sso-oidc).
+
+### SCIM 2.0 Provisioning (RFC 7644)
+
+Per-org inbound SCIM 2.0 endpoints let enterprise directories (Okta, Microsoft Entra ID, OneLogin) provision and deprovision users automatically. Deactivation synchronously revokes sessions and refresh tokens. See [SCIM Provisioning](../enterprise/scim).
+
+### Workload Identity & Delegation
+
+Machines can authenticate without stored secrets (Kubernetes ServiceAccount tokens, SPIFFE JWT-SVIDs — see [Workload Identity](../enterprise/workload-identity)), and agents can act on behalf of users with attenuated, audience-bound tokens via RFC 8693 token exchange (see [Token Exchange](../enterprise/token-exchange)).
+
+---
+
 ## Future Roadmap
 
-The following capabilities are planned for future releases to make Authorizer an even more complete enterprise SSO platform:
+Still planned for future releases:
 
 ### Dynamic Client Registration (RFC 7591)
 
-Today, all apps share the same `client_id` and `client_secret` per Authorizer instance. Dynamic client registration will allow each app to register its own credentials programmatically, enabling:
-- Per-app client credentials with independent secrets
-- Granular per-app token lifetimes and scopes
-- Self-service app onboarding without server restarts
-
-### SAML 2.0 Support
-
-SAML remains widely used in enterprise environments, especially for legacy apps and SaaS tools that don't support OIDC. Adding SAML IdP capabilities will let Authorizer federate with SAML-only service providers.
+Self-service programmatic client registration (the `registration_endpoint`). Today, new clients are created by an admin through the [client registry](./client-registry) admin API.
 
 ### LDAP / Active Directory Integration
 
 Direct LDAP/AD integration will allow Authorizer to authenticate users against existing corporate directories without requiring federation through Azure AD or Google Workspace.
-
-### Multi-Tenant Support
-
-True multi-tenancy with tenant-level data isolation, per-tenant branding, and per-tenant configuration. This will enable SaaS providers to use a single Authorizer deployment for all their customers.
 
 ### Front-Channel Logout (OIDC)
 
@@ -324,11 +345,7 @@ In addition to the already-supported backchannel logout, front-channel logout wi
 
 ### Automated JWKS Key Rotation
 
-Time-based automatic rotation of JWT signing keys with configurable rotation periods, eliminating the need for manual key rotation.
-
-### SCIM Provisioning (RFC 7644)
-
-System for Cross-domain Identity Management will enable automatic user provisioning and deprovisioning from enterprise directories (Azure AD, Okta, OneLogin) into Authorizer.
+Time-based automatic rotation of JWT signing keys with configurable rotation periods, eliminating the need for manual key rotation. (Zero-downtime *manual* rotation via secondary keys is already supported — see the [OAuth 2.0 & OIDC reference](/core/oauth2-oidc).)
 
 ---
 
@@ -339,10 +356,16 @@ Authorizer gives you a **self-hosted, single-binary SSO server** that speaks sta
 | What You Get Today | What's Coming |
 |---|---|
 | Full OIDC IdP with discovery | Dynamic client registration (RFC 7591) |
-| 10+ social login providers | SAML 2.0 IdP |
-| MFA (TOTP, email OTP, SMS OTP) | LDAP/AD integration |
-| RBAC with JWT claims | Multi-tenant support |
-| Backchannel logout | Front-channel logout |
-| Token introspection & revocation | Automated JWKS rotation |
-| 13+ database backends | SCIM provisioning |
+| 10+ social login providers | LDAP/AD integration |
+| MFA (TOTP, email OTP, SMS OTP) | Front-channel logout |
+| RBAC with JWT claims | Automated JWKS rotation |
+| Backchannel logout | |
+| Token introspection & revocation | |
+| 13+ database backends | |
 | Custom access token scripts | |
+| [Client registry](./client-registry) + `client_credentials` grant | |
+| [Organizations](../enterprise/organizations) with per-org members & roles | |
+| [Per-org SAML 2.0 SP](../enterprise/org-saml) & [OIDC broker SSO](../enterprise/org-sso-oidc) | |
+| [SCIM 2.0 provisioning](../enterprise/scim) | |
+| [Workload identity](../enterprise/workload-identity) (K8s, SPIFFE) | |
+| [RFC 8693 token exchange](../enterprise/token-exchange) (delegation) | |
