@@ -22,12 +22,15 @@ This page is the one-stop reference for every endpoint, parameter, and integrati
 | OIDC Hybrid Flow (§3.3)               | Implemented   | `code id_token`, `code token`, `code id_token token`, `id_token token` |
 | OIDC RP-Initiated Logout 1.0          | Implemented   | `post_logout_redirect_uri`, `state` echo, `id_token_hint`          |
 | OIDC Back-Channel Logout 1.0          | Implemented   | Opt-in via `--backchannel-logout-uri`                              |
-| RFC 6749 (OAuth 2.0)                  | Implemented   | Authorization Code + Refresh Token + Implicit grants               |
+| RFC 6749 (OAuth 2.0)                  | Implemented   | Authorization Code + Refresh Token + Implicit + Client Credentials grants |
 | RFC 6750 (Bearer Token)               | Implemented   | `WWW-Authenticate` on 401                                          |
 | RFC 7009 (Token Revocation)           | Implemented   | Returns 200 for invalid tokens                                     |
 | RFC 7517 (JWK)                        | Implemented   | RSA, ECDSA, HMAC; manual multi-key rotation                        |
+| RFC 7523 (JWT client assertions)      | Implemented   | `private_key_jwt` via [trusted issuers](../enterprise/workload-identity) — K8s SA tokens, SPIFFE JWT-SVIDs |
 | RFC 7636 (PKCE)                       | Implemented   | `S256` and `plain` methods; defaults to `plain` when the method is omitted (§4.2) |
 | RFC 7662 (Token Introspection)        | Implemented   | Non-disclosure for inactive tokens                                 |
+| RFC 8693 (Token Exchange)             | Implemented   | [Delegation-only profile](../enterprise/token-exchange) with nested `act` chain |
+| RFC 8707 (Resource Indicators)        | Implemented   | `resource` binding on the token-exchange grant (exactly one required) |
 
 **Not yet implemented** (tracked for future releases): RFC 7591 dynamic client registration, RFC 9101 JAR / Request Object, OIDC Session Management iframe, front-channel logout, automated time-based key rotation.
 
@@ -406,7 +409,7 @@ Returns metadata so clients can auto-configure themselves.
 | `revocation_endpoint`                                 | URL for `/oauth/revoke`                                                              |
 | `end_session_endpoint`                                | URL for `/logout`                                                                    |
 | `response_types_supported`                            | `["code", "token", "id_token", "code id_token", "code token", "code id_token token", "id_token token"]` |
-| `grant_types_supported`                               | `["authorization_code", "refresh_token", "implicit"]`                                |
+| `grant_types_supported`                               | `["authorization_code", "refresh_token", "client_credentials", "implicit", "urn:ietf:params:oauth:grant-type:token-exchange"]` |
 | `scopes_supported`                                    | `["openid", "email", "profile", "offline_access"]`                                   |
 | `response_modes_supported`                            | `["query", "fragment", "form_post", "web_message"]`                                  |
 | `code_challenge_methods_supported`                    | `["S256", "plain"]`                                                                  |
@@ -502,9 +505,9 @@ For `form_post`, Authorizer serves the auto-submitting form with a dedicated `Co
 ### Token Endpoint
 
 **Endpoint:** `POST /oauth/token`
-**Specs:** [RFC 6749 §3.2](https://www.rfc-editor.org/rfc/rfc6749#section-3.2) | [RFC 7636 §4.6](https://www.rfc-editor.org/rfc/rfc7636#section-4.6)
+**Specs:** [RFC 6749 §3.2](https://www.rfc-editor.org/rfc/rfc6749#section-3.2) | [RFC 7636 §4.6](https://www.rfc-editor.org/rfc/rfc7636#section-4.6) | [RFC 8693](https://www.rfc-editor.org/rfc/rfc8693)
 
-Exchanges an authorization code or refresh token for access / ID tokens.
+Serves four grant types: `authorization_code`, `refresh_token`, `client_credentials`, and `urn:ietf:params:oauth:grant-type:token-exchange`.
 
 **Content-Type:** `application/x-www-form-urlencoded` or `application/json`
 **Response headers:** `Cache-Control: no-store`, `Pragma: no-cache` (RFC 6749 §5.1)
@@ -546,13 +549,52 @@ Refresh tokens are **rotated** on each use — the old one is invalidated and a 
 }
 ```
 
+**Client Credentials grant** (RFC 6749 §4.4 — machine/service-account tokens):
+
+| Parameter       | Required | Notes                                                                    |
+| --------------- | -------- | ------------------------------------------------------------------------ |
+| `grant_type`    | Yes      | `client_credentials`                                                     |
+| `client_id`     | Yes      | A `service_account` client from the [client registry](./client-registry) |
+| `client_secret` | Yes\*    | Via HTTP Basic (`client_secret_basic`) or form body (`client_secret_post`) |
+| `scope`         | No       | Space-separated subset of the client's `allowed_scopes`. Omitted = full authorized set. Any scope outside the allow-list rejects the whole request with `invalid_scope` |
+
+\*Instead of a secret, the client may authenticate with an RFC 7523 `client_assertion` — see [Workload Identity](../enterprise/workload-identity). Presenting more than one authentication method is rejected (RFC 6749 §2.3). Interactive clients (including the reserved boot client) are rejected on this grant with `unauthorized_client`.
+
+```bash
+curl -s -X POST $AUTHORIZER_URL/oauth/token \
+  -u "$SERVICE_ACCOUNT_ID:$SERVICE_ACCOUNT_SECRET" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=client_credentials" \
+  -d "scope=read:reports"
+```
+
+```json
+{ "access_token": "eyJhbG...", "token_type": "Bearer", "expires_in": 1800, "scope": "read:reports" }
+```
+
+No `id_token` and no `refresh_token` are issued — machines re-authenticate on expiry (RFC 6749 §4.4.3). See the [Client Registry guide](./client-registry) for the full flow.
+
+**Token Exchange grant** (RFC 8693 — delegation only):
+
+| Parameter            | Required | Notes                                                                    |
+| -------------------- | -------- | ------------------------------------------------------------------------ |
+| `grant_type`         | Yes      | `urn:ietf:params:oauth:grant-type:token-exchange`                        |
+| `subject_token`      | Yes      | The user's access token (the authority being exercised)                  |
+| `subject_token_type` | Yes      | `urn:ietf:params:oauth:token-type:access_token` or `...:jwt`             |
+| `actor_token`        | Yes      | The agent's own access token (delegation-only — omitting it is rejected) |
+| `actor_token_type`   | Yes      | Same URNs as `subject_token_type`                                        |
+| `resource`           | Yes      | Exactly one (RFC 8707) — 0 or >1 values are rejected                     |
+| `scope`              | No       | Requested down-scope; the result is always the intersection with the subject's scope and the agent's ceiling |
+
+The calling client must authenticate as a `service_account` (secret or `client_assertion`). The resulting token is short-lived (5 minutes), audience-bound to `resource`, and carries the nested `act` actor chain. Full semantics, security invariants, and examples: [Token Exchange & Delegation](../enterprise/token-exchange).
+
 **Error response:**
 
 ```json
 { "error": "invalid_grant", "error_description": "..." }
 ```
 
-Standard codes: `invalid_request`, `invalid_client`, `invalid_grant`, `unsupported_grant_type`, `invalid_scope`.
+Standard codes: `invalid_request`, `invalid_client`, `invalid_grant`, `unsupported_grant_type`, `unauthorized_client`, `invalid_scope`.
 
 ### UserInfo Endpoint
 
