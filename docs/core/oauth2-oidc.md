@@ -26,7 +26,7 @@ This page is the one-stop reference for every endpoint, parameter, and integrati
 | RFC 6750 (Bearer Token)               | Implemented   | `WWW-Authenticate` on 401                                          |
 | RFC 7009 (Token Revocation)           | Implemented   | Returns 200 for invalid tokens                                     |
 | RFC 7517 (JWK)                        | Implemented   | RSA, ECDSA, HMAC; manual multi-key rotation                        |
-| RFC 7636 (PKCE)                       | Implemented   | S256 method; required for authorization code flow                  |
+| RFC 7636 (PKCE)                       | Implemented   | `S256` and `plain` methods; defaults to `plain` when the method is omitted (§4.2) |
 | RFC 7662 (Token Introspection)        | Implemented   | Non-disclosure for inactive tokens                                 |
 
 **Not yet implemented** (tracked for future releases): RFC 7591 dynamic client registration, RFC 9101 JAR / Request Object, OIDC Session Management iframe, front-channel logout, automated time-based key rotation.
@@ -335,7 +335,7 @@ Auth0 calls third-party OIDC identity providers **Enterprise Connections**.
 
 4. **Test.** Open an Auth0 Universal Login page — you should see a new button labeled `authorizer` (or whatever you named the connection). Clicking it redirects through Authorizer and lands back on your Auth0 app as a normal Auth0 user.
 
-**What Auth0 does under the hood:** it calls Authorizer's `/authorize` endpoint with a code-flow request, exchanges the code at `/oauth/token`, verifies the ID token via `/.well-known/jwks.json`, and calls `/userinfo` to populate the Auth0 user profile. All of these endpoints are implemented by Authorizer.
+**What Auth0 does under the hood:** it calls Authorizer's `/authorize` endpoint with a code-flow request, exchanges the code at `/oauth/token`, verifies the ID token via `/.well-known/jwks.json`, and calls `/userinfo` to populate the Auth0 user profile. All of these endpoints are implemented by Authorizer. Three Auth0 quirks Authorizer handles for you: Auth0 always sends a `nonce` (even for the code flow, where OIDC makes it optional) and validates it against the ID token; it uses `response_mode=form_post` for the authorization response; and it may send a `code_challenge` without `code_challenge_method`, in which case Authorizer defaults to `plain` per RFC 7636 §4.2.
 
 ### Okta: Add Authorizer as an Identity Provider
 
@@ -409,9 +409,9 @@ Returns metadata so clients can auto-configure themselves.
 | `grant_types_supported`                               | `["authorization_code", "refresh_token", "implicit"]`                                |
 | `scopes_supported`                                    | `["openid", "email", "profile", "offline_access"]`                                   |
 | `response_modes_supported`                            | `["query", "fragment", "form_post", "web_message"]`                                  |
-| `code_challenge_methods_supported`                    | `["S256"]`                                                                           |
+| `code_challenge_methods_supported`                    | `["S256", "plain"]`                                                                  |
 | `id_token_signing_alg_values_supported`               | Includes configured `--jwt-type` and always `RS256`                                  |
-| `token_endpoint_auth_methods_supported`               | `["client_secret_basic", "client_secret_post"]`                                      |
+| `token_endpoint_auth_methods_supported`               | `["client_secret_basic", "client_secret_post", "none", "private_key_jwt"]` (`none` = public client with PKCE) |
 | `introspection_endpoint_auth_methods_supported`       | `["client_secret_basic", "client_secret_post"]`                                      |
 | `revocation_endpoint_auth_methods_supported`          | `["client_secret_basic", "client_secret_post"]`                                      |
 | `claims_supported`                                    | Includes `sub`, `iss`, `aud`, `exp`, `iat`, `auth_time`, `amr`, `acr`, `at_hash`, `c_hash`, `nonce`, `email`, `email_verified`, `given_name`, `family_name`, profile claims |
@@ -440,7 +440,7 @@ Supported flows: Authorization Code (with PKCE), Implicit, Hybrid.
 | `scope`                  | No                          | Space-separated. Default: `openid profile email`                                      |
 | `response_mode`          | No                          | `query`, `fragment`, `form_post`, `web_message`. Hybrid flows forbid `query`          |
 | `code_challenge`         | Yes, when `code` is in type | PKCE challenge: `BASE64URL(SHA256(code_verifier))`                                    |
-| `code_challenge_method`  | No                          | Only `S256` is supported; defaults to `S256`                                          |
+| `code_challenge_method`  | No                          | `S256` or `plain`; defaults to `plain` when omitted, per RFC 7636 §4.2                |
 | `nonce`                  | Recommended                 | Binds ID token to session; required per OIDC when `response_type` includes `id_token` |
 | `prompt`                 | No                          | `none`, `login`, `consent`, `select_account` (last two are parsed but no-op)          |
 | `max_age`                | No                          | Seconds; `0` forces re-auth; positive values force re-auth if session is older        |
@@ -479,6 +479,26 @@ GET /authorize?
 
 The response fragment contains **both** `code=` and `id_token=` in a single round trip.
 
+#### Nonce handling
+
+The `nonce` prevents ID token replay: the client sends a random value on `/authorize` and must get the same value back as the `nonce` claim in the ID token.
+
+- **Code flow:** OIDC Core makes `nonce` optional here, but enterprise RPs (Auth0, Okta, Keycloak) always send and validate it. Authorizer stores the nonce with the authorization code — including across the login UI round-trip — and embeds it in the ID token issued at `/oauth/token`.
+- **Implicit flow** (`response_type=id_token` or `id_token token`): `nonce` is **required** per OIDC Core §3.2.2.1; requests without it are rejected with `invalid_request`.
+
+#### Response modes
+
+| Mode          | Delivery                                       | Notes                                              |
+|---------------|------------------------------------------------|-----------------------------------------------------|
+| `query`       | Redirect with params in the query string       | Only for the `code` flow — tokens never go in URLs; forbidden for hybrid flows |
+| `fragment`    | Redirect with params in the URL fragment       | Default for implicit / hybrid flows                 |
+| `form_post`   | Auto-submitting HTML form `POST` to the RP     | Used by Auth0 for Enterprise OIDC connections       |
+| `web_message` | `window.postMessage()` to the RP               | For SPA integrations                                |
+
+Error responses (e.g. `login_required` from `prompt=none`) are delivered via the same configured `response_mode`.
+
+For `form_post`, Authorizer serves the auto-submitting form with a dedicated `Content-Security-Policy` (nonce-based `script-src`, relaxed `form-action`) so the browser allows the form to POST to the RP's `redirect_uri`. If a reverse proxy in front of Authorizer injects its own CSP header, it can break `form_post` — see [Common Issues](#common-issues).
+
 ### Token Endpoint
 
 **Endpoint:** `POST /oauth/token`
@@ -499,7 +519,9 @@ Exchanges an authorization code or refresh token for access / ID tokens.
 | `client_id`     | Yes      | Your client ID                                          |
 | `client_secret` | Yes\*    | Required if `code_verifier` is not provided             |
 
-\*Either `code_verifier` or `client_secret` is required. Client authentication may also be sent via HTTP Basic Auth.
+\*Either `code_verifier` or `client_secret` is required. Client authentication may be sent as HTTP Basic (`client_secret_basic`), in the form body (`client_secret_post`), or omitted entirely for public clients using PKCE (`none`).
+
+Authorization codes expire after **10 minutes** (RFC 6749 §4.1.2 recommendation) and are single-use.
 
 **Refresh Token grant:**
 
@@ -728,6 +750,10 @@ const codeChallenge = btoa(String.fromCharCode(...new Uint8Array(hash)))
 printf '%s' "$CODE_VERIFIER" | openssl dgst -binary -sha256 | openssl base64 | tr -d '=' | tr '/+' '_-'
 ```
 
+:::note plain method
+If `code_challenge_method` is omitted, Authorizer defaults to `plain` per RFC 7636 §4.2 — the verifier is compared directly to the challenge, no hashing. Always send `code_challenge_method=S256` explicitly; `plain` exists only for spec compliance with clients that can't compute SHA-256.
+:::
+
 ### 3. Send it on `/authorize`
 
 ```
@@ -949,6 +975,8 @@ For pre-production validation, run a full OIDC conformance suite:
 | Back-channel logout never fires                   | `--backchannel-logout-uri` not set, or receiver unreachable within 5 seconds                       |
 | Auth0 Enterprise OIDC connection can't discover   | Wrong Issuer URL — must be exactly `https://your-authorizer.example` (no trailing slash, no path)  |
 | `redirect_uri` rejected                           | Not in `--allowed-origins`. The debug-level log message names the exact URI that was rejected      |
+| RP reports "unexpected ID Token nonce claim value" | The `nonce` sent to `/authorize` didn't round-trip into the ID token. A custom login UI must forward `nonce` (and the PKCE params) back to `/authorize` after authentication |
+| `form_post` blocked: "sending form data violates Content Security Policy" | A reverse proxy in front of Authorizer is injecting its own CSP header, overriding the `form_post` CSP Authorizer sets |
 
 ## Debugging Tips
 
