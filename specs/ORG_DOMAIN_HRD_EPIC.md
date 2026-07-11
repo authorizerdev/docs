@@ -341,12 +341,54 @@ Logic:
     `--enable-org-discovery` (default on) for operators who consider even
     routing metadata sensitive.
 
+### Universal login page (`/app`) integration — THE PRIMARY UX
+
+The hosted login SPA at `/app` (`AppHandler`, `internal/http_handlers/app.go`,
+gated by `--enable-login-page`) is where most users land, and it already carries
+the OAuth request context (`redirect_uri`, `state`, `scope`, `client_id`, org
+branding) into the SPA. HRD plugs in here:
+
+1. **Email-first step on `/app`.** The login page shows an email field first.
+   As the user submits it, the SPA (`web/app`) calls
+   `GET /api/v1/org-discovery?email=…`.
+2. **SSO match → redirect to the org's SP-initiated login**, carrying the
+   original OAuth context so the post-IdP completion returns to the *caller's*
+   `redirect_uri`, not to `/app`. The SPA navigates to the discovered
+   `connection.login_url` (`/oauth/saml/<slug>/login` or the OIDC equivalent)
+   with `redirect_uri`, `state`, `scope`, `client_id`, `nonce` appended.
+3. **No SSO match → render password / social / magic-link inline** on `/app`,
+   exactly as today. A no-match never blocks login (invited external members
+   still authenticate normally).
+4. **Round-trip back.** After the IdP authenticates and posts to the org's ACS
+   (SAML) / callback (OIDC), the flow resumes the original authorization request
+   and redirects to the caller's `redirect_uri` with the code — the standard
+   flow the app already runs.
+
+**Good news — the round-trip is ALREADY solved (verified in source).** Both
+SP-initiated login endpoints already accept and preserve the app context
+through the IdP round-trip via the shared store: `SAMLLoginHandler`
+(`saml_sp.go`) captures `redirect_uri`+`state` into `samlFlowState`
+(`AppRedirect`/`AppState`) under an opaque single-use `RelayState`, and the
+OIDC broker login (`oauth_sso.go`) does the same via `ssoFlowState` under a
+single-use `state`. The ACS/callback resumes the session and redirects to the
+caller's `redirect_uri` with its `state`. So HRD needs **no new server-side
+threading** — Phase 3 is just the `/app` SPA calling discovery and redirecting
+to these existing endpoints with `redirect_uri`+`state` appended. (If a future
+need arises to also carry `scope`/`nonce` into the SSO flow, extend those two
+flow-state structs — but the core redirect-back works today.)
+
+**Per-org branding (optional, nice-to-have):** once discovery resolves the org,
+`/app` may show that org's name/logo instead of the instance defaults
+(`AppHandler` currently passes only `Config.OrganizationName/Logo`). Deferred;
+note it.
+
 ### App-supplied escape hatch (no server change — document it)
 Builders who already know the org (subdomain, their own domain map, an org
-picker) skip discovery entirely and go straight to
-`/oauth/saml/<slug>/login` or the org's OIDC connection. This mirrors the
-"application already determined the tenant / no prompt" mode of mature products
-and stays the recommended path when the app owns the mapping.
+picker) skip discovery entirely and send the user straight to
+`/oauth/saml/<slug>/login` (with the OAuth context) or the org's OIDC
+connection. This mirrors the "application already determined the tenant / no
+prompt" mode of mature products and stays the recommended path when the app
+owns the mapping. It relies on the same OAuth-context threading as above.
 
 ### Multi-match note
 Invariant 2 (unique PK) makes a *verified* domain belong to exactly one org, so
