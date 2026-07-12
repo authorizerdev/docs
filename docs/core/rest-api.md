@@ -431,13 +431,14 @@ Get admin-level metadata about the server (version, feature flags).
 
 #### `POST /v1/admin/users`
 
-List all users with pagination.
+List all users with pagination and optional search.
 
 **Request body**
 
 | Field        | Type                | Description  | Required |
 | ------------ | ------------------- | ------------ | -------- |
 | `pagination` | `{ page, limit }`   | Page & limit. | no       |
+| `query`      | `string`            | Case-insensitive substring filter (matches against user ID, email, given_name, family_name, nickname). | no |
 
 **Response** `{ users: User[], pagination: { page, limit, total, offset } }`
 
