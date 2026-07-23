@@ -665,6 +665,8 @@ mutation {
 
 Mutation to reset the password. For security reasons this is 2 step process, we send email to the registered and then the are redirect to reset password url through the link in that email. In the second step, it accepts `params` of type `ResetPasswordInput` with following keys as parameter
 
+On success, this also synchronously revokes all of the user's existing sessions and refresh tokens — see [Refresh tokens](./security#refresh-tokens).
+
 **Request Params**
 
 | Key                | Description                                                                 | Required |

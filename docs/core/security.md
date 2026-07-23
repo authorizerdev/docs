@@ -76,6 +76,13 @@ Everything else in this document is opt-in or already on by default.
   for higher-security deployments where re-authentication is acceptable;
   lengthen for long-lived sessions where a 30-day window is too short.
 
+**Revocation on password reset**: a successful [`reset_password`](./graphql-api#reset_password)
+synchronously deletes all of the user's existing sessions and refresh
+tokens from the session store before the mutation returns — any
+pre-existing session or refresh token is rejected immediately after. This
+closes the gap where an attacker holding a live session before the reset
+kept access after it.
+
 ---
 
 ## Trusted proxies
@@ -111,6 +118,31 @@ proxy you **must** set this flag, otherwise:
 | Behind Cloudflare | the [Cloudflare IP ranges](https://www.cloudflare.com/ips/) |
 | Behind an AWS ALB | the VPC CIDR (e.g. `10.0.0.0/16`) |
 | Inside a Kubernetes cluster | the pod and service CIDRs (e.g. `10.0.0.0/8`) |
+
+---
+
+## Trusted base URL
+
+```bash
+./authorizer --url=https://auth.example.com
+```
+
+- **`--url`** (default empty): the operator-configured canonical base URL of
+  this Authorizer instance. When set, it is the **only** source used to
+  derive the server's own host — verification/reset/magic-link email links,
+  the JWT `iss` claim, and the OIDC discovery/JWKS document URLs — and every
+  request header that could otherwise influence it (`X-Authorizer-URL`,
+  `X-Forwarded-Host`, `Host`) is ignored. The value is normalized to
+  scheme+host (path, query, fragment, userinfo, and trailing slash stripped)
+  and pinned once at startup, before any listener accepts a connection.
+
+When **empty** (the default), Authorizer falls back to header-based
+derivation (`X-Authorizer-URL`, then `X-Forwarded-Host`/`Host`), which
+preserves flexible reverse-proxy / multi-tenant setups but leaves a
+host-header-injection account-takeover surface (CWE-640): a request with a
+forged host header can cause a password-reset or verification email to
+contain a link pointing at an attacker-controlled domain. **Set `--url` in
+production**, particularly behind a reverse proxy, to close this off.
 
 ---
 

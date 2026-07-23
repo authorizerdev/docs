@@ -17,6 +17,8 @@ For [organizations](./organizations) whose IdP speaks SAML 2.0 (Okta, Microsoft 
 
 ## Setup
 
+All the admin ops below accept a super-admin, or that org's `authorizer:org_admin` member — see [Org-scoped admin](./organizations#org-scoped-admin).
+
 ### 1. Collect the IdP's details
 
 From the org's IdP you need: the **entity ID** (the assertion `Issuer`), the **SSO URL** (HTTP-Redirect binding), and the **X.509 signing certificate** (PEM).

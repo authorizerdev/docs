@@ -16,6 +16,8 @@ Authorizer verifies ID token (JWKS, iss, aud, nonce) ──► JIT provision ─
 
 ## Setup
 
+All the admin ops below accept a super-admin, or that org's `authorizer:org_admin` member — see [Org-scoped admin](./organizations#org-scoped-admin).
+
 ### 1. Register Authorizer at the upstream IdP
 
 Create an OIDC app (authorization code flow) at the org's IdP with the redirect URI:

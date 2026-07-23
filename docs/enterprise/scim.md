@@ -15,6 +15,8 @@ The organization is resolved **solely from the bearer token** — never from the
 
 ## Create the endpoint (admin API)
 
+All the ops below accept a super-admin, or that org's `authorizer:org_admin` member — see [Org-scoped admin](./organizations#org-scoped-admin).
+
 One SCIM endpoint per org, keyed by `org_id`:
 
 ```graphql
