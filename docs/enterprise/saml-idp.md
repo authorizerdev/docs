@@ -7,10 +7,16 @@ title: SAML 2.0 Identity Provider
 
 Per [organization](./organizations), Authorizer can also act as a **SAML 2.0 Identity Provider** — issuing signed assertions to downstream Service Providers (Zendesk, Salesforce, Notion, …) so their SAML-based SSO logs users in with their existing Authorizer session. This is the architectural inverse of [Authorizer as SAML SP](./org-saml): there Authorizer *consumes* an assertion from a corporate IdP; here it *produces* one for a downstream SP. Do not confuse the two — a `SAMLServiceProvider` row (this page) and an `OrgSAMLConnection` row (the SP-role doc) are unrelated tables.
 
-```
-Per-org SP role (org-saml.md)          Per-org IdP role (this page)
-Okta ──assertion──► Authorizer         Authorizer ──assertion──► Zendesk
-      (Authorizer = SP)                      (Authorizer = IdP)
+```mermaid
+flowchart LR
+    subgraph SP["Per-org SP role (org-saml.md)"]
+        direction LR
+        Okta -- assertion --> Auth1["Authorizer (= SP)"]
+    end
+    subgraph IDP["Per-org IdP role (this page)"]
+        direction LR
+        Auth2["Authorizer (= IdP)"] -- assertion --> Zendesk
+    end
 ```
 
 ## Endpoints (per org)

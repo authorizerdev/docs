@@ -7,11 +7,18 @@ title: Per-Org OIDC SSO
 
 Each [organization](./organizations) can bring its own upstream OIDC identity provider (Okta, Microsoft Entra ID, Google Workspace, …). Authorizer acts as the **Relying Party (broker)**: the org's users authenticate at their corporate IdP, and Authorizer JIT-provisions them and issues a normal Authorizer session — your apps keep integrating with Authorizer only.
 
-```
-User ──► /oauth/sso/{org_slug}/login ──► upstream IdP /authorize (PKCE + state + nonce)
-     ◄── /oauth/sso/{org_slug}/callback ◄── code
-Authorizer verifies ID token (JWKS, iss, aud, nonce) ──► JIT provision ──► session cookie
-     ──► redirect back to your app (redirect_uri + state)
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant A as Authorizer
+    participant I as Upstream IdP
+
+    U->>A: GET /oauth/sso/{org_slug}/login
+    A->>I: /authorize (PKCE + state + nonce)
+    I-->>A: GET /oauth/sso/{org_slug}/callback (code)
+    A->>A: verify ID token (JWKS, iss, aud, nonce)
+    A->>A: JIT provision + session cookie
+    A-->>U: redirect to your app (redirect_uri + state)
 ```
 
 ## Setup

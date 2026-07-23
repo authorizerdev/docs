@@ -125,12 +125,12 @@ A **relationship tuple** is a single fact: _`user` is `relation` of `object`_. T
 the data that actually grants access; add and remove them any time without touching the
 model.
 
-```text
-user:1b9d…   viewer   document:1      → this user can view document 1
-user:2c8e…   owner    document:1      → this user owns document 1 (⇒ editor, viewer)
-team:9#member  viewer  document:1   → every member of team:9 can view it
-user:*       viewer   document:5      → document 5 is public
-```
+| Tuple | Meaning |
+|-------|---------|
+| `user:1b9d…` `viewer` `document:1` | This user can view document 1 |
+| `user:2c8e…` `owner` `document:1` | This user owns document 1 (⇒ editor, viewer) |
+| `team:9#member` `viewer` `document:1` | Every member of team:9 can view it |
+| `user:*` `viewer` `document:5` | Document 5 is public |
 
 :::info Identify users by id, not name
 The subject is `user:<id>` — the **Authorizer user id** (the token's `sub` claim,
@@ -317,16 +317,16 @@ cookie is used automatically.
 Your application keeps doing what it does; Authorizer answers one extra question per
 request: **"may this user do this to this object?"**
 
-```text
-                 ┌──────────────┐  login   ┌─────────────┐
-                 │   Your app   │ ───────► │  Authorizer  │
-                 │  (frontend)  │ ◄─────── │              │
-                 └──────┬───────┘  token   │  ┌────────┐  │
-                        │ API call + token │  │ OpenFGA│  │
-                 ┌──────▼───────┐          │  │ engine │  │
-                 │ Your backend │ ───────► │  └────────┘  │
-                 │              │  check_  │              │
-                 └──────────────┘permissions└─────────────┘
+```mermaid
+flowchart LR
+    A["Your app<br/>(frontend)"] -- login --> Auth
+    Auth -- token --> A
+    A -- "API call + token" --> C[Your backend]
+    C -- check_permissions --> Auth
+
+    subgraph Auth[Authorizer]
+        D[OpenFGA engine]
+    end
 ```
 
 There are exactly **two touchpoints**:

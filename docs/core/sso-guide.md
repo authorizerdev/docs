@@ -9,32 +9,20 @@ Authorizer can serve as the **central Single Sign-On (SSO) Identity Provider** f
 
 ## Architecture Overview
 
-```
-┌─────────────┐   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐
-│  Internal    │   │  Customer   │   │   Admin      │   │  Third-Party│
-│  Dashboard   │   │  Portal     │   │   Tools      │   │  (Grafana,  │
-│  (React)     │   │  (Next.js)  │   │   (Go CLI)   │   │  GitLab...) │
-└──────┬───────┘   └──────┬──────┘   └──────┬───────┘   └──────┬──────┘
-       │                  │                  │                  │
-       │         OIDC Authorization Code + PKCE Flow           │
-       └──────────────────┼──────────────────┼─────────────────┘
-                          │                  │
-                 ┌────────▼──────────────────▼─┐
-                 │        AUTHORIZER            │
-                 │     (Central IdP)            │
-                 │                              │
-                 │  • Unified user store        │
-                 │  • Session management         │
-                 │  • MFA / TOTP                │
-                 │  • Role-based access (RBAC)  │
-                 │  • Social logins             │
-                 │  • Custom token claims       │
-                 └──────────────┬───────────────┘
-                                │
-                  Optional upstream federation
-              ┌─────────┬──────┼──────┬─────────┐
-              │         │      │      │         │
-           Google    GitHub  Azure  Apple   Facebook
+```mermaid
+flowchart TB
+    D["Internal Dashboard<br/>(React)"]
+    P["Customer Portal<br/>(Next.js)"]
+    T["Admin Tools<br/>(Go CLI)"]
+    E["Third-Party<br/>(Grafana, GitLab, ...)"]
+
+    D & P & T & E -- "OIDC Authorization Code + PKCE" --> Auth
+
+    subgraph Auth["AUTHORIZER (Central IdP)"]
+        F["Unified user store · Session management<br/>MFA / TOTP · RBAC · Social logins · Custom token claims"]
+    end
+
+    Auth -- "optional upstream federation" --> Google & GitHub & Azure & Apple & Facebook
 ```
 
 Every app talks to Authorizer using standard **OIDC Discovery**. Point your app at `https://auth.yourcompany.com/.well-known/openid-configuration` and the client library auto-discovers all endpoints.
