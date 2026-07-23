@@ -272,9 +272,9 @@ Use these v2 **CLI flags** instead of v1 env or dashboard config. Flag names use
 | `DISABLE_BASIC_AUTHENTICATION`  | `--enable-basic-authentication` (inverted) |
 | `DISABLE_EMAIL_VERIFICATION`    | `--enable-email-verification` (inverted) |
 | `DISABLE_MAGIC_LINK_LOGIN`      | `--enable-magic-link-login` (inverted) |
-| `ENFORCE_MULTI_FACTOR_AUTHENTICATION` | `--enforce-mfa`, `--enable-mfa` |
+| `ENFORCE_MULTI_FACTOR_AUTHENTICATION` | `--enforce-mfa` (default flipped: `true` → `false`; MFA is now optional unless you set this) |
 | `DISABLE_SIGN_UP`               | `--enable-signup` (inverted) |
-| TOTP / OTP                      | `--enable-totp-login`, `--enable-email-otp`, `--enable-sms-otp` |
+| TOTP / OTP / WebAuthn           | **Breaking**: `--enable-mfa`, `--enable-totp-login`, `--enable-email-otp`, and `--enable-sms-otp` are removed. TOTP, email OTP, SMS OTP, and WebAuthn-as-MFA are now **on by default**; opt out with `--disable-totp-login`, `--disable-email-otp`, `--disable-sms-otp`, `--disable-webauthn-mfa`, or turn everything off at once with `--disable-mfa`. See [MFA & WebAuthn/passkeys flags](../core/server-config#multi-factor-authentication-mfa--webauthnpasskeys). |
 | Mobile basic auth               | `--enable-mobile-basic-authentication` |
 | Phone verification              | `--enable-phone-verification` |
 

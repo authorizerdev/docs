@@ -1,5 +1,5 @@
 ---
-sidebar_position: 6
+sidebar_position: 8
 title: Workload Identity
 ---
 
@@ -128,7 +128,23 @@ For testing: `kubectl create token worker -n payments --audience=https://your-au
 
 ### Online hardening: Kubernetes TokenReview
 
-Offline JWKS validation proves the token was signed by the cluster — **not** that the bound Pod/ServiceAccount still exists. A deleted pod's not-yet-expired token would still verify. For high-security workloads a trust row can opt in to online validation (`enable_token_review` + `kubernetes_api_server_url` on the trusted-issuer record — honored at runtime but not yet exposed through the admin API): after the offline checks pass, Authorizer calls the cluster's `authentication.k8s.io/v1` TokenReview API and rejects the assertion fail-closed unless the apiserver reports it still authenticated.
+Offline JWKS validation proves the token was signed by the cluster — **not** that the bound Pod/ServiceAccount still exists. A deleted pod's not-yet-expired token would still verify. For high-security workloads a trust row can opt in to online validation via `enable_token_review` + `kubernetes_api_server_url` — admin-settable fields on `_add_trusted_issuer` / `_update_trusted_issuer` (`kubernetes_api_server_url` must be a non-empty `https` URL whenever `enable_token_review` is `true`, checked at write time): after the offline checks pass, Authorizer calls the cluster's `authentication.k8s.io/v1` TokenReview API and rejects the assertion fail-closed unless the apiserver reports it still authenticated.
+
+```graphql
+mutation {
+  _update_trusted_issuer(
+    params: {
+      id: "TRUSTED_ISSUER_UUID"
+      enable_token_review: true
+      kubernetes_api_server_url: "https://<managed-cluster-public-api-endpoint>"
+    }
+  ) {
+    id
+    enable_token_review
+    kubernetes_api_server_url
+  }
+}
+```
 
 - Authorizer authenticates the TokenReview call with its **own** in-cluster ServiceAccount token, which needs the `system:auth-delegator` ClusterRole.
 - The apiserver URL goes through the same SSRF-hardened client, so only a **publicly-routable apiserver endpoint** (e.g. a managed cluster's public API endpoint) works today — `https://kubernetes.default.svc` (a private ClusterIP) is rejected by design.

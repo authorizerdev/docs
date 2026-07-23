@@ -24,6 +24,10 @@ Table of Contents
   - [`ResendVerifyEmail`](#resendverifyemail)
   - [`VerifyOtp`](#verifyotp)
   - [`ResendOtp`](#resendotp)
+  - [`SkipMfaSetup`](#skipmfasetup)
+  - [`LockMfa`](#lockmfa)
+  - [`EmailOtpMfaSetup`](#emailotpmfasetup)
+  - [`SmsOtpMfaSetup`](#smsotpmfasetup)
   - [`ForgotPassword`](#forgotpassword)
   - [`ResetPassword`](#resetpassword)
   - [`Session`](#session)
@@ -76,6 +80,29 @@ Table of Contents
     - [`FgaListUsers`](#fgalistusers)
     - [`FgaExpand`](#fgaexpand)
     - [`FgaReset`](#fgareset)
+  - [Client Registry](#client-registry)
+    - [`CreateClient`](#createclient)
+    - [`UpdateClient`](#updateclient)
+    - [`DeleteClient`](#deleteclient)
+    - [`RotateClientSecret`](#rotateclientsecret)
+    - [`GetClient`](#getclient)
+    - [`Clients`](#clients)
+  - [Trusted Issuers](#trusted-issuers)
+    - [`AddTrustedIssuer`](#addtrustedissuer)
+    - [`UpdateTrustedIssuer`](#updatetrustedissuer)
+    - [`DeleteTrustedIssuer`](#deletetrustedissuer)
+    - [`GetTrustedIssuer`](#gettrustedissuer)
+    - [`TrustedIssuers`](#trustedissuers)
+  - [SAML IdP](#saml-idp)
+    - [`CreateSamlServiceProvider`](#createsamlserviceprovider)
+    - [`UpdateSamlServiceProvider`](#updatesamlserviceprovider)
+    - [`DeleteSamlServiceProvider`](#deletesamlserviceprovider)
+    - [`GetSamlServiceProvider`](#getsamlserviceprovider)
+    - [`ListSamlServiceProviders`](#listsamlserviceproviders)
+    - [`RotateSamlIdpCert`](#rotatesamlidpcert)
+    - [`RetireSamlIdpKey`](#retiresamlidpkey)
+    - [`ListSamlIdpKeys`](#listsamlidpkeys)
+    - [`ImportSamlSpMetadata`](#importsamlspmetadata)
 - [Calling with `grpcurl`](#calling-with-grpcurl)
 - [Health checks](#health-checks)
 - [Errors](#errors)
@@ -210,6 +237,22 @@ Each message mirrors its GraphQL/REST counterpart — see the linked
 ### `ResendOtp`
 
 *Public.* Re-send the MFA OTP. Mirrors [`resend_otp`](./graphql-api#resend_otp).
+
+### `SkipMfaSetup`
+
+*Public.* Completes an in-progress, token-withheld MFA offer by recording an explicit decline, then issues the withheld access token. Fails with `FAILED_PRECONDITION` when MFA is org-enforced (`--enforce-mfa`). Mirrors [`skip_mfa_setup`](./graphql-api#skip_mfa_setup).
+
+### `LockMfa`
+
+*Public.* Records that the caller lost access to their only MFA factor(s); only allowed with no verified Email/SMS OTP fallback enrolled. Does not issue a token — the account requires admin recovery afterward. Mirrors [`lock_mfa`](./graphql-api#lock_mfa).
+
+### `EmailOtpMfaSetup`
+
+*Public (dual-mode).* Sends a one-time code to the caller's own email and creates an unverified email-OTP MFA enrollment — either for an already-authenticated caller adding a second factor, or a caller in the withheld first-time-offer state identified by the MFA session cookie. Mirrors [`email_otp_mfa_setup`](./graphql-api#email_otp_mfa_setup).
+
+### `SmsOtpMfaSetup`
+
+*Public (dual-mode).* Same as `EmailOtpMfaSetup`, for SMS. Mirrors [`sms_otp_mfa_setup`](./graphql-api#sms_otp_mfa_setup).
 
 ### `ForgotPassword`
 
@@ -406,6 +449,98 @@ Manage the embedded fine-grained authorization (FGA) engine. See [Authorization 
 #### `FgaReset`
 
 *Admin-only.* Delete the entire fine-grained authorization store (model, all versions, and all tuples) and start fresh. Refused if any tuples still exist. Destructive and audited.
+
+### Client Registry
+
+Manage machine/workload identity clients (`service_account` and similar client types). See the [Client Registry guide](./client-registry) for the conceptual model.
+
+#### `CreateClient`
+
+*Admin-only.* Provision a new client and return the generated client secret exactly once.
+
+#### `UpdateClient`
+
+*Admin-only.* Update a client's name, description, allowed scopes, or active state. Never touches the secret.
+
+#### `DeleteClient`
+
+*Admin-only.* Delete a client by id, cascading to its trusted issuers.
+
+#### `RotateClientSecret`
+
+*Admin-only.* Replace the stored client secret with a fresh one, returned exactly once. The old secret stops validating immediately.
+
+#### `GetClient`
+
+*Admin-only.* Get a single client by id. The client secret is never surfaced.
+
+#### `Clients`
+
+*Admin-only.* List clients with pagination. Client secrets are never surfaced.
+
+### Trusted Issuers
+
+Manage external JWT issuers used for RFC 7523 `private_key_jwt` client assertions. See [Workload Identity](../enterprise/workload-identity).
+
+#### `AddTrustedIssuer`
+
+*Admin-only.* Register an external issuer for a client. `subject_claim` defaults to `sub` when omitted.
+
+#### `UpdateTrustedIssuer`
+
+*Admin-only.* Update an issuer's name, JWKS URL, expected audience, active state, or SPIFFE refresh hint.
+
+#### `DeleteTrustedIssuer`
+
+*Admin-only.* Delete a trusted issuer by id.
+
+#### `GetTrustedIssuer`
+
+*Admin-only.* Get a single trusted issuer by id.
+
+#### `TrustedIssuers`
+
+*Admin-only.* List trusted issuers, optionally filtered by client id, with pagination.
+
+### SAML IdP
+
+Manage Authorizer acting as a SAML 2.0 identity provider for downstream service providers, plus IdP signing-key rotation. See [SAML IdP](../enterprise/saml-idp).
+
+#### `CreateSamlServiceProvider`
+
+*Admin-only.* Register a downstream SP that Authorizer issues signed assertions to.
+
+#### `UpdateSamlServiceProvider`
+
+*Admin-only.* Update a downstream SP's name, endpoints, certificate, attribute mapping, or active state.
+
+#### `DeleteSamlServiceProvider`
+
+*Admin-only.* Delete a downstream SP by id.
+
+#### `GetSamlServiceProvider`
+
+*Admin-only.* Get a single downstream SP by id.
+
+#### `ListSamlServiceProviders`
+
+*Admin-only.* List downstream SPs for an org.
+
+#### `RotateSamlIdpCert`
+
+*Admin-only.* Generate a new current signing keypair for an org's SAML IdP, demoting the previous current key.
+
+#### `RetireSamlIdpKey`
+
+*Admin-only.* Retire a published-but-not-signing SAML IdP key by id.
+
+#### `ListSamlIdpKeys`
+
+*Admin-only.* List all SAML IdP signing keys for an org.
+
+#### `ImportSamlSpMetadata`
+
+*Admin-only.* Parse pasted SP metadata XML and return fields to prefill a create call. Performs no remote fetch and creates no record.
 
 ## Calling with `grpcurl`
 

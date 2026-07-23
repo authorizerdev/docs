@@ -37,6 +37,10 @@ Table of Contents
   - [`POST /v1/resend_verify_email`](#post-v1resend_verify_email)
   - [`POST /v1/verify_otp`](#post-v1verify_otp)
   - [`POST /v1/resend_otp`](#post-v1resend_otp)
+  - [`POST /v1/skip_mfa_setup`](#post-v1skip_mfa_setup)
+  - [`POST /v1/lock_mfa`](#post-v1lock_mfa)
+  - [`POST /v1/email_otp_mfa_setup`](#post-v1email_otp_mfa_setup)
+  - [`POST /v1/sms_otp_mfa_setup`](#post-v1sms_otp_mfa_setup)
   - [`POST /v1/forgot_password`](#post-v1forgot_password)
   - [`POST /v1/reset_password`](#post-v1reset_password)
   - [`POST /v1/logout`](#post-v1logout)
@@ -90,6 +94,9 @@ Table of Contents
     - [`POST /v1/admin/fga/list_users`](#post-v1adminfgalist_users)
     - [`POST /v1/admin/fga/expand`](#post-v1adminfgaexpand)
     - [`POST /v1/admin/fga/reset`](#post-v1adminfgareset)
+  - [Client Registry](#client-registry)
+  - [Trusted Issuers](#trusted-issuers)
+  - [SAML IdP](#saml-idp)
 - [Errors](#errors)
 - [See also](#see-also)
 
@@ -250,6 +257,22 @@ Complete an MFA challenge by submitting the email/phone OTP. Mirrors [`verify_ot
 ### `POST /v1/resend_otp`
 
 Re-send the MFA OTP. Mirrors [`resend_otp`](./graphql-api#resend_otp).
+
+### `POST /v1/skip_mfa_setup`
+
+Completes an in-progress, token-withheld MFA offer by recording an explicit decline, then issues the withheld access token. Rejected when MFA is org-enforced (`--enforce-mfa`). Mirrors [`skip_mfa_setup`](./graphql-api#skip_mfa_setup).
+
+### `POST /v1/lock_mfa`
+
+Records that the caller lost access to their only MFA factor(s); only allowed with no verified Email/SMS OTP fallback enrolled. Does not issue a token — the account requires admin recovery afterward. Mirrors [`lock_mfa`](./graphql-api#lock_mfa).
+
+### `POST /v1/email_otp_mfa_setup`
+
+Sends a one-time code to the caller's own email and creates an unverified email-OTP MFA enrollment — either for an already-authenticated caller adding a second factor, or a caller in the withheld first-time-offer state identified by the MFA session cookie. Mirrors [`email_otp_mfa_setup`](./graphql-api#email_otp_mfa_setup).
+
+### `POST /v1/sms_otp_mfa_setup`
+
+Same as `email_otp_mfa_setup`, for SMS. Mirrors [`sms_otp_mfa_setup`](./graphql-api#sms_otp_mfa_setup).
 
 ### `POST /v1/forgot_password`
 
@@ -761,6 +784,50 @@ Delete the entire fine-grained authorization store (model, all versions, and all
 **Request body** — empty
 
 **Response** `{ message: string }`
+
+### Client Registry
+
+Manage machine/workload identity clients. All admin-only. Field-level request/response
+shapes and examples: [Client Registry guide](./client-registry).
+
+| Endpoint                                | Description                                                          |
+| ---------------------------------------- | --------------------------------------------------------------------- |
+| `POST /v1/admin/create_client`           | Provision a new client; returns the secret exactly once.              |
+| `POST /v1/admin/update_client`           | Update name, description, allowed scopes, or active state.            |
+| `POST /v1/admin/delete_client`           | Delete a client by id, cascading to its trusted issuers.               |
+| `POST /v1/admin/rotate_client_secret`    | Replace the client secret, returned exactly once.                      |
+| `POST /v1/admin/client`                  | Get a single client by id. Secret never surfaced.                     |
+| `POST /v1/admin/clients`                 | List clients with pagination. Secrets never surfaced.                 |
+
+### Trusted Issuers
+
+Manage external JWT issuers for RFC 7523 `private_key_jwt` client assertions. All
+admin-only. Field-level request/response shapes: [Workload Identity](../enterprise/workload-identity).
+
+| Endpoint                                  | Description                                                          |
+| ------------------------------------------ | --------------------------------------------------------------------- |
+| `POST /v1/admin/add_trusted_issuer`        | Register an issuer for a client (`subject_claim` defaults to `sub`). |
+| `POST /v1/admin/update_trusted_issuer`     | Update name, JWKS URL, expected audience, active state, or SPIFFE hint. |
+| `POST /v1/admin/delete_trusted_issuer`     | Delete a trusted issuer by id.                                        |
+| `POST /v1/admin/trusted_issuer`            | Get a single trusted issuer by id.                                    |
+| `POST /v1/admin/trusted_issuers`           | List trusted issuers, optionally filtered by client id.              |
+
+### SAML IdP
+
+Manage Authorizer acting as a SAML 2.0 IdP for downstream service providers, plus IdP
+signing-key rotation. All admin-only. Field-level request/response shapes: [SAML IdP](../enterprise/saml-idp).
+
+| Endpoint                                        | Description                                                          |
+| ------------------------------------------------ | --------------------------------------------------------------------- |
+| `POST /v1/admin/create_saml_service_provider`    | Register a downstream SP.                                             |
+| `POST /v1/admin/update_saml_service_provider`    | Update a downstream SP's name, endpoints, certificate, or mapping.    |
+| `POST /v1/admin/delete_saml_service_provider`    | Delete a downstream SP by id.                                         |
+| `POST /v1/admin/saml_service_provider`           | Get a single downstream SP by id.                                     |
+| `POST /v1/admin/saml_service_providers`          | List downstream SPs for an org.                                       |
+| `POST /v1/admin/rotate_saml_idp_cert`            | Generate a new current signing keypair, demoting the previous one.    |
+| `POST /v1/admin/retire_saml_idp_key`             | Retire a published-but-not-signing SAML IdP key by id.                |
+| `POST /v1/admin/saml_idp_keys`                   | List all SAML IdP signing keys for an org.                            |
+| `POST /v1/admin/import_saml_sp_metadata`         | Parse pasted SP metadata XML; no record created, no remote fetch.     |
 
 ## Errors
 

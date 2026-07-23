@@ -19,6 +19,7 @@ Organizations are the anchor for the other enterprise features:
 | [OIDC SSO broker](./org-sso-oidc) | One upstream OIDC IdP connection |
 | [SAML 2.0 SP](./org-saml) | One upstream SAML IdP connection |
 | [SCIM 2.0 provisioning](./scim) | One inbound SCIM endpoint + bearer token |
+| [Verified domains + Home Realm Discovery](./org-domains) | Many verified email domains, used to route logins to this org's SSO |
 
 Users who sign in through an org's SSO connection are JIT-provisioned and automatically added as members of that organization.
 

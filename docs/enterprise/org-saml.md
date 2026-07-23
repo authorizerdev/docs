@@ -1,5 +1,5 @@
 ---
-sidebar_position: 3
+sidebar_position: 4
 title: Per-Org SAML 2.0 SSO
 ---
 
@@ -102,3 +102,7 @@ Disabled by default. Set `allow_idp_initiated: true` only if the org's IdP canno
 ### AuthnRequest signing
 
 AuthnRequests are currently emitted unsigned (HTTP-Redirect binding). All SP-side assertion security is enforced at the ACS; request signing protects the IdP against forged requests and is a future upgrade.
+
+## Acting as an IdP instead?
+
+This page covers Authorizer as the **SP** (consuming assertions from an org's upstream corporate IdP). Authorizer can also act as a **SAML IdP** — issuing signed assertions to downstream Service Providers like Zendesk or Salesforce, per org. See [SAML 2.0 Identity Provider](./saml-idp).

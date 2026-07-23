@@ -29,8 +29,9 @@ This page is the one-stop reference for every endpoint, parameter, and integrati
 | RFC 7523 (JWT client assertions)      | Implemented   | `private_key_jwt` via [trusted issuers](../enterprise/workload-identity) — K8s SA tokens, SPIFFE JWT-SVIDs |
 | RFC 7636 (PKCE)                       | Implemented   | `S256` and `plain` methods; defaults to `plain` when the method is omitted (§4.2) |
 | RFC 7662 (Token Introspection)        | Implemented   | Non-disclosure for inactive tokens                                 |
+| RFC 8414 (Authorization Server Metadata) | Implemented | `/.well-known/oauth-authorization-server` — alias of the OIDC discovery document |
 | RFC 8693 (Token Exchange)             | Implemented   | [Delegation-only profile](../enterprise/token-exchange) with nested `act` chain |
-| RFC 8707 (Resource Indicators)        | Implemented   | `resource` binding on the token-exchange grant (exactly one required) |
+| RFC 8707 (Resource Indicators)        | Implemented   | Optional `resource` on `/authorize` + `/oauth/token` (authorization code flow); exactly one required on the token-exchange grant |
 
 **Not yet implemented** (tracked for future releases): RFC 7591 dynamic client registration, RFC 9101 JAR / Request Object, OIDC Session Management iframe, front-channel logout, automated time-based key rotation.
 
@@ -410,9 +411,10 @@ Returns metadata so clients can auto-configure themselves.
 | `end_session_endpoint`                                | URL for `/logout`                                                                    |
 | `response_types_supported`                            | `["code", "token", "id_token", "code id_token", "code token", "code id_token token", "id_token token"]` |
 | `grant_types_supported`                               | `["authorization_code", "refresh_token", "client_credentials", "implicit", "urn:ietf:params:oauth:grant-type:token-exchange"]` |
-| `scopes_supported`                                    | `["openid", "email", "profile", "offline_access"]`                                   |
+| `scopes_supported`                                    | `["openid", "email", "profile", "phone", "offline_access"]`                          |
 | `response_modes_supported`                            | `["query", "fragment", "form_post", "web_message"]`                                  |
-| `code_challenge_methods_supported`                    | `["S256", "plain"]`                                                                  |
+| `code_challenge_methods_supported`                    | `["S256", "plain"]` — `["S256"]` only when `--oauth2-1-strict` is set                |
+| `resource_indicators_supported`                       | `true` (RFC 8707)                                                                    |
 | `id_token_signing_alg_values_supported`               | Includes configured `--jwt-type` and always `RS256`                                  |
 | `token_endpoint_auth_methods_supported`               | `["client_secret_basic", "client_secret_post", "none", "private_key_jwt"]` (`none` = public client with PKCE) |
 | `introspection_endpoint_auth_methods_supported`       | `["client_secret_basic", "client_secret_post"]`                                      |
@@ -425,12 +427,31 @@ Returns metadata so clients can auto-configure themselves.
 curl https://your-authorizer.example/.well-known/openid-configuration
 ```
 
+#### RFC 8414 alias
+
+**Endpoint:** `GET /.well-known/oauth-authorization-server`
+
+A thin alias serving the identical document as `/.well-known/openid-configuration` — added
+for clients that only know [RFC 8414](https://www.rfc-editor.org/rfc/rfc8414) (OAuth 2.0
+Authorization Server Metadata) and probe this path first without falling back to OIDC
+discovery. This matters for OAuth-only clients like remote MCP hosts implementing the
+[MCP Authorization spec](https://modelcontextprotocol.io), which is layered on RFC 8414/8707
+rather than full OIDC. The response also advertises `resource_indicators_supported: true`
+(RFC 8707).
+
 ### Authorization Endpoint
 
 **Endpoint:** `GET /authorize`
 **Specs:** [RFC 6749](https://www.rfc-editor.org/rfc/rfc6749) | [RFC 7636 (PKCE)](https://www.rfc-editor.org/rfc/rfc7636) | [OIDC Core 1.0 §3](https://openid.net/specs/openid-connect-core-1_0.html#Authentication)
 
 Supported flows: Authorization Code (with PKCE), Implicit, Hybrid.
+
+With `--oauth2-1-strict` (default `false`, opt-in and breaking), Authorizer additionally
+enforces OAuth 2.1: any `response_type` that delivers a bearer token in the fragment
+(`token`, `id_token token`, `code token`, `code id_token token`) is rejected, and PKCE
+`plain` is no longer accepted — only `S256`. Discovery's `code_challenge_methods_supported`
+reflects this (drops `plain` when strict mode is on). Off by default, so existing implicit/
+hybrid-with-token and PKCE-plain clients are unaffected until you opt in.
 
 **Request parameters:**
 
@@ -439,7 +460,7 @@ Supported flows: Authorization Code (with PKCE), Implicit, Hybrid.
 | `client_id`              | Yes                         | Your application's client ID                                                          |
 | `response_type`          | Yes                         | Any supported single or hybrid combination (see discovery)                            |
 | `state`                  | Yes                         | Anti-CSRF token (opaque string). Mandatory in Authorizer                              |
-| `redirect_uri`           | No                          | Must match an allowed origin; defaults to `/app`                                      |
+| `redirect_uri`           | No                          | Must match a registered redirect URI exactly (RFC 6749 §3.1.2.3) if the client has any registered; otherwise checked against `--allowed-origins` only. Defaults to `/app` |
 | `scope`                  | No                          | Space-separated. Default: `openid profile email`                                      |
 | `response_mode`          | No                          | `query`, `fragment`, `form_post`, `web_message`. Hybrid flows forbid `query`          |
 | `code_challenge`         | Yes, when `code` is in type | PKCE challenge: `BASE64URL(SHA256(code_verifier))`                                    |
@@ -451,6 +472,7 @@ Supported flows: Authorization Code (with PKCE), Implicit, Hybrid.
 | `ui_locales`             | No                          | Forwarded to the login UI as a query parameter                                        |
 | `id_token_hint`          | No                          | Advisory ID token; invalid hints are ignored (never cause the request to fail)        |
 | `screen_hint`            | No                          | Authorizer extension: `signup` redirects to the signup page                           |
+| `resource`               | No                          | RFC 8707 resource indicator (authorization code flow only). Must be an absolute URI with no fragment (`invalid_target` otherwise); repeated values are rejected (`invalid_request`). Bound to the code and must be echoed unchanged at `/oauth/token`; sets the access token's `aud` |
 
 **Example authorization code request:**
 
@@ -526,15 +548,19 @@ Serves four grant types: `authorization_code`, `refresh_token`, `client_credenti
 
 Authorization codes expire after **10 minutes** (RFC 6749 §4.1.2 recommendation) and are single-use.
 
+If `resource` was present at `/authorize`, it must be echoed here (form field `resource`) and match exactly, or the request is rejected with `invalid_grant`. It is not a token endpoint parameter in its own right — it can only confirm the value already bound to the code.
+
 **Refresh Token grant:**
 
 | Parameter       | Required | Notes                                          |
 | --------------- | -------- | ---------------------------------------------- |
 | `grant_type`    | Yes      | `refresh_token`                                |
 | `refresh_token` | Yes      | A valid refresh token                          |
-| `client_id`     | Yes      | Your client ID                                 |
+| `client_id`     | Yes      | Your client ID — must match the client the refresh token was originally issued to (enforced via the token's `aud` claim); a mismatch is `invalid_grant` |
 
 Refresh tokens are **rotated** on each use — the old one is invalidated and a new one returned.
+
+**Reuse detection:** each refresh token carries a stable `family_id`, minted once and carried across every rotation in its lineage. Replaying an already-rotated (dead) token is treated as a breach and revokes only that token's family (the specific session lineage) — other sessions and login methods for the same user are untouched. A same-second double-submit of the immediately preceding token (multi-tab race, retry) is tolerated within a **10-second grace window** and is not treated as reuse; anything older, or a replay after the window, revokes the family.
 
 **Success response:**
 
@@ -598,10 +624,10 @@ Standard codes: `invalid_request`, `invalid_client`, `invalid_grant`, `unsupport
 
 ### UserInfo Endpoint
 
-**Endpoint:** `GET /userinfo`
+**Endpoint:** `GET /userinfo` or `POST /userinfo`
 **Specs:** [OIDC Core §5.3](https://openid.net/specs/openid-connect-core-1_0.html#UserInfo) | [OIDC Core §5.4 (scope-based claim filtering)](https://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims) | [RFC 6750 (Bearer Token)](https://www.rfc-editor.org/rfc/rfc6750)
 
-Returns claims about the authenticated end-user, **filtered by the scopes encoded in the access token**.
+Returns claims about the authenticated end-user, **filtered by the scopes encoded in the access token**. Both `GET` and `POST` are accepted per OIDC Core §5.3.1 — either way the access token goes in the `Authorization: Bearer` header (a token in the POST body is not supported).
 
 ```bash
 curl -H "Authorization: Bearer ACCESS_TOKEN" https://your-authorizer.example/userinfo
@@ -616,7 +642,7 @@ curl -H "Authorization: Bearer ACCESS_TOKEN" https://your-authorizer.example/use
 | `phone`   | `phone_number`, `phone_number_verified`                                                                                       |
 | `address` | `address`                                                                                                                     |
 
-The `sub` claim is **always** returned per OIDC Core §5.3.2. Keys belonging to a granted scope group are always present in the response; if the user has no value for a specific claim, the key is emitted with JSON `null` (explicitly permitted by §5.3.2) so callers can rely on a stable schema.
+The `sub` claim is **always** returned per OIDC Core §5.3.2. Claims within a granted scope group are included only when the user actually has a value; unset claims are **omitted**, never emitted as JSON `null` — §5.3.2 permits omission but does not permit a present-but-null claim, and OIDF conformance testing (`oidcc-scope-profile`) enforces this.
 
 **Error response (RFC 6750 §3):**
 

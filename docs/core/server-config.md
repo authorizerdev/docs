@@ -123,14 +123,59 @@ Organization / UI:
   --enable-basic-authentication=true \
   --enable-email-verification=true \
   --enable-magic-link-login=true \
-  --enable-signup=true \
-  --enable-totp-login=true \
-  --enable-email-otp=true \
-  --enable-sms-otp=false
+  --enable-signup=true
 ```
 
 These replace v1 flags such as `DISABLE_BASIC_AUTHENTICATION`, `DISABLE_EMAIL_VERIFICATION`, etc.
 See the [Auth behavior mapping](../migration/v1-to-v2#auth-behavior) for exact correspondences.
+
+### Multi-factor authentication (MFA) & WebAuthn/passkeys
+
+**Breaking change**: `--enable-mfa`, `--enable-totp-login`, `--enable-email-otp`,
+and `--enable-sms-otp` are **removed**. TOTP, email OTP, SMS OTP, and
+WebAuthn/passkey-as-MFA are now all **on by default**; opt out per method with
+the `--disable-*` flags below. `--enforce-mfa` also flipped its default from
+`true` to `false` — MFA is now optional and skippable unless you explicitly
+enforce it.
+
+```bash
+./authorizer \
+  --enforce-mfa=false \
+  --disable-mfa=false \
+  --disable-totp-login=false \
+  --disable-webauthn-mfa=false \
+  --disable-email-otp=false \
+  --disable-sms-otp=false
+```
+
+- **`--enforce-mfa`** (default `false`): require every user to complete MFA
+  enrollment before a token is issued (`mfaGateBlockEnroll`, never skippable).
+  When `false`, users are offered MFA setup once and may skip it
+  (`skip_mfa_setup` mutation); a user's own already-enrolled factor is always
+  required to verify regardless of this flag.
+- **`--disable-mfa`** (default `false`): one-way global kill switch — forces
+  MFA off entirely (TOTP/email-OTP/SMS-OTP unavailable, `--enforce-mfa`
+  neutralized) regardless of the per-method flags below. Does **not** affect
+  WebAuthn/passkey as a **primary login method** (only as an MFA factor).
+- **`--disable-totp-login`** (default `false`): disable TOTP authenticator-app
+  MFA.
+- **`--disable-webauthn-mfa`** (default `false`): disable WebAuthn/passkey as
+  an **MFA factor**. Does not affect WebAuthn/passkey as a primary,
+  passwordless login method — that is always available and has no flag.
+- **`--disable-email-otp`** (default `false`): disable email-OTP MFA. Only
+  takes effect when SMTP is configured (`--smtp-*`); otherwise email OTP is
+  unavailable regardless of this flag.
+- **`--disable-sms-otp`** (default `false`): disable SMS-OTP MFA. Only takes
+  effect when Twilio is configured (`--twilio-*`); otherwise SMS OTP is
+  unavailable regardless of this flag.
+
+Effective availability of each method is exposed on the public `meta`
+GraphQL query (`is_totp_mfa_enabled`, `is_email_otp_mfa_enabled`,
+`is_sms_otp_mfa_enabled`, `is_webauthn_enabled`, `is_mfa_enforced`) so
+frontends never have to reverse-engineer flag combinations. See
+[MFA & Passkeys](./security#multi-factor-authentication-mfa--passkeys) for
+the full behavior — withheld-token first-time setup, lockout, admin recovery,
+and the WebAuthn/passkey GraphQL operations.
 
 ### Cookies
 
@@ -321,6 +366,8 @@ See the dedicated [Security Hardening](./security) page for:
 - OTP and TOTP at-rest hardening, including the rolling-deploy note
   for multi-replica clusters
 - Login error normalization and user-enumeration defences
+- Multi-factor authentication (MFA) behavior, lockout, admin recovery, and
+  WebAuthn/passkey ceremonies
 
 ---
 
