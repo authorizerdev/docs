@@ -14,9 +14,11 @@ sequenceDiagram
     participant W as Workload
     participant A as Authorizer
 
-    Note over W: holds a platform-issued JWT<br/>(K8s SA token / SPIFFE JWT-SVID)
-    W->>A: POST /oauth/token grant_type=client_credentials<br/>client_assertion_type=...jwt-bearer<br/>client_assertion=&lt;JWT&gt;
-    Note over A: iss → trusted issuer row → JWKS verify<br/>→ aud/exp/subject/replay checks
+    Note over W: holds a platform-issued JWT (K8s SA token or SPIFFE JWT-SVID)
+    W->>A: POST /oauth/token, grant_type=client_credentials
+    W->>A: client_assertion_type=jwt-bearer, client_assertion=JWT
+    Note over A: iss maps to a trusted issuer row
+    Note over A: JWKS verify, then aud/exp/subject/replay checks
     A->>A: authenticate AS the bound service_account
     A-->>W: Authorizer access token
 ```
