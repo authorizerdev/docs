@@ -110,6 +110,7 @@ const sidebars: SidebarsConfig = {
       label: 'authorizer-go',
       items: [
         'sdks/authorizer-go/index',
+        'sdks/authorizer-go/functions',
         'sdks/authorizer-go/example',
         'sdks/authorizer-go/admin',
       ],
