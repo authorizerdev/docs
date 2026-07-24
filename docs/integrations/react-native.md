@@ -39,36 +39,31 @@ Start your Authorizer instance with the required CLI flags:
 
 Note the `--client-id` value -- you will need it in the SDK configuration below. Check [Server Configuration](/core/server-config) for all available flags.
 
-## Step 3: Install expo
+## Step 3: Bootstrap react native project
+
+The legacy global `expo-cli` (`expo init`) is deprecated. Use `create-expo-app` instead:
 
 ```
-npm install --global expo-cli
+npx create-expo-app with-react-native-expo --template blank-typescript
 ```
 
-## Step 4: Bootstrap react native project
+## Step 4: Install dependencies
 
 ```
-expo init with-react-native-expo
+npm install @authorizerdev/authorizer-js expo-auth-session expo-crypto expo-secure-store expo-web-browser
 ```
 
-Select blank default app
+> Note: `jwt-decode` and `react-native-base64` are **not** needed -- the flow below fetches the user profile via `authorizerRef.getProfile()` instead of decoding a JWT client-side.
 
-## Step 5: Install dependencies
+## Step 5: Create redirect url
 
-```
-npm install @authorizerdev/authorizer-js expo-auth-session expo-random expo-secure-store expo-web-browser jwt-decode react-native-base64
-```
-
-## Step 6: Create redirect url
-
-Redirect URL is used to redirect back to your application once the authentication process is complete
+Redirect URL is used to redirect back to your application once the authentication process is complete. The `useProxy` option (Expo's auth proxy service) has been removed from `expo-auth-session` -- call `makeRedirectUri()` with no arguments:
 
 ```js
-const useProxy = false
-const redirectUri = AuthSession.makeRedirectUri({ useProxy })
+const redirectUri = AuthSession.makeRedirectUri()
 ```
 
-## Step 7: Create AuthorizerJS Client
+## Step 6: Create AuthorizerJS Client
 
 - Get your client ID from the `--client-id` flag used when starting the server
 
@@ -76,6 +71,7 @@ const redirectUri = AuthSession.makeRedirectUri({ useProxy })
 const authorizerClientID = 'YOUR_CLIENT_ID'
 const authorizerURL = 'YOUR_AUTHORIZER_INSTANCE_URL'
 const authorizationEndpoint = `${authorizerURL}/authorize`
+const tokenEndpoint = `${authorizerURL}/oauth/token`
 const authorizerRef = new Authorizer({
   clientID: authorizerClientID,
   authorizerURL: authorizerURL,
@@ -83,9 +79,9 @@ const authorizerRef = new Authorizer({
 })
 ```
 
-## Step 8: Setup Expo AuthSession
+## Step 7: Setup Expo AuthSession
 
-Configure `useAuthRequest` hook with above configs
+Configure `useAuthRequest` hook with above configs. The example uses the **authorization code + PKCE** flow (`responseType: 'code'`, `usePKCE: true`) rather than the implicit `token` flow, since Expo's `expo-auth-session` treats PKCE as the secure default for public clients.
 
 > Note: Use `offline_access` in scope if you want to get refresh token and want to perform silent refresh when user comes back to app. If your app is data sensitive we do not recommend using refresh token (example banking / finance app)
 
@@ -94,37 +90,29 @@ const [request, result, promptAsync] = AuthSession.useAuthRequest(
   {
     redirectUri,
     clientId: authorizerClientID,
-    // id_token will return a JWT token
-    responseType: 'token',
+    responseType: 'code',
     // use offline access to get a refresh token and perform silent refresh in background
     scopes: ['openid', 'profile', 'email', 'offline_access'],
     extraParams: {
       // ideally, this will be a random value
       nonce: 'nonce',
     },
+    usePKCE: true,
   },
   { authorizationEndpoint }
 )
 ```
 
-## Step 9: Listen to the authentication process change
+## Step 8: Handle the authentication result
 
-Get auth session result and set refresh token in secure store for silent refresh.
-You also get the access token, id token for the further usage
+On success, exchange the authorization code for tokens with `AuthSession.exchangeCodeAsync()`, store the refresh token, then fetch the profile with the access token to get the user's email.
 
 ```js
 const authorizerRefreshTokenKey = `authorizer_refresh_token`
 
 useEffect(() => {
   async function setResult() {
-    if (result) {
-      if (result.params.refresh_token) {
-        await SecureStore.setItemAsync(
-          authorizerRefreshTokenKey,
-          result.params.refresh_token
-        )
-      }
-
+    if (result && result.type === 'success') {
       if (result.error) {
         Alert.alert(
           'Authentication error',
@@ -133,24 +121,39 @@ useEffect(() => {
         return
       }
 
-      if (result.type === 'success') {
-        // Retrieve the JWT token and decode it
-        const jwtToken = result.params.id_token
-        const decoded = jwtDecode(jwtToken)
+      const codeRes = await AuthSession.exchangeCodeAsync(
+        {
+          code: result.params.code,
+          redirectUri,
+          clientId: authorizerClientID,
+          extraParams: {
+            code_verifier: request?.codeVerifier || '',
+          },
+        },
+        { tokenEndpoint }
+      )
 
-        const { email } = decoded
-        setEmail(email)
+      if (codeRes?.refreshToken) {
+        await SecureStore.setItemAsync(
+          authorizerRefreshTokenKey,
+          codeRes.refreshToken
+        )
       }
+
+      // get profile using the access token
+      const { data: profileData } = await authorizerRef.getProfile({
+        Authorization: `Bearer ${codeRes?.accessToken}`,
+      })
+      setEmail(profileData?.email ?? undefined)
     }
   }
   setResult()
 }, [result])
 ```
 
-## Step 10: Silent Refresh
+## Step 9: Silent Refresh
 
-Perform Silent Refresh. Note silent refresh will give you new access token, id token and refresh token.
-You can use access token & id token for further API requests.
+Perform Silent Refresh. Note silent refresh will give you a new access token and refresh token, which you can then use to re-fetch the profile.
 
 ```js
 // on init of app silently refresh token if it exists
@@ -162,22 +165,27 @@ useEffect(() => {
       )
       if (refreshToken) {
         try {
-          const res = await authorizerRef.getToken({
+          const { data } = await authorizerRef.getToken({
             grant_type: 'refresh_token',
             refresh_token: refreshToken,
           })
           await SecureStore.setItemAsync(
-            'authorizer_refresh_token',
-            res.refresh_token
+            authorizerRefreshTokenKey,
+            data?.refresh_token || ''
           )
-          setEmail(jwtDecode(res.id_token).email)
+
+          // get profile using the new access token
+          const { data: profileData } = await authorizerRef.getProfile({
+            Authorization: `Bearer ${data?.access_token}`,
+          })
+          setEmail(profileData?.email ?? undefined)
         } catch (err) {
           console.error(err)
           await SecureStore.deleteItemAsync(authorizerRefreshTokenKey)
         }
       }
     } catch (error) {
-      setEmail(null)
+      setEmail(undefined)
       await SecureStore.deleteItemAsync(authorizerRefreshTokenKey)
     } finally {
       setLoading(false)
@@ -187,4 +195,33 @@ useEffect(() => {
 }, [])
 ```
 
-Also you can perform silent refresh when access token / id token expires. You also get `expires_in` in the response of token which you can use. So you can set time interval after which it should fetch new tokens.
+Also you can perform silent refresh when the access token expires. You also get `expires_in` in the response of token which you can use. So you can set time interval after which it should fetch new tokens.
+
+## Step 10: Logout
+
+Revoke the refresh token, clear it from `SecureStore`, and open the Authorizer `/logout` endpoint in a browser session so the server-side cookie is cleared too:
+
+```js
+const handleLogout = async () => {
+  setLoading(true)
+  setEmail(undefined)
+
+  try {
+    const refreshToken = await SecureStore.getItemAsync(
+      authorizerRefreshTokenKey
+    )
+    await authorizerRef.revokeToken({
+      refresh_token: refreshToken || '',
+    })
+    await SecureStore.deleteItemAsync(authorizerRefreshTokenKey)
+    await WebBrowser.openAuthSessionAsync(
+      `${authorizerURL}/logout?redirect_uri=${redirectUri}`,
+      'redirectUrl'
+    )
+  } catch (err) {
+    console.log(err)
+  } finally {
+    setLoading(false)
+  }
+}
+```

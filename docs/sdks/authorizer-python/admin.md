@@ -109,8 +109,12 @@ Each method declares which protocols support it. Calling a method on an unsuppor
 protocol raises a clear error early rather than emitting a 404.
 
 > **⚠ Destructive:** `delete_user`, `delete_webhook`, `delete_email_template`,
-> `fga_write_model` (overwrites the model), `fga_delete_tuples`, and `fga_reset` (wipes all
-> FGA data) permanently change or remove data.
+> `fga_write_model` (overwrites the model), `fga_delete_tuples`, `fga_reset` (wipes all
+> FGA data), `delete_client`, `rotate_client_secret`/`rotate_scim_token` (invalidate the
+> old secret/token), `delete_trusted_issuer`, `delete_organization`,
+> `delete_org_oidc_connection`/`delete_org_saml_connection`, `delete_saml_service_provider`,
+> `retire_saml_idp_key`, `delete_org_domain`, and `delete_scim_endpoint` permanently change
+> or remove data — see each method's note below.
 
 #### Auth, session & meta
 
@@ -174,12 +178,81 @@ protocol raises a clear error early rather than emitting a 404.
 | `fga_expand`        | Expand a relation into its userset.      | ✓ | ✓ | ✓ |
 | `fga_reset`         | **Reset all FGA data.**                  | ✓ | ✓ |   |
 
+#### Clients (service accounts / machine identities)
+
+Clients created here authenticate over `/oauth/token` with the `client_credentials` and
+token-exchange grants — see [Machine-to-machine & agent delegation](./functions#oauth-rest).
+
+| Method                 | Description                                     | grpc | rest | gql |
+| ---------------------- | ------------------------------------------------ | :--: | :--: | :-: |
+| `create_client`        | Create a client. `client_secret` is shown **once**. | ✓ | ✓ | ✓ |
+| `update_client`        | Update a client.                                | ✓ | ✓ | ✓ |
+| `delete_client`        | **Delete a client** — its tokens stop resolving. | ✓ | ✓ | ✓ |
+| `rotate_client_secret` | **Rotate a client's secret** (old one invalidated, new one shown once). | ✓ | ✓ | ✓ |
+| `get_client`           | Get a single client.                            | ✓ | ✓ | ✓ |
+| `clients`              | List clients (paginated).                       | ✓ | ✓ | ✓ |
+
+#### Trusted issuers
+
+External OIDC/JWT issuers Authorizer accepts tokens from (e.g. for federated
+machine/agent identities).
+
+| Method                   | Description                              | grpc | rest | gql |
+| ------------------------ | ----------------------------------------- | :--: | :--: | :-: |
+| `add_trusted_issuer`     | Add a trusted issuer.                    | ✓ | ✓ | ✓ |
+| `update_trusted_issuer`  | Update a trusted issuer.                 | ✓ | ✓ | ✓ |
+| `delete_trusted_issuer`  | **Delete a trusted issuer** — its tokens stop authenticating. | ✓ | ✓ | ✓ |
+| `get_trusted_issuer`     | Get a single trusted issuer.             | ✓ | ✓ | ✓ |
+| `trusted_issuers`        | List trusted issuers (paginated).        | ✓ | ✓ | ✓ |
+
+#### SAML Identity Provider
+
+Authorizer acting as a SAML IdP for downstream service providers.
+
+| Method                          | Description                                                        | grpc | rest | gql |
+| -------------------------------- | -------------------------------------------------------------------- | :--: | :--: | :-: |
+| `create_saml_service_provider`   | Register a downstream SP.                                          | ✓ | ✓ | ✓ |
+| `update_saml_service_provider`   | Update a registered SP.                                             | ✓ | ✓ | ✓ |
+| `delete_saml_service_provider`   | **Delete a registered SP** — it can no longer be issued assertions. | ✓ | ✓ | ✓ |
+| `get_saml_service_provider`      | Get a single registered SP.                                         | ✓ | ✓ | ✓ |
+| `list_saml_service_providers`    | List registered SPs (paginated).                                    | ✓ | ✓ | ✓ |
+| `rotate_saml_idp_cert`           | Generate a new signing keypair; the previous key stays active.      | ✓ | ✓ | ✓ |
+| `retire_saml_idp_key`            | **Retire a signing key** — drops out of IdP metadata; cannot retire the current key. | ✓ | ✓ | ✓ |
+| `list_saml_idp_keys`             | List signing keys (`-> list[SAMLIDPKey]`).                          | ✓ | ✓ | ✓ |
+| `import_saml_sp_metadata`        | Parse pasted SP metadata XML (no record is created, no URL fetched). | ✓ | ✓ | ✓ |
+
 #### GraphQL-only extras
 
 These have no REST / gRPC equivalent and work **over GraphQL only**:
 
-| Method               | Description                          |
-| -------------------- | ------------------------------------ |
-| `admin_signup`       | Bootstrap the first admin.           |
-| `update_env`         | Update server environment/config.    |
-| `generate_jwt_keys`  | Generate a new JWT signing key pair. |
+| Method                          | Description                                          |
+| --------------------------------- | ------------------------------------------------------- |
+| `admin_signup`                    | Bootstrap the first admin.                             |
+| `update_env`                      | Update server environment/config.                      |
+| `generate_jwt_keys`               | Generate a new JWT signing key pair.                   |
+| `create_organization`             | Create an organization.                                |
+| `update_organization`             | Update an organization.                                |
+| `delete_organization`             | **Delete an organization.**                            |
+| `get_organization`                | Get a single organization.                             |
+| `organizations`                   | List organizations (paginated).                        |
+| `add_org_member`                  | Add a member to an organization.                       |
+| `remove_org_member`               | Remove a member from an organization.                  |
+| `org_members`                     | List an organization's members.                        |
+| `create_org_oidc_connection`      | Create an org-scoped OIDC SSO connection.               |
+| `update_org_oidc_connection`      | Update an org-scoped OIDC SSO connection.               |
+| `delete_org_oidc_connection`      | **Delete an org-scoped OIDC SSO connection** — members lose this SSO path. |
+| `get_org_oidc_connection`         | Get an org-scoped OIDC SSO connection.                  |
+| `create_org_saml_connection`      | Create an org-scoped SAML SSO connection.               |
+| `update_org_saml_connection`      | Update an org-scoped SAML SSO connection.               |
+| `delete_org_saml_connection`      | **Delete an org-scoped SAML SSO connection** — members lose this SSO path. |
+| `get_org_saml_connection`         | Get an org-scoped SAML SSO connection.                  |
+| `user_organizations`              | List the organizations a user belongs to.               |
+| `request_org_domain`              | Start home-realm-discovery domain verification (DNS challenge). |
+| `verify_org_domain`               | Verify a requested domain's DNS challenge.              |
+| `add_verified_org_domain`         | Super-admin only: trust-assert a domain as verified, skipping the DNS challenge. |
+| `delete_org_domain`               | **Delete a verified org domain** — it stops routing logins to the org. |
+| `org_domains`                     | List an organization's verified domains.                |
+| `create_scim_endpoint`            | Create a SCIM provisioning endpoint. Bearer token shown **once**. |
+| `rotate_scim_token`               | **Rotate a SCIM endpoint's bearer token** (old one invalidated, new one shown once). |
+| `delete_scim_endpoint`            | **Delete a SCIM endpoint** — provisioning stops working. |
+| `get_scim_endpoint`               | Get a single SCIM endpoint.                             |

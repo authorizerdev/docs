@@ -679,12 +679,15 @@ Retrieve audit log entries with optional filtering and pagination.
 
 **Request body**
 
-| Field        | Type              | Description              | Required |
-| ------------ | ----------------- | ----------------------- | -------- |
-| `pagination` | `{ page, limit }` | Page & limit.            | no       |
-| `actor_id`   | `string`          | Filter by actor id.      | no       |
-| `action`     | `string`          | Filter by action type.   | no       |
-| `resource`   | `string`          | Filter by resource type. | no       |
+| Field            | Type              | Description                       | Required |
+| ---------------- | ----------------- | ---------------------------------- | -------- |
+| `pagination`     | `{ page, limit }` | Page & limit.                       | no       |
+| `actor_id`       | `string`          | Filter by actor id.                 | no       |
+| `action`         | `string`          | Filter by action type.              | no       |
+| `resource_type`  | `string`          | Filter by resource type.            | no       |
+| `resource_id`    | `string`          | Filter by resource id.              | no       |
+| `from_timestamp` | `int64`           | Filter entries at/after this Unix timestamp. | no |
+| `to_timestamp`   | `int64`           | Filter entries at/before this Unix timestamp. | no |
 
 **Response** `{ audit_logs: AuditLog[], pagination: { ... } }`
 

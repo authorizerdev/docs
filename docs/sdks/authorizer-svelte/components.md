@@ -25,13 +25,15 @@ title: Components
 
 ### Props
 
-- `config`: Object to configure the `authorizer` backend URL and redirect URL. It accepts JSON object with following keys
+- `config`: Object to configure the `authorizer` backend URL, redirect URL and client id. It accepts JSON object with following keys
 
-| Key                     | Type       | Description                                                                                                                | Required |
-| ----------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------- | -------- |
-| `authorizerURL`         | `string`   | Authorizer backend URL                                                                                                     | `true`   |
-| `redirectURL`           | `string`   | Frontend application URL or the page where you want to redirect user post login. Default value is `window.location.origin` | `true`   |
-| `onStateChangeCallback` | `function` | [optional] Async callback that is called whenever context state information changes.                                       | `false`  |
+| Key             | Type     | Description                                                                                                                 | Required |
+| --------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------| -------- |
+| `authorizerURL` | `string` | Authorizer backend URL                                                                                                      | `true`   |
+| `redirectURL`   | `string` | Frontend application URL or the page where you want to redirect user post login. Default value is `window.location.origin` | `true`   |
+| `client_id`     | `string` | Client ID of the application, generated from the Authorizer dashboard                                                      | `true`   |
+
+- `onStateChangeCallback={(newState)=>{}}`: [optional] Async callback that is called whenever context state information changes.
 
 ### Sample Usage
 
@@ -44,6 +46,7 @@ const App = () => {
       config={{
         authorizerURL: 'http://localhost:8080',
         redirectURL: window.location.origin,
+        client_id: 'YOUR_CLIENT_ID',
       }}
       onStateChangeCallback={async (newState) => {}}
     >
@@ -60,6 +63,7 @@ A core component that includes:
 - social logins
 - signup view
 - login view
+- magic link login view
 - forgot password view
 
 Pre configured component that shows various login/signup options based on the backend configurations. Make sure it is used as Child of `AuthorizerProvider`.
@@ -72,6 +76,7 @@ It has following optional props as callback events that are triggered via variou
 - `onMagicLinkLogin={(magicLinkResponse)=>{}}`: event called when magic link login form is submitted successfully.
 - `onSignup={(signupResponse)=>{}}`: event called when signup form is submitted successfully.
 - `onForgotPassword={(forgotPasswordResponse)={}}`: called when forgot password form is submitted successfully.
+- `roles={['user']}`: [optional] list of roles to request for the logged in / signed up user.
 
 ### Sample Usage
 
@@ -101,6 +106,9 @@ A component to render basic authentication singup form. Make sure it is used as 
 ### Props
 
 - `onSignup={(response)=>{}}`: event called when signup form is submitted successfully.
+- `setView={(view)=>{}}`: [optional] callback used internally by `Authorizer` to switch between `Login`/`Signup`/`ForgotPassword` views. Only needed if you are composing your own view switcher.
+- `urlProps={{ scope: [], redirect_uri: undefined, state: undefined }}`: [optional] object to override the OAuth `scope`, `redirect_uri` and `state` query params used for the signup request.
+- `roles={['user']}`: [optional] list of roles to request for the signed up user.
 
 ### Sample Usage
 
@@ -125,6 +133,9 @@ A component to render basic authentication login form. Make sure this is used as
 ### Props
 
 - `onLogin={(response)=>{}}`: event called when login form is submitted successfully.
+- `setView={(view)=>{}}`: [optional] callback used internally by `Authorizer` to switch between `Login`/`Signup`/`ForgotPassword` views. Only needed if you are composing your own view switcher.
+- `urlProps={{ scope: [], redirect_uri: undefined, state: undefined }}`: [optional] object to override the OAuth `scope`, `redirect_uri` and `state` query params used for the login request.
+- `roles={['user']}`: [optional] list of roles to request for the logged in user.
 
 ### Sample Usage
 
@@ -149,6 +160,8 @@ A component to render magic link login form. Make sure this is used as Child of 
 ### Props
 
 - `onMagicLinkLogin={(response)=>{}}`: event called when magic link login form is submitted successfully.
+- `urlProps={{ state: 'random-string', redirect_uri: undefined }}`: [optional] object to override the `state` and `redirect_uri` query params used for the magic link request.
+- `roles={['user']}`: [optional] list of roles to request for the logged in user.
 
 ### Sample Usage
 
@@ -172,7 +185,8 @@ A component to render list of social media login buttons based on backend config
 
 ### Props
 
-- `onForgotPassword={(response)=>{}}`: event called when forgot password form is submitted successfully.
+- `urlProps={{ scope: [] }}`: [optional] object to override the OAuth `scope` query param sent with the social login request.
+- `roles={['user']}`: [optional] list of roles to request for the logged in user.
 
 ### Sample Usage
 
@@ -196,7 +210,9 @@ A component to render forgot password form. Make sure this is used as Child of `
 
 ### Props
 
-No props exposed for this components
+- `onForgotPassword={(response)=>{}}`: event called when forgot password form is submitted successfully.
+- `setView={(view)=>{}}`: [optional] callback used internally by `Authorizer` to switch between `Login`/`Signup`/`ForgotPassword` views. Only needed if you are composing your own view switcher.
+- `urlProps={{ state: 'random-string', redirect_uri: undefined }}`: [optional] object to override the `state` and `redirect_uri` query params used for the request.
 
 ### Sample Usage
 
@@ -248,9 +264,11 @@ A component to render the OTP verification form. Make sure it is used as Child o
 
 - `email="foo@bar.com"`: user email address on which the OTP was sent.
 
-It also has following optional prop as callback event that is triggered on form submit.
+It also has following optional props.
 
-- `onLogin={(response)=>{}}`: event called when verify OTP form is submitted successfully.
+- `onLogin={(response)=>{}}`: callback event that is triggered when the verify OTP form is submitted successfully.
+- `setView={(view)=>{}}`: callback used internally by `Authorizer` to switch between `Login`/`Signup`/`ForgotPassword` views. Only needed if you are composing your own view switcher.
+- `urlProps={{ state: undefined }}`: object to override the `state` query param used for the verify request.
 
 ### Sample Usage
 

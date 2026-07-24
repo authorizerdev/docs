@@ -84,11 +84,20 @@ is a one-click example. Save to install.
 curl http://localhost:8080/graphql \
   -H 'Content-Type: application/json' \
   -H 'X-Authorizer-Admin-Secret: admin' \
+  -H 'Origin: http://localhost:8080' \
   -d '{
     "query": "mutation ($params: FgaWriteModelInput!) { _fga_write_model(params: $params) { id } }",
     "variables": { "params": { "dsl": "model\n  schema 1.1\n\ntype user\n\ntype document\n  relations\n    define owner: [user]\n    define editor: [user] or owner\n    define viewer: [user] or editor\n    define can_view: viewer\n    define can_edit: editor\n    define can_delete: owner" } }
   }'
 ```
+
+:::note CSRF: send an Origin header
+`POST /graphql` is CSRF-protected — state-changing requests need a matching
+`Origin` (or `Referer`) header even when called server-to-server with the
+admin secret. Both example apps in the [examples repo](https://github.com/authorizerdev/examples)
+(`with-fga-permissions`, `with-fga-advanced`) set `Origin` on every request
+for exactly this reason.
+:::
 
 ### Step 2 — Grant access (write tuples)
 

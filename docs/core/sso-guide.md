@@ -301,9 +301,17 @@ Model tenants as organizations with per-org members and per-org roles, and attac
 
 Authorizer acts as a SAML 2.0 Service Provider per organization: register a corporate IdP's entity ID, SSO URL, and signing certificate, and that org's users log in through their IdP with JIT provisioning. See [SAML SSO](../enterprise/org-saml).
 
+### SAML 2.0 Identity Provider (IdP)
+
+The architectural inverse of the SP role above: per organization, Authorizer can also act as a **SAML 2.0 Identity Provider**, issuing signed assertions to downstream Service Providers (Zendesk, Salesforce, Notion, …) so their SAML-based SSO logs users in with their existing Authorizer session. Each org gets its own SAML signing keypair with `current` / `active` / `retired` rotation states, and both SP-initiated and opt-in IdP-initiated flows are supported. See [SAML Identity Provider](../enterprise/saml-idp).
+
 ### Per-Organization OIDC SSO (Broker)
 
 The OIDC sibling of the SAML SP: Authorizer brokers a per-org upstream OIDC IdP (Okta, Entra ID, Google Workspace) as a Relying Party. See [OIDC SSO](../enterprise/org-sso-oidc).
+
+### Verified Domains & Home Realm Discovery
+
+Organizations can prove ownership of an email domain — via a DNS TXT challenge, or a trusted-assert shortcut for super-admins — so a login for `jane@acme.com` is automatically routed to Acme's SAML or OIDC connection instead of the generic login form. This routing lookup is called Home Realm Discovery (HRD) and is exposed at the public `/api/v1/org-discovery` endpoint (opt-in, off by default). A verified domain only ever affects routing — it never grants org membership and never blocks login. See [Verified Domains & Home Realm Discovery](../enterprise/org-domains).
 
 ### SCIM 2.0 Provisioning (RFC 7644)
 
@@ -353,7 +361,8 @@ Authorizer gives you a **self-hosted, single-binary SSO server** that speaks sta
 | Custom access token scripts | |
 | [Client registry](./client-registry) + `client_credentials` grant | |
 | [Organizations](../enterprise/organizations) with per-org members & roles | |
-| [Per-org SAML 2.0 SP](../enterprise/org-saml) & [OIDC broker SSO](../enterprise/org-sso-oidc) | |
+| [Per-org SAML 2.0 SP](../enterprise/org-saml), [SAML 2.0 IdP](../enterprise/saml-idp) & [OIDC broker SSO](../enterprise/org-sso-oidc) | |
+| [Verified domains & Home Realm Discovery](../enterprise/org-domains) | |
 | [SCIM 2.0 provisioning](../enterprise/scim) | |
 | [Workload identity](../enterprise/workload-identity) (K8s, SPIFFE) | |
 | [RFC 8693 token exchange](../enterprise/token-exchange) (delegation) | |
