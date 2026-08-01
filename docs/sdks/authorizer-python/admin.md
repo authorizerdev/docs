@@ -221,38 +221,53 @@ Authorizer acting as a SAML IdP for downstream service providers.
 | `list_saml_idp_keys`             | List signing keys (`-> list[SAMLIDPKey]`).                          | ✓ | ✓ | ✓ |
 | `import_saml_sp_metadata`        | Parse pasted SP metadata XML (no record is created, no URL fetched). | ✓ | ✓ | ✓ |
 
+#### Organizations, org SSO, SCIM and org domains
+
+Multi-tenant organizations, their membership, upstream SSO connections, inbound SCIM
+provisioning, and the verified domains that drive home-realm discovery. These were
+GraphQL-only until server 2.4.0, which added the proto RPCs and REST bindings — against an
+older server they still work over `graphql` only.
+
+Most are authorized for a super-admin **or** that organization's own org-admin (the
+reserved `authorizer:org_admin` role); the platform-wide operations (`organizations`,
+`create_organization`, `delete_organization`, `add_verified_org_domain`) stay super-admin
+only.
+
+| Method | Description | gql | rest | grpc |
+| ------ | ----------- | :-: | :--: | :--: |
+| `create_organization` | Create an organization. | ✓ | ✓ | ✓ |
+| `update_organization` | Update an organization. | ✓ | ✓ | ✓ |
+| `delete_organization` | **Delete an organization.** | ✓ | ✓ | ✓ |
+| `get_organization` | Get a single organization. | ✓ | ✓ | ✓ |
+| `organizations` | List organizations (paginated). | ✓ | ✓ | ✓ |
+| `add_org_member` | Add a member to an organization. | ✓ | ✓ | ✓ |
+| `remove_org_member` | Remove a member from an organization. | ✓ | ✓ | ✓ |
+| `org_members` | List an organization's members. | ✓ | ✓ | ✓ |
+| `user_organizations` | List the organizations a user belongs to. | ✓ | ✓ | ✓ |
+| `request_org_domain` | Start home-realm-discovery domain verification (DNS challenge). | ✓ | ✓ | ✓ |
+| `verify_org_domain` | Verify a requested domain's DNS challenge. | ✓ | ✓ | ✓ |
+| `add_verified_org_domain` | Super-admin only: trust-assert a domain as verified, skipping the DNS challenge. | ✓ | ✓ | ✓ |
+| `delete_org_domain` | **Delete a verified org domain** — it stops routing logins to the org. | ✓ | ✓ | ✓ |
+| `org_domains` | List an organization's verified domains. | ✓ | ✓ | ✓ |
+| `create_org_oidc_connection` | Create an org-scoped OIDC SSO connection. | ✓ | ✓ | ✓ |
+| `update_org_oidc_connection` | Update an org-scoped OIDC SSO connection. | ✓ | ✓ | ✓ |
+| `delete_org_oidc_connection` | **Delete an org-scoped OIDC SSO connection** — members lose this SSO path. | ✓ | ✓ | ✓ |
+| `get_org_oidc_connection` | Get an org-scoped OIDC SSO connection. | ✓ | ✓ | ✓ |
+| `create_org_saml_connection` | Create an org-scoped SAML SSO connection. | ✓ | ✓ | ✓ |
+| `update_org_saml_connection` | Update an org-scoped SAML SSO connection. | ✓ | ✓ | ✓ |
+| `delete_org_saml_connection` | **Delete an org-scoped SAML SSO connection** — members lose this SSO path. | ✓ | ✓ | ✓ |
+| `get_org_saml_connection` | Get an org-scoped SAML SSO connection. | ✓ | ✓ | ✓ |
+| `create_scim_endpoint` | Create a SCIM provisioning endpoint. Bearer token shown **once**. | ✓ | ✓ | ✓ |
+| `rotate_scim_token` | **Rotate a SCIM endpoint's bearer token** (old one invalidated, new one shown once). | ✓ | ✓ | ✓ |
+| `delete_scim_endpoint` | **Delete a SCIM endpoint** — provisioning stops working. | ✓ | ✓ | ✓ |
+| `get_scim_endpoint` | Get a single SCIM endpoint. | ✓ | ✓ | ✓ |
+
 #### GraphQL-only extras
 
-These have no REST / gRPC equivalent and work **over GraphQL only**:
+These are the only admin operations with no proto RPC, so they work **over GraphQL only**:
 
 | Method                          | Description                                          |
 | --------------------------------- | ------------------------------------------------------- |
 | `admin_signup`                    | Bootstrap the first admin.                             |
-| `update_env`                      | Update server environment/config.                      |
+| `update_env`                      | **Deprecated server-side** — v2 configures everything via CLI flags; the resolver always errors. |
 | `generate_jwt_keys`               | Generate a new JWT signing key pair.                   |
-| `create_organization`             | Create an organization.                                |
-| `update_organization`             | Update an organization.                                |
-| `delete_organization`             | **Delete an organization.**                            |
-| `get_organization`                | Get a single organization.                             |
-| `organizations`                   | List organizations (paginated).                        |
-| `add_org_member`                  | Add a member to an organization.                       |
-| `remove_org_member`               | Remove a member from an organization.                  |
-| `org_members`                     | List an organization's members.                        |
-| `create_org_oidc_connection`      | Create an org-scoped OIDC SSO connection.               |
-| `update_org_oidc_connection`      | Update an org-scoped OIDC SSO connection.               |
-| `delete_org_oidc_connection`      | **Delete an org-scoped OIDC SSO connection** — members lose this SSO path. |
-| `get_org_oidc_connection`         | Get an org-scoped OIDC SSO connection.                  |
-| `create_org_saml_connection`      | Create an org-scoped SAML SSO connection.               |
-| `update_org_saml_connection`      | Update an org-scoped SAML SSO connection.               |
-| `delete_org_saml_connection`      | **Delete an org-scoped SAML SSO connection** — members lose this SSO path. |
-| `get_org_saml_connection`         | Get an org-scoped SAML SSO connection.                  |
-| `user_organizations`              | List the organizations a user belongs to.               |
-| `request_org_domain`              | Start home-realm-discovery domain verification (DNS challenge). |
-| `verify_org_domain`               | Verify a requested domain's DNS challenge.              |
-| `add_verified_org_domain`         | Super-admin only: trust-assert a domain as verified, skipping the DNS challenge. |
-| `delete_org_domain`               | **Delete a verified org domain** — it stops routing logins to the org. |
-| `org_domains`                     | List an organization's verified domains.                |
-| `create_scim_endpoint`            | Create a SCIM provisioning endpoint. Bearer token shown **once**. |
-| `rotate_scim_token`               | **Rotate a SCIM endpoint's bearer token** (old one invalidated, new one shown once). |
-| `delete_scim_endpoint`            | **Delete a SCIM endpoint** — provisioning stops working. |
-| `get_scim_endpoint`               | Get a single SCIM endpoint.                             |

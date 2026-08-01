@@ -176,7 +176,7 @@ The SDK provides the following methods:
 - `SkipMfaSetup` -- Skip optional MFA setup and issue the withheld access token
 - `EmailOtpMfaSetup` -- Start email-OTP MFA enrollment
 - `SmsOtpMfaSetup` -- Start SMS-OTP MFA enrollment
-- `TotpMfaSetup` -- Start TOTP MFA enrollment (GraphQL only)
+- `TotpMfaSetup` -- Start TOTP MFA enrollment
 - `DeactivateAccount` -- Deactivate the authenticated user's own account
 - `WebauthnRegistrationOptions` -- Get a passkey creation challenge
 - `WebauthnRegistrationVerify` -- Complete passkey enrollment

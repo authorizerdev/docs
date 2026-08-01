@@ -1138,7 +1138,7 @@ await authRef.verifyOtp({ is_totp: true, otp: '123456' })
 
 ## WebAuthn / Passkeys
 
-The following methods drive [WebAuthn](https://www.w3.org/TR/webauthn-3/) passkey registration and login. The low-level `webauthn*` methods talk to the server only (GraphQL-only, no REST route) and expect/return the opaque JSON strings the WebAuthn spec defines; the higher-level `registerPasskey`/`loginWithPasskey*` helpers additionally drive the browser's `navigator.credentials` ceremony for you and are what most apps should use directly.
+The following methods drive [WebAuthn](https://www.w3.org/TR/webauthn-3/) passkey registration and login. The low-level `webauthn*` methods talk to the server only (GraphQL or REST; the REST routes landed in server 2.4.0) and expect/return the opaque JSON strings the WebAuthn spec defines; the higher-level `registerPasskey`/`loginWithPasskey*` helpers additionally drive the browser's `navigator.credentials` ceremony for you and are what most apps should use directly.
 
 ## - `webauthnRegistrationOptions`
 

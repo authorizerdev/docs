@@ -274,6 +274,34 @@ Sends a one-time code to the caller's own email and creates an unverified email-
 
 Same as `email_otp_mfa_setup`, for SMS. Mirrors [`sms_otp_mfa_setup`](./graphql-api#sms_otp_mfa_setup).
 
+### `POST /v1/totp_mfa_setup`
+
+Generates a fresh TOTP secret, QR image, and recovery codes for the caller to enroll as an MFA method. Nothing is sent anywhere — the enrollment payload is returned directly, and enrollment is completed with `verify_otp` (`is_totp: true`). Mirrors [`totp_mfa_setup`](./graphql-api#totp_mfa_setup).
+
+### `POST /v1/webauthn_registration_options`
+
+Returns the WebAuthn creation options (an opaque JSON string) to hand to `navigator.credentials.create()`. Works for an already-authenticated caller adding a passkey, or for a caller in the withheld first-time MFA-offer state identified by the MFA session cookie.
+
+### `POST /v1/webauthn_registration_verify`
+
+Submits the credential produced by the browser to finish registration. Returns the full auth response: on the MFA-session-cookie path this also completes the gate and issues the withheld access token; on the ordinary authenticated path `access_token` is null.
+
+### `POST /v1/webauthn_login_options`
+
+Returns the WebAuthn request options for `navigator.credentials.get()`. Omit `email` for the usernameless (discoverable credential) ceremony.
+
+### `POST /v1/webauthn_login_verify`
+
+Submits the signed assertion to complete passkey login and issue tokens.
+
+### `POST /v1/webauthn_credentials`
+
+Lists the authenticated caller's own registered passkeys. Requires authentication.
+
+### `POST /v1/webauthn_delete_credential`
+
+Deletes one of the authenticated caller's own passkeys by id. Requires authentication.
+
 ### `POST /v1/forgot_password`
 
 Start password reset; emails a reset link. Mirrors [`forgot_password`](./graphql-api#forgot_password).
@@ -832,6 +860,67 @@ signing-key rotation. All admin-only. Field-level request/response shapes: [SAML
 | `POST /v1/admin/retire_saml_idp_key`             | Retire a published-but-not-signing SAML IdP key by id.                |
 | `POST /v1/admin/saml_idp_keys`                   | List all SAML IdP signing keys for an org.                            |
 | `POST /v1/admin/import_saml_sp_metadata`         | Parse pasted SP metadata XML; no record created, no remote fetch.     |
+
+### Organizations
+
+Multi-tenant organizations and their membership. Super-admin, or that organization's own
+org-admin (the reserved `authorizer:org_admin` role) for the org-scoped operations.
+Field-level request/response shapes: [Organizations](../enterprise/organizations).
+
+| Endpoint                                | Description                                                       |
+| --------------------------------------- | ----------------------------------------------------------------- |
+| `POST /v1/admin/create_organization`    | Create an organization. Super-admin only.                          |
+| `POST /v1/admin/update_organization`    | Update name, display name, or enabled state.                       |
+| `POST /v1/admin/delete_organization`    | Delete an organization and its scoped records. Super-admin only.   |
+| `POST /v1/admin/organization`           | Get a single organization by id.                                   |
+| `POST /v1/admin/organizations`          | List organizations. Super-admin only.                              |
+| `POST /v1/admin/add_org_member`         | Add a user to an organization with a set of org roles.             |
+| `POST /v1/admin/remove_org_member`      | Remove a user from an organization.                                |
+| `POST /v1/admin/org_members`            | List an organization's members.                                    |
+| `POST /v1/admin/user_organizations`     | List the organizations a user belongs to, with their roles.        |
+
+### Organization Domains
+
+Verified DNS-domain-to-organization mappings used for home-realm discovery — routing a
+login to the correct tenant IdP. Field-level shapes: [Organization Domains](../enterprise/org-domains).
+
+| Endpoint                                    | Description                                                          |
+| ------------------------------------------- | -------------------------------------------------------------------- |
+| `POST /v1/admin/request_org_domain`         | Start domain verification; returns the DNS TXT challenge to publish. |
+| `POST /v1/admin/verify_org_domain`          | Check the published TXT record and mark the domain verified.         |
+| `POST /v1/admin/add_verified_org_domain`    | Trusted-assert a domain as verified, skipping DNS. Super-admin only. |
+| `POST /v1/admin/delete_org_domain`          | Remove a mapping; the domain stops routing to that organization.     |
+| `POST /v1/admin/org_domains`                | List an organization's domains.                                      |
+
+### Organization SSO Connections
+
+Per-organization upstream identity providers an org's members sign in through. The
+upstream `client_secret` is stored encrypted and never returned. Field-level shapes:
+[Org SSO (OIDC)](../enterprise/org-sso-oidc) and [Org SAML](../enterprise/org-saml).
+
+| Endpoint                                          | Description                                        |
+| -------------------------------------------------- | -------------------------------------------------- |
+| `POST /v1/admin/create_org_oidc_connection`       | Register an upstream OIDC IdP for an organization. |
+| `POST /v1/admin/update_org_oidc_connection`       | Update an OIDC connection.                          |
+| `POST /v1/admin/delete_org_oidc_connection`       | Delete an OIDC connection.                          |
+| `POST /v1/admin/org_oidc_connection`              | Get an OIDC connection by id or org id.             |
+| `POST /v1/admin/create_org_saml_connection`       | Register an upstream SAML IdP for an organization.  |
+| `POST /v1/admin/update_org_saml_connection`       | Update a SAML connection.                           |
+| `POST /v1/admin/delete_org_saml_connection`       | Delete a SAML connection.                           |
+| `POST /v1/admin/org_saml_connection`              | Get a SAML connection by id or org id.              |
+
+### SCIM
+
+Inbound SCIM 2.0 provisioning endpoints, one per organization. The bearer token is
+returned exactly once — at creation and at rotation — and is never retrievable
+afterwards. Field-level shapes: [SCIM](../enterprise/scim).
+
+| Endpoint                                | Description                                                          |
+| --------------------------------------- | -------------------------------------------------------------------- |
+| `POST /v1/admin/create_scim_endpoint`   | Enable SCIM for an organization; returns the one-time bearer token.  |
+| `POST /v1/admin/rotate_scim_token`      | Issue a new token, invalidating the old one. Shown once.             |
+| `POST /v1/admin/delete_scim_endpoint`   | Disable SCIM for an organization.                                     |
+| `POST /v1/admin/scim_endpoint`          | Get an organization's SCIM endpoint metadata. Never returns the token. |
 
 ## Errors
 
