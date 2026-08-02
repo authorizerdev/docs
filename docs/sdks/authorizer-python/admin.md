@@ -121,9 +121,9 @@ protocol raises a clear error early rather than emitting a 404.
 | Method          | Description                              | grpc | rest | gql |
 | --------------- | ---------------------------------------- | :--: | :--: | :-: |
 | `admin_login`   | Exchange the admin secret for a session. | ✓ | ✓ | ✓ |
-| `admin_logout`  | End the admin session.                   | ✓ | ✓ |   |
-| `admin_session` | Get the current admin session.           | ✓ | ✓ |   |
-| `admin_meta`    | Server metadata / feature flags.         | ✓ | ✓ |   |
+| `admin_logout`  | End the admin session.                   | ✓ | ✓ | ✓ |
+| `admin_session` | Get the current admin session.           | ✓ | ✓ | ✓ |
+| `admin_meta`    | Server metadata / feature flags.         | ✓ | ✓ | ✓ |
 
 #### Users & access
 
@@ -169,14 +169,14 @@ protocol raises a clear error early rather than emitting a 404.
 
 | Method              | Description                              | grpc | rest | gql |
 | ------------------- | ---------------------------------------- | :--: | :--: | :-: |
-| `fga_get_model`     | Get the current FGA model.               | ✓ | ✓ |   |
+| `fga_get_model`     | Get the current FGA model.               | ✓ | ✓ | ✓ |
 | `fga_write_model`   | **Write/overwrite the FGA model.**       | ✓ | ✓ | ✓ |
 | `fga_write_tuples`  | Write relationship tuples.               | ✓ | ✓ | ✓ |
 | `fga_delete_tuples` | **Delete relationship tuples.**          | ✓ | ✓ | ✓ |
 | `fga_read_tuples`   | Read relationship tuples.                | ✓ | ✓ | ✓ |
 | `fga_list_users`    | List users with a relation to an object. | ✓ | ✓ | ✓ |
 | `fga_expand`        | Expand a relation into its userset.      | ✓ | ✓ | ✓ |
-| `fga_reset`         | **Reset all FGA data.**                  | ✓ | ✓ |   |
+| `fga_reset`         | **Reset all FGA data.**                  | ✓ | ✓ | ✓ |
 
 #### Clients (service accounts / machine identities)
 

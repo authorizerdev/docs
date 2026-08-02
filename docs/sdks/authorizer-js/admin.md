@@ -97,9 +97,9 @@ protocol returns a clear error rather than emitting a 404.
 | Method         | Description                              | rest | gql |
 | -------------- | ---------------------------------------- | :--: | :-: |
 | `adminLogin`   | Exchange the admin secret for a session. | ✓ | ✓ |
-| `adminLogout`  | End the admin session.                   | ✓ |   |
-| `adminSession` | Get the current admin session.           | ✓ |   |
-| `adminMeta`    | Server metadata / feature flags.         | ✓ |   |
+| `adminLogout`  | End the admin session.                   | ✓ | ✓ |
+| `adminSession` | Get the current admin session.           | ✓ | ✓ |
+| `adminMeta`    | Server metadata / feature flags.         | ✓ | ✓ |
 
 #### Users & access
 
@@ -145,14 +145,14 @@ protocol returns a clear error rather than emitting a 404.
 
 | Method            | Description                              | rest | gql |
 | ----------------- | ---------------------------------------- | :--: | :-: |
-| `fgaGetModel`     | Get the current FGA model.               | ✓ |   |
+| `fgaGetModel`     | Get the current FGA model.               | ✓ | ✓ |
 | `fgaWriteModel`   | **Write/overwrite the FGA model.**       | ✓ | ✓ |
 | `fgaWriteTuples`  | Write relationship tuples.               | ✓ | ✓ |
 | `fgaDeleteTuples` | **Delete relationship tuples.**          | ✓ | ✓ |
 | `fgaReadTuples`   | Read relationship tuples.                | ✓ | ✓ |
 | `fgaListUsers`    | List users with a relation to an object. | ✓ | ✓ |
 | `fgaExpand`       | Expand a relation into its userset.      | ✓ | ✓ |
-| `fgaReset`        | **Reset all FGA data.**                  | ✓ |   |
+| `fgaReset`        | **Reset all FGA data.**                  | ✓ | ✓ |
 
 #### OAuth clients (service accounts / M2M)
 

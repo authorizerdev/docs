@@ -37,6 +37,7 @@ Organization create/update/delete/list stay super-admin-only (`x-authorizer-admi
 | `_add_org_member` | mutation | Add a user as member with optional per-org roles | Super-admin or that org's `authorizer:org_admin` |
 | `_remove_org_member` | mutation | Remove a member | Super-admin or that org's `authorizer:org_admin` |
 | `_org_members` | query | Paginated member list for an org | Super-admin or that org's `authorizer:org_admin` |
+| `_user_organizations` | query | Paginated list of the orgs a user belongs to, with their roles in each | Super-admin or that org's `authorizer:org_admin` |
 
 ### Create an organization
 

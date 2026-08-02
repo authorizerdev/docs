@@ -120,9 +120,9 @@ and JS admin clients (JS supports graphql + rest only).
 | Method        | Description                                  | grpc | rest | gql |
 | ------------- | -------------------------------------------- | :--: | :--: | :-: |
 | `AdminLogin`  | Exchange the admin secret for a session.     | ✓ | ✓ | ✓ |
-| `AdminLogout` | End the admin session.                       | ✓ | ✓ |   |
-| `AdminSession`| Get the current admin session.               | ✓ | ✓ |   |
-| `AdminMeta`   | Server metadata / feature flags.             | ✓ | ✓ |   |
+| `AdminLogout` | End the admin session.                       | ✓ | ✓ | ✓ |
+| `AdminSession`| Get the current admin session.               | ✓ | ✓ | ✓ |
+| `AdminMeta`   | Server metadata / feature flags.             | ✓ | ✓ | ✓ |
 
 #### Users & access
 
@@ -168,14 +168,14 @@ and JS admin clients (JS supports graphql + rest only).
 
 | Method            | Description                              | grpc | rest | gql |
 | ----------------- | ---------------------------------------- | :--: | :--: | :-: |
-| `FgaGetModel`     | Get the current FGA model.               | ✓ | ✓ |   |
+| `FgaGetModel`     | Get the current FGA model.               | ✓ | ✓ | ✓ |
 | `FgaWriteModel`   | **Write/overwrite the FGA model.**       | ✓ | ✓ | ✓ |
 | `FgaWriteTuples`  | Write relationship tuples.               | ✓ | ✓ | ✓ |
 | `FgaDeleteTuples` | **Delete relationship tuples.**          | ✓ | ✓ | ✓ |
 | `FgaReadTuples`   | Read relationship tuples.                | ✓ | ✓ | ✓ |
 | `FgaListUsers`    | List users with a relation to an object. | ✓ | ✓ | ✓ |
 | `FgaExpand`       | Expand a relation into its userset.      | ✓ | ✓ | ✓ |
-| `FgaReset`        | **Reset all FGA data.**                  | ✓ | ✓ |   |
+| `FgaReset`        | **Reset all FGA data.**                  | ✓ | ✓ | ✓ |
 
 #### OAuth clients (machine-to-machine / workload identity)
 
