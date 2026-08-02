@@ -167,6 +167,50 @@ function LogoutButton() {
 }
 ```
 
+## Multi-factor authentication and passkeys
+
+`Authorizer` (and the individual `AuthorizerSignup` / `AuthorizerBasicAuthLogin` /
+`AuthorizerPasskeyLogin` components) already handle MFA end-to-end during login and
+signup: when the backend offers or requires a second factor, they automatically render
+the setup, verification, or locked-account screens for you — no extra wiring needed.
+
+To let a signed-in user manage their own second factors from a "Security settings" page,
+use [`AuthorizerMFASetup`](./components#authorizermfasetup) and
+[`AuthorizerPasskeyRegister`](./components#authorizerpasskeyregister) directly:
+
+```jsx
+import {
+  useAuthorizer,
+  AuthorizerMFASetup,
+  AuthorizerPasskeyRegister,
+} from '@authorizerdev/authorizer-react';
+
+function SecuritySettings() {
+  const { config } = useAuthorizer();
+
+  return (
+    <>
+      <h2>Two-factor authentication</h2>
+      <AuthorizerMFASetup
+        availableMfaMethods={{
+          totp: config.is_totp_mfa_enabled,
+          passkey: config.is_webauthn_enabled,
+          emailOtp: config.is_email_otp_mfa_enabled,
+          smsOtp: config.is_sms_otp_mfa_enabled,
+        }}
+      />
+
+      <h2>Passkeys</h2>
+      <AuthorizerPasskeyRegister showCredentials />
+    </>
+  );
+}
+```
+
+`AuthorizerPasskeyLogin` and passkey verification only render for browsers that support
+WebAuthn — there is no backend flag to gate them on, so gate any custom UI you build
+around them on `isWebauthnSupported()` from `@authorizerdev/authorizer-js` the same way.
+
 ## Next.js integration
 
 `authorizer-react` is a client-side library — render the provider in a client component

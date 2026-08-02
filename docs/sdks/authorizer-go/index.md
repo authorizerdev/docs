@@ -54,13 +54,15 @@ if err != nil {
 
 ```go
 response, err := authorizerClient.Login(&authorizer.LoginInput{
-    Email:    "test@yopmail.com",
+    Email:    authorizer.NewStringRef("test@yopmail.com"),
     Password: "Abc@123",
 })
 if err != nil {
     panic(err)
 }
 ```
+
+> `Email` (and `PhoneNumber`) are `*string` fields, so pass a pointer: use the SDK's `authorizer.NewStringRef(v string) *string` helper, or take the address of a local variable.
 
 **Example: Validate JWT Token**
 
@@ -149,7 +151,7 @@ all, err := authorizerClient.ListPermissions(&authorizer.ListPermissionsRequest{
 The SDK provides the following methods:
 
 - `Login` -- Authenticate with email and password
-- `Signup` -- Register a new user
+- `SignUp` -- Register a new user
 - `VerifyEmail` -- Verify user email
 - `ForgotPassword` -- Initiate forgot password flow
 - `ResetPassword` -- Reset password with token
@@ -158,8 +160,27 @@ The SDK provides the following methods:
 - `MagicLinkLogin` -- Login with magic link
 - `ValidateJWTToken` -- Validate a JWT token
 - `GetSession` -- Get current session
-- `RevokeToken` -- Revoke a token
+- `RevokeToken` -- Revoke a token (`/oauth/revoke`)
+- `Revoke` -- Revoke a token over the client's selected protocol (graphql/rest/grpc)
 - `Logout` -- Logout user
 - `ValidateSession` -- Validate a session
 - `CheckPermissions` -- Evaluate one or more permission checks (FGA)
 - `ListPermissions` -- List objects the subject holds a permission on (FGA)
+- `GetMetaData` -- Get server metadata / enabled feature flags
+- `GetToken` -- Exchange a grant (`authorization_code`, `refresh_token`, `client_credentials`, or RFC 8693 `token-exchange`) for a token at `/oauth/token` -- covers M2M and workload-identity flows
+- `ExecuteGraphQL` -- Run a raw GraphQL request against the instance
+- `ResendOTP` -- Resend a one-time code
+- `ResendVerifyEmail` -- Resend the email verification link
+- `VerifyOTP` -- Verify a one-time code and complete login
+- `LockMfa` -- Lock the account into required MFA setup when no verified fallback is enrolled
+- `SkipMfaSetup` -- Skip optional MFA setup and issue the withheld access token
+- `EmailOtpMfaSetup` -- Start email-OTP MFA enrollment
+- `SmsOtpMfaSetup` -- Start SMS-OTP MFA enrollment
+- `TotpMfaSetup` -- Start TOTP MFA enrollment (GraphQL only)
+- `DeactivateAccount` -- Deactivate the authenticated user's own account
+- `WebauthnRegistrationOptions` -- Get a passkey creation challenge
+- `WebauthnRegistrationVerify` -- Complete passkey enrollment
+- `WebauthnLoginOptions` -- Get a passkey assertion challenge (email optional, for usernameless login)
+- `WebauthnLoginVerify` -- Complete passkey login
+- `WebauthnCredentials` -- List the caller's own registered passkeys
+- `WebauthnDeleteCredential` -- Delete one of the caller's own registered passkeys

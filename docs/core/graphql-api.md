@@ -95,6 +95,7 @@ It returns `Meta` type with the following possible values
 | `is_google_login_enabled`         | It gives information if google login is configured or not     |
 | `is_github_login_enabled`         | It gives information if github login is configured or not     |
 | `is_facebook_login_enabled`       | It gives information if facebook login is configured or not   |
+| `is_discord_login_enabled`        | It gives information if discord login is configured or not    |
 | `is_email_verification_enabled`   | It gives information if email verification is enabled or not  |
 | `is_basic_authentication_enabled` | It gives information, if basic auth is enabled or not         |
 | `is_magic_link_login_enabled`     | It gives information if password less login is enabled or not |
@@ -114,6 +115,7 @@ query {
     is_google_login_enabled
     is_github_login_enabled
     is_facebook_login_enabled
+    is_discord_login_enabled
     is_email_verification_enabled
     is_basic_authentication_enabled
     is_magic_link_login_enabled
@@ -673,6 +675,8 @@ mutation {
 
 Mutation to reset the password. For security reasons this is 2 step process, we send email to the registered and then the are redirect to reset password url through the link in that email. In the second step, it accepts `params` of type `ResetPasswordInput` with following keys as parameter
 
+On success, this also synchronously revokes all of the user's existing sessions and refresh tokens — see [Refresh tokens](./security#refresh-tokens).
+
 **Request Params**
 
 | Key                | Description                                                                 | Required |
@@ -793,6 +797,84 @@ This mutation returns `Response` type with following keys
 ```graphql
 mutation {
   resend_otp(params: { email: "foo@bar.com" }) {
+    message
+  }
+}
+```
+
+### `skip_mfa_setup`
+
+Completes an in-progress, token-withheld MFA first-time-setup offer by recording that the caller explicitly declined it, then issues the access token that was withheld (see [Withheld-token first-time setup](../core/security#withheld-token-first-time-setup)). Accepts `params` of type `SkipMfaSetupRequest`.
+
+**Request Params**
+
+| Key            | Description                                                  | Required |
+| -------------- | ------------------------------------------------------------- | -------- |
+| `email`        | Email address of the user (resolves the pending MFA session)  | false    |
+| `phone_number` | Phone number of the user (resolves the pending MFA session)   | false    |
+| `state`        | Authorization-code-grant state, same as `verify_otp`          | false    |
+
+Either `email` or `phone_number` is required. Returns `AuthResponse` (same shape as [`verify_otp`](#verify_otp)). Fails with an error when MFA is org-enforced (`--enforce-mfa`) — enforcement is never skippable.
+
+```graphql
+mutation {
+  skip_mfa_setup(params: { email: "foo@bar.com" }) {
+    access_token
+    expires_in
+    message
+  }
+}
+```
+
+### `lock_mfa`
+
+Records that the caller lost access to their only enrolled MFA factor(s), permanently locking the account until an admin recovers it (see [Lockout & admin recovery](../core/security#lockout--admin-recovery)). Only allowed when the caller has no verified email/SMS OTP fallback enrolled — use that instead of locking if one exists. Does **not** issue a token. Accepts `params` of type `LockMfaRequest`.
+
+**Request Params**
+
+| Key            | Description            | Required |
+| -------------- | ----------------------- | -------- |
+| `email`        | Email address of the user | false |
+| `phone_number` | Phone number of the user   | false |
+
+Either `email` or `phone_number` is required. Returns `Response`.
+
+```graphql
+mutation {
+  lock_mfa(params: { email: "foo@bar.com" }) {
+    message
+  }
+}
+```
+
+### `email_otp_mfa_setup`
+
+Sends a one-time code to the caller's own email and creates an unverified email-OTP MFA enrollment; verify it with [`verify_otp`](#verify_otp) to activate. Accepts `params` of type `OtpMfaSetupRequest`. Dual-mode: with a valid bearer token/session, `params` is ignored and the code goes to the already-authenticated caller (the settings-screen "add a second factor" flow); without one, `email`/`phone_number` resolve the pending MFA session cookie (the withheld first-time-setup flow).
+
+**Request Params**
+
+| Key            | Description                                                        | Required |
+| -------------- | -------------------------------------------------------------------- | -------- |
+| `email`        | Email address (MFA-session-cookie mode only; ignored when bearer-authenticated) | false |
+| `phone_number` | Phone number (MFA-session-cookie mode only; ignored when bearer-authenticated)  | false |
+
+Returns `Response`.
+
+```graphql
+mutation {
+  email_otp_mfa_setup(params: { email: "foo@bar.com" }) {
+    message
+  }
+}
+```
+
+### `sms_otp_mfa_setup`
+
+Sends a one-time code to the caller's own phone number and creates an unverified SMS-OTP MFA enrollment. Same dual-mode permissions and `verify_otp` activation relationship as [`email_otp_mfa_setup`](#email_otp_mfa_setup). Accepts `params` of type `OtpMfaSetupRequest` (same fields as above). Returns `Response`.
+
+```graphql
+mutation {
+  sms_otp_mfa_setup(params: { phone_number: "+10000000000" }) {
     message
   }
 }
@@ -1016,7 +1098,7 @@ query {
       limit: 10
     }
   }) {
-    pagination: {
+    pagination {
       offset
       total
       page
@@ -1069,24 +1151,6 @@ query {
 ```
 
 It returns the whole `User` object mentioned in [profile](#profile) query section
-
-#### `_update_user`
-
-Mutation to update environment variables. It accepts `params` of type `UpdateEnvInput` with keys present in environment variables
-
-> Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer-admin` as http only cookie.
-
-This mutation returns `Response` type with message
-
-**Sample Mutation**
-
-```graphql
-mutation {
-  _update_env(params: { DATABASE_URL: "data.db", DATABASE_TYPE: "sqlite" }) {
-    message
-  }
-}
-```
 
 ### `_update_user`
 
@@ -1189,7 +1253,7 @@ It can take optional `params` input of type `PaginatedInput` with following keys
 
 ```graphql
 query {
-  _verification_requests(params: { pagination: { limit: 10, page: 2 } }) {
+  _verification_requests(params: { limit: 10, page: 2 }) {
     pagination {
       limit
       offset
@@ -1311,7 +1375,7 @@ Mutation to test webhook endpoint. This mutation is allowed for admins only. It 
 
 | Key          | Description                                                                                                                                                                                                                                                         | Required |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| `event_name` | Name of event for which webhook should be called. Currently, supports `user.login`, `user.created`, `user.signup`, `user.access_revoked`, `user.access_enabled`, `user.deleted` events only. This is a unique field, means you can have one webhook for each event. | `true`   |
+| `event_name` | Name of event for which webhook should be called. Currently, supports `user.login`, `user.created`, `user.signup`, `user.access_revoked`, `user.access_enabled`, `user.deleted`, `user.deactivated`, `user.provisioned`, `user.deprovisioned`, `user.scim_updated`, `group.created`, `group.updated`, `group.deleted` events only. This is a unique field, means you can have one webhook for each event. | `true`   |
 | `endpoint`   | Endpoint that needs to be called for a given event                                                                                                                                                                                                                  | `true`   |
 | `headers`    | JSON of key, value pair which are extra HTTP headers to be sent. Default header added is `content-type: application/json`                                                                                                                                           | `false`  |
 
@@ -1357,7 +1421,7 @@ Mutation to add webhook. This mutation is allowed for admins only. It accepts `p
 
 | Key          | Description                                                                                                                                                                                                                                                         | Required |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| `event_name` | Name of event for which webhook should be called. Currently, supports `user.login`, `user.created`, `user.signup`, `user.access_revoked`, `user.access_enabled`, `user.deleted` events only. This is a unique field, means you can have one webhook for each event. | `true`   |
+| `event_name` | Name of event for which webhook should be called. Currently, supports `user.login`, `user.created`, `user.signup`, `user.access_revoked`, `user.access_enabled`, `user.deleted`, `user.deactivated`, `user.provisioned`, `user.deprovisioned`, `user.scim_updated`, `group.created`, `group.updated`, `group.deleted` events only. This is a unique field, means you can have one webhook for each event. | `true`   |
 | `endpoint`   | Endpoint that needs to be called for a given event                                                                                                                                                                                                                  | `true`   |
 | `enabled`    | Boolean to state if the webhook is enabled or disabled                                                                                                                                                                                                              | `true`   |
 | `headers`    | JSON of key, value pair which are extra HTTP headers to be sent. Default header added is `content-type: application/json`                                                                                                                                           | `false`  |
@@ -1404,7 +1468,7 @@ Mutation to update webhook. This mutation is allowed for admins only. It accepts
 | Key          | Description                                                                                                                                                                                                                                                         | Required |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
 | `id`         | Identifier of the webhook                                                                                                                                                                                                                                           | `true`   |
-| `event_name` | Name of event for which webhook should be called. Currently, supports `user.login`, `user.created`, `user.signup`, `user.access_revoked`, `user.access_enabled`, `user.deleted` events only. This is a unique field, means you can have one webhook for each event. | `false`  |
+| `event_name` | Name of event for which webhook should be called. Currently, supports `user.login`, `user.created`, `user.signup`, `user.access_revoked`, `user.access_enabled`, `user.deleted`, `user.deactivated`, `user.provisioned`, `user.deprovisioned`, `user.scim_updated`, `group.created`, `group.updated`, `group.deleted` events only. This is a unique field, means you can have one webhook for each event. | `false`  |
 | `endpoint`   | Endpoint that needs to be called for a given event                                                                                                                                                                                                                  | `false`  |
 | `enabled`    | Boolean to state if the webhook is enabled or disabled                                                                                                                                                                                                              | `false`  |
 | `headers`    | JSON of key, value pair which are extra HTTP headers to be sent. Default header added is `content-type: application/json`                                                                                                                                           | `false`  |
@@ -1596,6 +1660,7 @@ Mutation to add email template that will be used while sending emails. This muta
 | Key          | Description                                                                                                                                                                                                                                  | Required |
 | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
 | `event_name` | Name of event for which email template should be called. Currently, supports `basic_auth_signup`, `magic_link_login`, `update_email`, `forgot_password` events only. This is a unique field, means you can have one template for each event. | `true`   |
+| `subject`    | Subject line for the email                                                                                                                                                                                                                   | `true`   |
 | `template`   | HTML template that will be used while sending emails                                                                                                                                                                                         | `true`   |
 
 **Response**
@@ -1609,7 +1674,7 @@ Mutation to add email template that will be used while sending emails. This muta
 ```graphql
 mutation {
   _add_email_template(
-    params: { event_name: "user.login", template: "hello world" }
+    params: { event_name: "basic_auth_signup", subject: "Welcome!", template: "hello world" }
   ) {
     message
   }
@@ -1628,6 +1693,7 @@ Mutation to update email template. This mutation is allowed for admins only. It 
 | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
 | `id`         | Identifier of the email template                                                                                                                                                                                                             | `true`   |
 | `event_name` | Name of event for which email template should be called. Currently, supports `basic_auth_signup`, `magic_link_login`, `update_email`, `forgot_password` events only. This is a unique field, means you can have one template for each event. | `false`  |
+| `subject`    | Subject line for the email                                                                                                                                                                                                                   | `false`  |
 | `template`   | HTML template that will be used while sending emails                                                                                                                                                                                         | `false`  |
 
 **Response**
@@ -1640,7 +1706,7 @@ Mutation to update email template. This mutation is allowed for admins only. It 
 
 ```graphql
 mutation {
-  _update_email_Template(
+  _update_email_template(
     params: {
       id: "123-adfa-123412-asdfasda"
       event_name: "update_email"
@@ -1713,7 +1779,7 @@ _email_templates(params: {limit: 10, page: 1}) {
     offset
     total
   }
-  webhooks {
+  email_templates {
     id
     template
     event_name
@@ -1735,13 +1801,16 @@ It can take optional `params` input with pagination and filtering options.
 
 **Request Params**
 
-| Key          | Description                  | Required | Default |
-| ------------ | ---------------------------- | -------- | ------- |
-| `page`       | Number of page that you want | false    | 1       |
-| `limit`      | Number of rows that you want | false    | 10      |
-| `actor_id`   | Filter by actor ID           | false    | null    |
-| `action`     | Filter by action             | false    | null    |
-| `resource`   | Filter by resource type      | false    | null    |
+| Key              | Description                        | Required | Default |
+| ---------------- | ----------------------------------- | -------- | ------- |
+| `page`           | Number of page that you want        | false    | 1       |
+| `limit`          | Number of rows that you want        | false    | 10      |
+| `actor_id`       | Filter by actor ID                  | false    | null    |
+| `action`         | Filter by action                    | false    | null    |
+| `resource_type`  | Filter by resource type             | false    | null    |
+| `resource_id`    | Filter by resource id               | false    | null    |
+| `from_timestamp` | Filter entries at/after this Unix timestamp | false | null |
+| `to_timestamp`   | Filter entries at/before this Unix timestamp | false | null |
 
 **Sample Query**
 
@@ -1757,11 +1826,12 @@ query {
       page
       total
     }
-    entries {
+    audit_logs {
       id
       actor_id
       action
-      resource
+      resource_type
+      resource_id
       created_at
     }
   }

@@ -66,7 +66,6 @@ const App = () => {
         authorizerURL: 'http://localhost:8080',
         redirectURL: window.location.origin,
         clientID: 'YOUR_CLIENT_ID', // value of --client-id flag used to start the server
-        extraHeaders: {}, // Optional JSON object to pass extra headers in each authorizer requests.
       }}
     >
       <LoginSignup />
@@ -100,6 +99,7 @@ Components in `@authorizerdev/authorizer-react` are designed using css variables
 --authorizer-primary-color: #3b82f6;
 --authorizer-primary-disabled-color: #60a5fa;
 --authorizer-gray-color: #d1d5db;
+--authorizer-slate-color: #e2e8f0;
 --authorizer-white-color: #ffffff;
 --authorizer-danger-color: #dc2626;
 --authorizer-success-color: #10b981;

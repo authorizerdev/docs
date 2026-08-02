@@ -24,7 +24,7 @@ This page covers:
 5. [Admin GraphQL API](#5-admin-graphql-api) — the `_fga_*` operations the dashboard uses.
 6. [SDKs](#6-sdks) and [operational notes](#7-operational-notes).
 7. [Using FGA from your application](#8-using-fga-from-your-application) — middleware, the tuple lifecycle, list filtering.
-8. [Real-world recipes](#9-real-world-recipes) — document sharing, multi-tenant SaaS, job roles, time-bound access, block lists.
+8. [Real-world recipes](#9-real-world-recipes) — document sharing, multi-tenant SaaS, job roles, time-bound access, block lists, permission-aware retrieval for RAG/AI agents.
 9. [Cheat sheet](#10-cheat-sheet) — app event → FGA operation.
 
 ---
@@ -125,12 +125,12 @@ A **relationship tuple** is a single fact: _`user` is `relation` of `object`_. T
 the data that actually grants access; add and remove them any time without touching the
 model.
 
-```text
-user:1b9d…   viewer   document:1      → this user can view document 1
-user:2c8e…   owner    document:1      → this user owns document 1 (⇒ editor, viewer)
-team:9#member  viewer  document:1   → every member of team:9 can view it
-user:*       viewer   document:5      → document 5 is public
-```
+| Tuple | Meaning |
+|-------|---------|
+| `user:1b9d…` `viewer` `document:1` | This user can view document 1 |
+| `user:2c8e…` `owner` `document:1` | This user owns document 1 (⇒ editor, viewer) |
+| `team:9#member` `viewer` `document:1` | Every member of team:9 can view it |
+| `user:*` `viewer` `document:5` | Document 5 is public |
 
 :::info Identify users by id, not name
 The subject is `user:<id>` — the **Authorizer user id** (the token's `sub` claim,
@@ -161,6 +161,16 @@ The client-facing surface is exactly **two queries**. The subject defaults to th
 cookie. An optional `user` ("type:id", or a bare id treated as `user:<id>`) is
 honored only when the caller is a **super-admin** or when it **equals the
 caller's own token subject**; anything else is rejected, never silently ignored.
+
+A **machine caller** (a `client_credentials` token from a `service_account` client)
+has its own subject too: it resolves to `service_account:<client_id>`, not
+`user:<sub>`, so a machine credential presenting its own token can self-check
+`service_account` tuples the same way a human token self-checks `user` ones. An
+RFC 8693 delegated/token-exchange token stays a `user:<sub>` subject regardless —
+only an autonomous machine token classifies as `service_account:`. Model machine
+identities with `type service_account` and admit it in relevant type restrictions
+(`viewer: [user, service_account]`) to put them in the same graph as humans; see
+the [DSL construct reference](./fga-guide#direct-assignment--type-restrictions).
 
 ### `check_permissions` — one or many questions
 
@@ -317,16 +327,16 @@ cookie is used automatically.
 Your application keeps doing what it does; Authorizer answers one extra question per
 request: **"may this user do this to this object?"**
 
-```text
-                 ┌──────────────┐  login   ┌─────────────┐
-                 │   Your app   │ ───────► │  Authorizer  │
-                 │  (frontend)  │ ◄─────── │              │
-                 └──────┬───────┘  token   │  ┌────────┐  │
-                        │ API call + token │  │ OpenFGA│  │
-                 ┌──────▼───────┐          │  │ engine │  │
-                 │ Your backend │ ───────► │  └────────┘  │
-                 │              │  check_  │              │
-                 └──────────────┘permissions└─────────────┘
+```mermaid
+flowchart LR
+    A["Your app<br/>(frontend)"] -- login --> Auth
+    Auth -- token --> A
+    A -- "API call + token" --> C[Your backend]
+    C -- check_permissions --> Auth
+
+    subgraph Auth[Authorizer]
+        D[OpenFGA engine]
+    end
 ```
 
 There are exactly **two touchpoints**:
@@ -706,6 +716,45 @@ check_permissions(can_view, document:7) with 5f1b…'s token → denied
 ```
 
 `but not` always wins over every grant path — direct, inherited, or public.
+
+---
+
+### Permission-aware retrieval (RAG / AI agents) {#permission-aware-retrieval-rag--ai-agents}
+
+**Scenario.** A RAG pipeline or AI agent must never let an LLM see, cite, or summarize
+a chunk the requesting user isn't allowed to read. The document-collaboration model
+above is enough — the interesting part is *where* you call FGA relative to ranking.
+
+**Two enforcement strategies:**
+
+| | Post-filter | Pre-filter |
+| --- | --- | --- |
+| How | Rank the whole corpus, then batch `check_permissions` on the top-k candidates | `list_permissions` first, filter the corpus, **then** rank |
+| Cost | One batched check per query, scoped to candidates only | One list call; grows with the caller's grant count |
+| Failure mode | **Candidate starvation** — if every top-k hit is denied, few or zero chunks survive | Large grant lists for privileged callers (e.g. an org admin) |
+| Use when | Corpus ≫ per-user access | Per-user access is small/medium |
+
+```text
+# Post-filter: rank first, then gate the candidates
+candidates = bm25_rank(whole_corpus, query, k=4)
+allowed = check_permissions(checks: [can_view document:<doc> for doc in candidates])
+context = [c for c in candidates if allowed[c.doc]]
+
+# Pre-filter: gate first, then rank only what's visible
+visible = list_permissions(relation: can_view, object_type: document).objects
+context = bm25_rank(corpus_filtered_to(visible), query, k=4)
+```
+
+As with every other FGA call, **fail closed**: an engine error aborts the query rather
+than degrading to "show everything," and a `truncated: true` on `list_permissions`
+must not be treated as the caller's complete allow-list (don't rank as if the tail
+doesn't exist — page or fall back to post-filter instead).
+
+This is also the pattern behind the [MCP server](./mcp)'s `check_permissions` /
+`list_permissions` tools: the same two calls, invoked by the model itself instead of
+your retrieval backend. See the runnable
+[`with-rag-fga`](https://github.com/authorizerdev/examples/tree/main/with-rag-fga)
+example (Python, both strategies, timed side by side).
 
 ---
 

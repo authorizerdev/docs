@@ -127,7 +127,7 @@ const { Authorizer } = require("@authorizerdev/authorizer-js");
 const authRef = new Authorizer({
   authorizerURL: "https://app.heroku.com",
   redirectURL: "http://app.heroku.com/app",
-  clientID:
+  clientID: "YOUR_CLIENT_ID",
 });
 
 async function main() {

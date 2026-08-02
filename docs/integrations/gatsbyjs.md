@@ -46,6 +46,8 @@ Answer the few bootstrapping questions,
 - Selected `styled-components` for styling system
 - Select the additional features you want
 
+> **Note:** If you use Gatsby 4 (the version used by the [`with-gatsbyjs` example](https://github.com/authorizerdev/examples/tree/main/with-gatsbyjs)), its native dependency `lmdb-store` does not compile on Node.js 20+. Use Node.js 16-18 to run it.
+
 ## Step 4: Install `@authorizerdev/authorizer-react`
 
 ```sh
@@ -56,6 +58,12 @@ OR
 
 ```sh
 yarn add @authorizerdev/authorizer-react
+```
+
+Import the SDK stylesheet once, e.g. in `gatsby-browser.js` (see Step 6):
+
+```js
+require('@authorizerdev/authorizer-react/styles.css')
 ```
 
 ## Step 5: Create Root Layout
@@ -105,6 +113,8 @@ export default function Layout({ children }) {
 Add root layout in gatsby browser config. Create `gatsby-browser.js` in the root of project with following content
 
 ```jsx
+require('@authorizerdev/authorizer-react/styles.css')
+
 const React = require('react')
 const Layout = require('./src/components/layout').default
 

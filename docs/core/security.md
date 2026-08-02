@@ -76,6 +76,13 @@ Everything else in this document is opt-in or already on by default.
   for higher-security deployments where re-authentication is acceptable;
   lengthen for long-lived sessions where a 30-day window is too short.
 
+**Revocation on password reset**: a successful [`reset_password`](./graphql-api#reset_password)
+synchronously deletes all of the user's existing sessions and refresh
+tokens from the session store before the mutation returns — any
+pre-existing session or refresh token is rejected immediately after. This
+closes the gap where an attacker holding a live session before the reset
+kept access after it.
+
 ---
 
 ## Trusted proxies
@@ -111,6 +118,31 @@ proxy you **must** set this flag, otherwise:
 | Behind Cloudflare | the [Cloudflare IP ranges](https://www.cloudflare.com/ips/) |
 | Behind an AWS ALB | the VPC CIDR (e.g. `10.0.0.0/16`) |
 | Inside a Kubernetes cluster | the pod and service CIDRs (e.g. `10.0.0.0/8`) |
+
+---
+
+## Trusted base URL
+
+```bash
+./authorizer --url=https://auth.example.com
+```
+
+- **`--url`** (default empty): the operator-configured canonical base URL of
+  this Authorizer instance. When set, it is the **only** source used to
+  derive the server's own host — verification/reset/magic-link email links,
+  the JWT `iss` claim, and the OIDC discovery/JWKS document URLs — and every
+  request header that could otherwise influence it (`X-Authorizer-URL`,
+  `X-Forwarded-Host`, `Host`) is ignored. The value is normalized to
+  scheme+host (path, query, fragment, userinfo, and trailing slash stripped)
+  and pinned once at startup, before any listener accepts a connection.
+
+When **empty** (the default), Authorizer falls back to header-based
+derivation (`X-Authorizer-URL`, then `X-Forwarded-Host`/`Host`), which
+preserves flexible reverse-proxy / multi-tenant setups but leaves a
+host-header-injection account-takeover surface (CWE-640): a request with a
+forged host header can cause a password-reset or verification email to
+contain a link pointing at an attacker-controlled domain. **Set `--url` in
+production**, particularly behind a reverse proxy, to close this off.
 
 ---
 
@@ -336,6 +368,167 @@ to decrypt:
 ```
 failed to decrypt stored TOTP secret; check that --jwt-secret has not changed since enrollment
 ```
+
+---
+
+## Multi-factor authentication (MFA) & Passkeys
+
+MFA methods — TOTP, email OTP, SMS OTP, and WebAuthn/passkey as a second
+factor — are **enabled by default**. `--enforce-mfa` defaults to `false`:
+MFA is optional and skippable unless you turn enforcement on. See
+[Server Configuration](./server-config#multi-factor-authentication-mfa--webauthnpasskeys)
+for the full flag reference (`--enforce-mfa`, `--disable-mfa`,
+`--disable-totp-login`, `--disable-webauthn-mfa`, `--disable-email-otp`,
+`--disable-sms-otp`).
+
+### Per-method availability
+
+The public `meta` GraphQL query exposes whether each method is actually
+usable right now (config flag **and**, for email/SMS OTP, provider
+configured):
+
+| Field | True when |
+|---|---|
+| `is_totp_mfa_enabled` | MFA enabled and `--disable-totp-login` is not set |
+| `is_email_otp_mfa_enabled` | MFA enabled, `--disable-email-otp` is not set, and SMTP is configured |
+| `is_sms_otp_mfa_enabled` | MFA enabled, `--disable-sms-otp` is not set, and Twilio is configured |
+| `is_webauthn_enabled` | MFA enabled and `--disable-webauthn-mfa` is not set — this reflects WebAuthn's availability **as an MFA factor only**; primary passkey login/registration has no flag and is always available regardless of this field |
+| `is_mfa_enforced` | mirrors `--enforce-mfa` |
+
+`_admin_meta.is_multi_factor_auth_service_enabled` reports whether MFA can be
+used at all on this instance (at least one usable method) — the dashboard
+uses it to gate the per-user "require MFA" toggle.
+
+### Withheld-token first-time setup
+
+Login/signup/OAuth-callback resolve a per-user MFA "gate" before issuing a
+token:
+
+| Gate | Trigger | Token behavior |
+|---|---|---|
+| none | MFA doesn't apply to this user and isn't enforced | issued normally |
+| block-verify | user already has a verified factor (TOTP, passkey, email-OTP, or SMS-OTP) | **withheld** until they verify it — never skippable |
+| block-enroll | `--enforce-mfa` is set and the user hasn't enrolled anything yet | **withheld** until enrollment completes — never skippable |
+| offer-all | MFA is available but not enforced, user hasn't enrolled, and has never skipped before | **withheld** until the user completes a method or calls `skip_mfa_setup` |
+| skipped | same as offer-all, but the user already chose Skip once | issued normally, no nag |
+
+In every withheld case the response carries no `access_token` — only a
+message and a set of `should_show_*` / `should_offer_*` flags on
+`AuthResponse` (`should_show_totp_screen`, `should_offer_webauthn_mfa_setup`,
+`should_offer_email_otp_mfa_setup`, `should_offer_sms_otp_mfa_setup`,
+`should_offer_webauthn_mfa_verify`). The frontend authenticates the
+follow-up call (`verify_otp`, `totp_mfa_setup`, `webauthn_registration_verify`,
+`webauthn_login_verify`, or `skip_mfa_setup`) via a short-lived MFA session
+cookie set alongside that response, not a bearer token — none has been
+issued yet. `should_offer_mfa_setup` is deprecated and never set; ignore it.
+
+A registered passkey satisfies MFA on its own — no OTP/TOTP re-challenge —
+because every WebAuthn assertion already requires user verification
+(biometric/PIN) at the authenticator.
+
+### Lockout & admin recovery
+
+Two independent lockout mechanisms exist:
+
+1. **Transient per-user rate limit.** `verify_otp` (TOTP, TOTP recovery code,
+   email OTP, and SMS OTP all share this) allows **5 failed attempts per user
+   in a 15-minute sliding window**; the 6th failing attempt returns
+   `429 Too Many Requests` for the rest of that window. This is on top of the
+   global per-IP rate limiter and closes the gap where one account is
+   brute-forced from many IPs. A storage-layer fault to the counter fails
+   open (never locks a legitimate user out because of an infra blip).
+2. **Permanent, self-declared lockout.** The `lock_mfa` mutation lets a user
+   who has lost access to their only MFA factor (with no working OTP
+   fallback) mark their own account locked (`mfa_locked_at`). It's refused
+   if the user has a verified email/SMS OTP fallback available — use that
+   instead. Once locked, **all** login attempts for that user (password,
+   passkey, everything) are rejected until an admin clears it.
+
+Admin recovery is the `_update_user` mutation with `reset_mfa: true`. It
+clears `mfa_locked_at`, the user's `is_multi_factor_auth_enabled` override,
+and `has_skipped_mfa_setup_at`, and **deletes every enrolled
+authenticator (TOTP/email-OTP/SMS-OTP) and every registered WebAuthn
+credential** for that user — their next login lands back on the same
+first-time MFA setup screen a brand-new account sees.
+
+```graphql
+mutation {
+  _update_user(params: { id: "user-id", reset_mfa: true }) {
+    id
+    mfa_locked_at
+    enrolled_mfa_methods
+  }
+}
+```
+
+`User.mfa_locked_at` and `User.enrolled_mfa_methods` (any of `"totp"`,
+`"webauthn"`, `"email_otp"`, `"sms_otp"`) let an admin dashboard show which
+users are locked and what they have enrolled without guessing from
+`is_multi_factor_auth_enabled` alone.
+
+### Recovery codes
+
+TOTP enrollment (`totp_mfa_setup`, or the enrollment payload returned inline
+by a `block-enroll`/`offer-all` login response) issues **10 single-use
+recovery codes**, shown to the user exactly once. At rest they are stored as
+**SHA-256 hashes** (not the plaintext codes) and each is marked consumed the
+first time it validates successfully — a stolen database dump never yields
+usable codes, and a code can't be replayed.
+
+### WebAuthn / passkey ceremonies
+
+WebAuthn/passkey support is `web/app` (end-user login) only —
+**`web/dashboard` admin login is untouched** (`_admin_login` has no passkey
+path). The self-service GraphQL operations (no `_` admin prefix):
+
+| Operation | Purpose |
+|---|---|
+| `webauthn_registration_options(email, phone_number)` | begin registering a new passkey; returns JSON `PublicKeyCredentialCreationOptions` for `navigator.credentials.create()` |
+| `webauthn_registration_verify(params: { name, credential, email, phone_number, state })` | verify the attestation and persist the credential |
+| `webauthn_login_options(email: String)` | begin a login ceremony — omit `email` for **usernameless/discoverable** login (any resident passkey for the origin); pass it for the **MFA-alternative** flow, scoped to that user's own credentials |
+| `webauthn_login_verify(params: { credential, state })` | verify the assertion and issue tokens through the same path as `login`/`verify_otp` |
+| `webauthn_credentials` (query) | list the caller's own registered passkeys |
+| `webauthn_delete_credential(id)` | delete one of the caller's own passkeys |
+
+`options`/`credential` are opaque JSON strings carrying the WebAuthn
+`PublicKeyCredential*` structures; the SDK handles the base64url ⟷
+`ArrayBuffer` conversion between these and the browser's
+`navigator.credentials` API.
+
+```graphql
+mutation BeginPasskeyLogin {
+  webauthn_login_options {
+    options
+  }
+}
+
+mutation FinishPasskeyLogin($credential: String!) {
+  webauthn_login_verify(params: { credential: $credential }) {
+    access_token
+    id_token
+    refresh_token
+    message
+  }
+}
+```
+
+Both registration operations also accept an MFA-session-cookie caller (no
+bearer token yet) during a token-withheld `offer-all`/`block-enroll` login —
+completing registration there resolves the gate and issues the previously
+withheld token, the same way `totp_mfa_setup` + `verify_otp(is_totp: true)`
+does for TOTP.
+
+**Email-verification gate:** `webauthn_login_verify` is stricter than
+password login — it refuses to issue tokens until the account's email is
+verified, returning a distinct, actionable error
+(`email is not verified. please verify your email before signing in with a
+passkey`) rather than a generic invalid-credential error. This matters most
+for passkey-only signup (no password at all): the first login attempt with
+that passkey is refused until the user verifies their email through the
+normal verification-email flow.
+
+A locked-out account (`mfa_locked_at` set) is refused at
+`webauthn_login_verify` too, with the same message as password/OTP login.
 
 ---
 

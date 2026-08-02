@@ -1,5 +1,5 @@
 ---
-sidebar_position: 5
+sidebar_position: 7
 title: Token Exchange & Delegation
 ---
 
@@ -92,6 +92,8 @@ effective = subject_token.scope ∩ agent.allowed_scopes ( ∩ requested scope, 
 ## Multi-hop delegation
 
 A delegated token can itself be the `subject_token` of a further exchange (app → agent → sub-agent). The prior `act` chain nests under the new actor. The chain depth is capped at **4**; deeper chains are rejected with `invalid_request`.
+
+A runnable 4-hop example (`orchestrator → research-agent → crm-reader → export-agent`, plus live rejections for a 5th hop, scope re-widening, and actor-token substitution) is in [`with-agent-delegation`](https://github.com/authorizerdev/examples/tree/main/with-agent-delegation).
 
 ## Resource binding & validation
 

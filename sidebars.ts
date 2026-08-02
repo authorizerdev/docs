@@ -39,8 +39,10 @@ const sidebars: SidebarsConfig = {
       label: 'Enterprise',
       items: [
         'enterprise/organizations',
+        'enterprise/org-domains',
         'enterprise/org-sso-oidc',
         'enterprise/org-saml',
+        'enterprise/saml-idp',
         'enterprise/scim',
         'enterprise/token-exchange',
         'enterprise/workload-identity',
@@ -108,6 +110,7 @@ const sidebars: SidebarsConfig = {
       label: 'authorizer-go',
       items: [
         'sdks/authorizer-go/index',
+        'sdks/authorizer-go/functions',
         'sdks/authorizer-go/example',
         'sdks/authorizer-go/admin',
       ],

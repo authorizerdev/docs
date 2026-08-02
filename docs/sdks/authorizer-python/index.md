@@ -117,6 +117,8 @@ AuthorizerClient(
     authorizer_url: str,
     redirect_url: str = "",
     extra_headers: dict[str, str] | None = None,
+    protocol: str = "graphql",
+    grpc_endpoint: str = "",
 )
 ```
 
@@ -126,6 +128,8 @@ AuthorizerClient(
 | `authorizer_url` | Base URL of your Authorizer instance, **no trailing slash**.                      | yes      |
 | `redirect_url`   | Default redirect URL used by magic-link and forgot-password flows.                | no       |
 | `extra_headers`  | Extra headers sent on every request (e.g. a custom `Origin` for CSRF).            | no       |
+| `protocol`       | Wire protocol: `"graphql"` (default), `"rest"`, or `"grpc"`.                      | no       |
+| `grpc_endpoint`  | gRPC target `host:port`, only used when `protocol="grpc"`. See [Protocols & Admin API](./admin). | no |
 
 > **CSRF (v2.3.0+):** the SDK automatically sets an `Origin` header so state-changing
 > requests aren't rejected with `403`. Override it via `extra_headers` if you need a
@@ -147,3 +151,4 @@ print(user.email)
 
 - [Functions](./functions) — the complete method, request, and response reference.
 - [Fine-Grained Authorization](./fga) — `check_permissions` and `list_permissions`.
+- [Protocols & Admin API](./admin) — `rest`/`grpc` transports and the `AuthorizerAdminClient`.

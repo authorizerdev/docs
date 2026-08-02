@@ -65,6 +65,7 @@ mutation {
   ) {
     client {
       id
+      client_id
       name
       allowed_scopes
       is_active
@@ -103,7 +104,7 @@ query {
 }
 ```
 
-Client responses never contain a secret or secret hash — there is no `client_secret` field on the `Client` type by design.
+Client responses never contain a secret or secret hash — there is no `client_secret` field on the `Client` type by design. The `Client` type does return `client_id` (the public OAuth identifier, distinct from the internal `id`) — add it to any of the queries/mutations above when your caller needs the value to present at `/oauth/token`.
 
 ## Authenticating: `client_credentials`
 
@@ -133,6 +134,36 @@ Rules:
 - No `refresh_token`, no `id_token` — re-authenticate on expiry.
 - Discovery (`/.well-known/openid-configuration`) advertises `client_credentials` in `grant_types_supported`.
 - Success and failure are both audited (`token.client_credentials` / `token.client_credentials_failed` audit events).
+- A transient registry lookup failure (e.g. a busy/unreachable database) is never reported as `invalid_client` — that would tell a legitimate caller its credentials are permanently wrong. It returns `503` with `temporarily_unavailable` instead, and is not counted as a security event.
+
+## Service accounts as FGA subjects
+
+A `service_account` client authenticated via `client_credentials` can itself be an [OpenFGA](../core/fga-guide) subject. When your authorization model declares a `service_account` type, the machine caller's own `check_permissions` / `list_permissions` calls resolve to the subject `service_account:<client_id>` — the client's public `client_id`, never its internal `id`:
+
+```dsl
+type service_account
+
+type document
+  relations
+    define viewer: [user, service_account]
+    define can_view: viewer
+```
+
+```graphql
+# Admin: grant the service account viewer on a document, keyed on its client_id
+mutation {
+  _fga_write_tuples(params: {
+    tuples: [{ user: "service_account:payments-worker-client-id", relation: "viewer", object: "document:1" }]
+  }) { message }
+}
+```
+
+```bash
+# The service account's own client_credentials token then passes check_permissions
+# as service_account:payments-worker-client-id — no explicit "user" needed.
+```
+
+A deactivated (`is_active: false`) service account is denied even while its already-issued token remains cryptographically valid — FGA is an additional, independent gate. A machine caller may only self-pin its own subject (`user: "service_account:<its own client_id>"` in `check_permissions`); pinning any other subject is rejected, exactly like a human caller. See the [FGA guide](../core/fga-guide) for the full model/tuple/check walkthrough.
 
 ## Secretless authentication: client assertions & trusted issuers
 

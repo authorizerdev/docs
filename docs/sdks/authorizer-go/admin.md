@@ -18,8 +18,10 @@ default** and is 100% backward compatible — existing code keeps working unchan
 | `ProtocolREST`     | Typed `POST/GET /v1/...` routes | Same flat responses as GraphQL.                |
 | `ProtocolGRPC`     | Generated gRPC stub             | Uses a **separate endpoint** (default `:9091`). |
 
-Pass `WithProtocol` to `NewAuthorizerClient`. As of 2.3.0-rc.9 all 20 public methods work
-over every protocol, and all three return **identical flat response shapes**.
+Pass `WithProtocol` to `NewAuthorizerClient`. Most public methods work over every protocol,
+and all three return **identical flat response shapes**. Exceptions: the six `Webauthn*`
+methods and `TotpMfaSetup` are **GraphQL only** (the server has no REST/gRPC RPC for them);
+`GetToken` and `RevokeToken` always use REST (see the OAuth note below).
 
 ```go
 // REST (default endpoint, no extra config)
@@ -45,7 +47,7 @@ if err != nil {
     panic(err)
 }
 
-res, err := client.Login(&authorizer.LoginInput{Email: "user@example.com", Password: "Abc@123"})
+res, err := client.Login(&authorizer.LoginInput{Email: authorizer.NewStringRef("user@example.com"), Password: "Abc@123"})
 ```
 
 > OAuth endpoints (`/oauth/token`, `/oauth/revoke`) always use REST regardless of the
@@ -75,8 +77,14 @@ for _, u := range res.Users {
 }
 ```
 
-Request/response types come from the generated proto package
-(`authorizerv1 "github.com/authorizerdev/authorizer-go/gen/..."`); import it alongside the SDK.
+Request/response types for the proto-backed methods come from the generated package
+`authorizerv1 "github.com/authorizerdev/authorizer-go/internal/genpb/authorizer/v1"`.
+It lives under `internal/`, so Go's internal-package rule means it can only be imported by
+code whose import path is rooted at `github.com/authorizerdev/authorizer-go` — e.g. this
+module's own `examples/` tree, not an external application module. The Go-native admin
+operations (organizations, org SSO connections, SCIM, org domains — see below) avoid this
+by declaring their request/response types directly in the top-level `authorizer` package
+instead.
 
 ### Admin client options
 
@@ -97,13 +105,16 @@ admin, err := authorizer.NewAuthorizerAdminClient(
 ### Admin methods
 
 Each method declares which protocols support it. Calling a method on an unsupported
-protocol raises a clear error early (e.g. _"AdminMeta is not available over graphql"_)
-rather than emitting a 404. The protocol columns below also apply to the Python and JS
-admin clients (JS supports graphql + rest only).
+protocol raises a clear error early (e.g. _"AdminMeta not available over graphql; use grpc
+or rest"_) rather than emitting a 404. The protocol columns below also apply to the Python
+and JS admin clients (JS supports graphql + rest only).
 
 > **⚠ Destructive:** `DeleteUser`, `DeleteWebhook`, `DeleteEmailTemplate`,
-> `FgaWriteModel` (overwrites the model), `FgaDeleteTuples`, and `FgaReset` (wipes all FGA
-> data) permanently change or remove data.
+> `FgaWriteModel` (overwrites the model), `FgaDeleteTuples`, `FgaReset` (wipes all FGA
+> data), `DeleteClient`, `DeleteTrustedIssuer`, `DeleteSamlServiceProvider`,
+> `RetireSamlIdpKey`, `DeleteOrganization`, `DeleteOrgOIDCConnection`,
+> `DeleteOrgSAMLConnection`, `DeleteScimEndpoint`, and `DeleteOrgDomain`
+> permanently change or remove data.
 
 #### Auth, session & meta
 
@@ -166,6 +177,120 @@ admin clients (JS supports graphql + rest only).
 | `FgaListUsers`    | List users with a relation to an object. | ✓ | ✓ | ✓ |
 | `FgaExpand`       | Expand a relation into its userset.      | ✓ | ✓ | ✓ |
 | `FgaReset`        | **Reset all FGA data.**                  | ✓ | ✓ |   |
+
+#### OAuth clients (machine-to-machine / workload identity)
+
+| Method               | Description                                                                            | grpc | rest | gql |
+| -------------------- | --------------------------------------------------------------------------------------- | :--: | :--: | :-: |
+| `CreateClient`       | Provision a new machine/workload identity (service account). `client_secret` is returned **once**. | ✓ | ✓ | ✓ |
+| `UpdateClient`       | Update a client's metadata, scopes or active flag.                                      | ✓ | ✓ | ✓ |
+| `DeleteClient`       | **Delete a client.** Tokens already issued to it stop being honoured.                   | ✓ | ✓ | ✓ |
+| `RotateClientSecret` | Issue a new secret for a client. Returned once; the old secret keeps validating during the grace window. | ✓ | ✓ | ✓ |
+| `GetClient`          | Get a single client by id (`client_secret` never returned).                             | ✓ | ✓ | ✓ |
+| `Clients`            | List clients (paginated).                                                               | ✓ | ✓ | ✓ |
+
+#### Trusted issuers
+
+| Method                 | Description                                                                                          | grpc | rest | gql |
+| ---------------------- | ------------------------------------------------------------------------------------------------------ | :--: | :--: | :-: |
+| `AddTrustedIssuer`     | Register an external token issuer (K8s service account, SPIFFE, OIDC) allowed to authenticate as a service account via JWT-bearer assertions. | ✓ | ✓ | ✓ |
+| `UpdateTrustedIssuer`  | Update a trusted issuer.                                                                                | ✓ | ✓ | ✓ |
+| `DeleteTrustedIssuer`  | **Delete a trusted issuer.** Assertions from it stop authenticating immediately.                       | ✓ | ✓ | ✓ |
+| `GetTrustedIssuer`     | Get a single trusted issuer by id.                                                                     | ✓ | ✓ | ✓ |
+| `TrustedIssuers`       | List trusted issuers (paginated), optionally filtered by `service_account_id`.                         | ✓ | ✓ | ✓ |
+
+#### SAML (service providers & IdP keys)
+
+| Method                      | Description                                                                                     | grpc | rest | gql |
+| ---------------------------- | -------------------------------------------------------------------------------------------------| :--: | :--: | :-: |
+| `CreateSamlServiceProvider` | Register a downstream SAML 2.0 SP that Authorizer (acting as IdP) issues signed assertions to.  | ✓ | ✓ | ✓ |
+| `UpdateSamlServiceProvider` | Update a downstream SP's name, endpoints, certificate, attribute mapping, or active state.       | ✓ | ✓ | ✓ |
+| `DeleteSamlServiceProvider` | **Delete a downstream SP.** SSO assertions to it stop being issued immediately.                  | ✓ | ✓ | ✓ |
+| `GetSamlServiceProvider`    | Get a single downstream SP by id.                                                                | ✓ | ✓ | ✓ |
+| `ListSamlServiceProviders`  | List downstream SPs for an org (paginated).                                                      | ✓ | ✓ | ✓ |
+| `RotateSamlIdpCert`         | Generate a new current signing keypair for an org's SAML IdP, demoting the previous current key. | ✓ | ✓ | ✓ |
+| `RetireSamlIdpKey`          | **Retire a published-but-not-signing SAML IdP key.** It stops being published in IdP metadata.   | ✓ | ✓ | ✓ |
+| `ListSamlIdpKeys`           | List all SAML IdP signing keys for an org.                                                       | ✓ | ✓ | ✓ |
+| `ImportSamlSpMetadata`      | Parse pasted SP metadata XML into fields to prefill a create call. Does not create a record or fetch remotely. | ✓ | ✓ | ✓ |
+
+#### Organizations & members
+
+Organizations, members, SSO connections, SCIM endpoints and verified domains have no
+proto/gRPC or REST RPCs — they are **GraphQL only**. Types are declared directly in the
+Go SDK (not proto-generated): `Organization`, `OrgMember`, `CreateOrganizationRequest`,
+`ListOrganizationsRequest`, etc.
+
+| Method               | Description                                          | grpc | rest | gql |
+| --------------------- | ----------------------------------------------------| :--: | :--: | :-: |
+| `CreateOrganization`  | Create an organization. `Name` must be a unique, URL-safe slug. | | | ✓ |
+| `UpdateOrganization`  | Update an organization.                              |  |  | ✓ |
+| `DeleteOrganization`  | **Delete an organization** and its memberships/connections. |  |  | ✓ |
+| `GetOrganization`     | Get a single organization by id.                     |  |  | ✓ |
+| `Organizations`       | List organizations (paginated).                      |  |  | ✓ |
+| `AddOrgMember`        | Add a user to an organization.                       |  |  | ✓ |
+| `RemoveOrgMember`     | Remove a user from an organization.                  |  |  | ✓ |
+| `OrgMembers`          | List an organization's members (paginated).          |  |  | ✓ |
+| `UserOrganizations`   | List a user's organizations, with per-org roles (paginated). |  |  | ✓ |
+
+`Organizations`, `OrgMembers` and `OrgDomains` (below) take pagination via this SDK's own
+`*PaginationRequest` type directly on the request — a single level, matching the proto
+shape everywhere else in the SDK:
+
+```go
+res, err := admin.Organizations(&authorizer.ListOrganizationsRequest{
+    Pagination: &authorizer.PaginationRequest{Limit: 20, Page: 1},
+})
+
+members, err := admin.OrgMembers(&authorizer.ListOrgMembersRequest{
+    OrgID:      "org_123",
+    Pagination: &authorizer.PaginationRequest{Limit: 20, Page: 1},
+})
+```
+
+#### Org SSO connections (OIDC & SAML)
+
+Upstream SSO an organization's members sign in through. **GraphQL only.**
+
+| Method                       | Description                                                              | grpc | rest | gql |
+| ------------------------------ | ------------------------------------------------------------------------| :--: | :--: | :-: |
+| `CreateOrgOIDCConnection`    | Create an org's upstream OIDC SSO connection.                            |  |  | ✓ |
+| `UpdateOrgOIDCConnection`    | Update it. Supplying `ClientSecret` rotates it; omitting leaves it intact. |  |  | ✓ |
+| `DeleteOrgOIDCConnection`    | **Delete it.** SSO logins through it stop working immediately.           |  |  | ✓ |
+| `GetOrgOIDCConnection`       | Get it by id or by org id (supply exactly one).                          |  |  | ✓ |
+| `CreateOrgSAMLConnection`    | Create an org's upstream SAML SSO connection.                            |  |  | ✓ |
+| `UpdateOrgSAMLConnection`    | Update it. Supplying `IdpCertificate` replaces it; omitting leaves it intact. |  |  | ✓ |
+| `DeleteOrgSAMLConnection`    | **Delete it.** SSO logins through it stop working immediately.           |  |  | ✓ |
+| `GetOrgSAMLConnection`       | Get it by id or by org id (supply exactly one).                          |  |  | ✓ |
+
+#### SCIM provisioning
+
+**GraphQL only.**
+
+| Method              | Description                                                                    | grpc | rest | gql |
+| -------------------- | --------------------------------------------------------------------------------| :--: | :--: | :-: |
+| `CreateScimEndpoint` | Provision a SCIM endpoint for an organization. The bearer token is returned **once**. |  |  | ✓ |
+| `RotateScimToken`    | Rotate the SCIM endpoint's bearer token. New token returned once; old one stops validating. |  |  | ✓ |
+| `DeleteScimEndpoint` | **Delete an organization's SCIM endpoint.** The IdP's provisioning token stops working immediately. |  |  | ✓ |
+| `GetScimEndpoint`    | Get an organization's SCIM endpoint (the bearer token is never returned).      |  |  | ✓ |
+
+#### Org domains (home realm discovery)
+
+Verified DNS-domain-to-organization mappings used for home realm discovery. **GraphQL only.**
+
+| Method                 | Description                                                                                     | grpc | rest | gql |
+| ------------------------ | --------------------------------------------------------------------------------------------------| :--: | :--: | :-: |
+| `RequestOrgDomain`     | Start domain verification, returning the DNS TXT record the tenant must publish to prove control. |  |  | ✓ |
+| `VerifyOrgDomain`      | Check the DNS TXT challenge and, if satisfied, verify the domain.                                  |  |  | ✓ |
+| `AddVerifiedOrgDomain` | Directly register a verified domain, bypassing the DNS TXT challenge. Super-admin only.            |  |  | ✓ |
+| `DeleteOrgDomain`      | **Remove a verified domain.** Logins relying on it for home realm discovery stop resolving to the org. |  |  | ✓ |
+| `OrgDomains`           | List an organization's verified domains (paginated).                                               |  |  | ✓ |
+
+```go
+domains, err := admin.OrgDomains(&authorizer.ListOrgDomainsRequest{
+    OrgID:      "org_123",
+    Pagination: &authorizer.PaginationRequest{Limit: 20, Page: 1},
+})
+```
 
 #### GraphQL-only extras
 
