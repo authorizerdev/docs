@@ -75,10 +75,28 @@ mutation {
 query {
   _org_members(params: { org_id: "ORG_ID" }) {
     pagination { total }
-    org_members { user_id roles created_at }
+    org_members {
+      user_id
+      roles
+      created_at
+      email
+      given_name
+      family_name
+    }
   }
 }
 ```
+
+**Organization member fields**
+
+| Field        | Type     | Description |
+| ------------ | -------- | ----------- |
+| `user_id`    | `string` | The user's unique identifier |
+| `roles`      | `[string]` | Per-organization roles assigned to this member |
+| `created_at` | `string` | Timestamp when the membership was created |
+| `email`      | `string` | User's email (may be empty if the user no longer exists) |
+| `given_name` | `string` | User's first name (may be empty if the user no longer exists) |
+| `family_name` | `string` | User's last name (may be empty if the user no longer exists) |
 
 ```graphql
 mutation {

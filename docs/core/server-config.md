@@ -123,14 +123,30 @@ Organization / UI:
   --enable-basic-authentication=true \
   --enable-email-verification=true \
   --enable-magic-link-login=true \
-  --enable-signup=true \
-  --enable-totp-login=true \
-  --enable-email-otp=true \
-  --enable-sms-otp=false
+  --enable-signup=true
 ```
 
 These replace v1 flags such as `DISABLE_BASIC_AUTHENTICATION`, `DISABLE_EMAIL_VERIFICATION`, etc.
 See the [Auth behavior mapping](../migration/v1-to-v2#auth-behavior) for exact correspondences.
+
+### Multi-factor authentication (MFA)
+
+```bash
+./authorizer \
+  --disable-totp-login=false \
+  --disable-email-otp=false \
+  --disable-sms-otp=false \
+  --enforce-mfa=false
+```
+
+MFA is **enabled by default** in v2. The following flags allow you to disable specific methods:
+
+- **`--disable-totp-login`** (default `false`): set to `true` to disable TOTP (time-based one-time password) MFA enrollment and login.
+- **`--disable-email-otp`** (default `false`): set to `true` to disable email OTP enrollment. Email OTP is only available when SMTP is configured (see [SMTP](#smtp)).
+- **`--disable-sms-otp`** (default `false`): set to `true` to disable SMS OTP enrollment. SMS OTP is only available when Twilio is configured (see [Twilio](#twilio-sms-otp)).
+- **`--enforce-mfa`** (default `false`): set to `true` to make MFA mandatory — all users must enroll in at least one MFA method during signup and cannot skip it. When `false`, MFA enrollment is optional.
+
+MFA is considered "available" when at least one method is enabled and its provider (SMTP for email, Twilio for SMS) is configured. The public `meta` query exposes which methods are available via `is_totp_mfa_enabled`, `is_email_otp_mfa_enabled`, and `is_sms_otp_mfa_enabled` fields, allowing the login UI to conditionally show MFA enrollment prompts.
 
 ### Cookies
 

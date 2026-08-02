@@ -99,6 +99,10 @@ It returns `Meta` type with the following possible values
 | `is_basic_authentication_enabled` | It gives information, if basic auth is enabled or not         |
 | `is_magic_link_login_enabled`     | It gives information if password less login is enabled or not |
 | `is_sign_up_enabled`              | It gives information if sign up is enabled or not             |
+| `is_totp_mfa_enabled`             | Whether TOTP MFA enrollment and login are available           |
+| `is_email_otp_mfa_enabled`        | Whether email OTP MFA enrollment and login are available (requires SMTP configured) |
+| `is_sms_otp_mfa_enabled`          | Whether SMS OTP MFA enrollment and login are available (requires Twilio configured) |
+| `is_webauthn_enabled`             | Whether WebAuthn/passkey enrollment is available              |
 
 **Sample Query**
 
@@ -114,6 +118,10 @@ query {
     is_basic_authentication_enabled
     is_magic_link_login_enabled
     is_sign_up_enabled
+    is_totp_mfa_enabled
+    is_email_otp_mfa_enabled
+    is_sms_otp_mfa_enabled
+    is_webauthn_enabled
   }
 }
 ```
@@ -952,7 +960,13 @@ query {
 
 #### `_admin_meta`
 
-Query to get admin metadata (server info available to admins).
+Query to get admin metadata (server info available to admins). Returns all fields from `meta` plus admin-only fields.
+
+**Admin-only fields**
+
+| Key                                 | Description                                                |
+| ----------------------------------- | ---------------------------------------------------------- |
+| `is_multi_factor_auth_service_enabled` | Whether at least one MFA method is available (at least one method enabled and its provider configured) |
 
 **Sample Query**
 
@@ -961,6 +975,10 @@ query {
   _admin_meta {
     version
     client_id
+    is_totp_mfa_enabled
+    is_email_otp_mfa_enabled
+    is_sms_otp_mfa_enabled
+    is_multi_factor_auth_service_enabled
   }
 }
 ```
@@ -979,14 +997,14 @@ Query to get all the `_users`. This query is only allowed for super admins. It r
 }
 ```
 
-It can take optional `params` input of type `PaginatedInput` with following keys
+It can take optional `params` input of type `ListUsersRequest` with following keys
 
 **Request Params**
 
-| Key     | Description                  | Required | Default |
-| ------- | ---------------------------- | -------- | ------- |
-| `page`  | Number of page that you want | false    | 1       |
-| `limit` | Number of rows that you want | false    | 10      |
+| Key          | Description                                                                           | Required | Default |
+| ------------ | ------------------------------------------------------------------------------------- | -------- | ------- |
+| `pagination` | Object with `page` and `limit` for pagination                                         | false    | page: 1, limit: 10 |
+| `query`      | Case-insensitive substring filter (matches against user ID, email, given_name, family_name, nickname). Empty or absent means no filter. | false    | empty   |
 
 **Sample Query**
 
