@@ -97,9 +97,9 @@ protocol returns a clear error rather than emitting a 404.
 | Method         | Description                              | rest | gql |
 | -------------- | ---------------------------------------- | :--: | :-: |
 | `adminLogin`   | Exchange the admin secret for a session. | ✓ | ✓ |
-| `adminLogout`  | End the admin session.                   | ✓ |   |
-| `adminSession` | Get the current admin session.           | ✓ |   |
-| `adminMeta`    | Server metadata / feature flags.         | ✓ |   |
+| `adminLogout`  | End the admin session.                   | ✓ | ✓ |
+| `adminSession` | Get the current admin session.           | ✓ | ✓ |
+| `adminMeta`    | Server metadata / feature flags.         | ✓ | ✓ |
 
 #### Users & access
 
@@ -145,14 +145,14 @@ protocol returns a clear error rather than emitting a 404.
 
 | Method            | Description                              | rest | gql |
 | ----------------- | ---------------------------------------- | :--: | :-: |
-| `fgaGetModel`     | Get the current FGA model.               | ✓ |   |
+| `fgaGetModel`     | Get the current FGA model.               | ✓ | ✓ |
 | `fgaWriteModel`   | **Write/overwrite the FGA model.**       | ✓ | ✓ |
 | `fgaWriteTuples`  | Write relationship tuples.               | ✓ | ✓ |
 | `fgaDeleteTuples` | **Delete relationship tuples.**          | ✓ | ✓ |
 | `fgaReadTuples`   | Read relationship tuples.                | ✓ | ✓ |
 | `fgaListUsers`    | List users with a relation to an object. | ✓ | ✓ |
 | `fgaExpand`       | Expand a relation into its userset.      | ✓ | ✓ |
-| `fgaReset`        | **Reset all FGA data.**                  | ✓ |   |
+| `fgaReset`        | **Reset all FGA data.**                  | ✓ | ✓ |
 
 #### OAuth clients (service accounts / M2M)
 
@@ -186,37 +186,36 @@ shared secret.
 #### Organizations
 
 Tenant grouping of users. Organizations, their SSO connections, SCIM endpoints, and verified
-domains have **no REST/proto routes yet** — GraphQL only.
+domains gained REST routes in server 2.4.0; on older servers these are GraphQL only.
 
 | Method              | Description                                             | rest | gql |
 | --------------------- | ------------------------------------------------------------ | :--: | :-: |
-| `createOrganization` | Create a new organization.                                   |   | ✓ |
-| `updateOrganization` | Update an existing organization.                              |   | ✓ |
-| `deleteOrganization` | **Delete an organization.**                                   |   | ✓ |
-| `organization`       | Get a single organization by id.                              |   | ✓ |
-| `organizations`      | List organizations (paginated).                               |   | ✓ |
-| `addOrgMember`       | Add a user to an organization with optional per-org roles.    |   | ✓ |
-| `removeOrgMember`    | **Remove a user from an organization.**                       |   | ✓ |
-| `orgMembers`         | List an organization's members (paginated).                   |   | ✓ |
-| `userOrganizations`  | List the organizations a user belongs to, with roles per org (paginated). |   | ✓ |
+| `createOrganization` | Create a new organization.                                   | ✓ | ✓ |
+| `updateOrganization` | Update an existing organization.                              | ✓ | ✓ |
+| `deleteOrganization` | **Delete an organization.**                                   | ✓ | ✓ |
+| `organization`       | Get a single organization by id.                              | ✓ | ✓ |
+| `organizations`      | List organizations (paginated).                               | ✓ | ✓ |
+| `addOrgMember`       | Add a user to an organization with optional per-org roles.    | ✓ | ✓ |
+| `removeOrgMember`    | **Remove a user from an organization.**                       | ✓ | ✓ |
+| `orgMembers`         | List an organization's members (paginated).                   | ✓ | ✓ |
+| `userOrganizations`  | List the organizations a user belongs to, with roles per org (paginated). | ✓ | ✓ |
 
 #### Org SSO connections
 
 Per-organization upstream identity providers. `createOrgOIDCConnection` brokers Authorizer as
 an OIDC Relying Party; `createOrgSAMLConnection` brokers Authorizer as a SAML 2.0 Service
 Provider. Upstream secrets/certificates are accepted on write but never projected back.
-GraphQL only.
 
 | Method                       | Description                                                       | rest | gql |
 | ------------------------------ | ----------------------------------------------------------------------- | :--: | :-: |
-| `createOrgOIDCConnection`    | Create a per-org upstream OIDC connection.                              |   | ✓ |
-| `updateOrgOIDCConnection`    | Update a per-org upstream OIDC connection.                              |   | ✓ |
-| `deleteOrgOIDCConnection`    | **Delete a per-org upstream OIDC connection; SSO stops immediately.**    |   | ✓ |
-| `orgOIDCConnection`          | Get a connection by id OR by org_id (supply exactly one).               |   | ✓ |
-| `createOrgSAMLConnection`    | Create a per-org upstream SAML connection.                              |   | ✓ |
-| `updateOrgSAMLConnection`    | Update a per-org upstream SAML connection.                              |   | ✓ |
-| `deleteOrgSAMLConnection`    | **Delete a per-org upstream SAML connection; SSO stops immediately.**    |   | ✓ |
-| `orgSAMLConnection`          | Get a connection by id OR by org_id (supply exactly one).               |   | ✓ |
+| `createOrgOIDCConnection`    | Create a per-org upstream OIDC connection.                              | ✓ | ✓ |
+| `updateOrgOIDCConnection`    | Update a per-org upstream OIDC connection.                              | ✓ | ✓ |
+| `deleteOrgOIDCConnection`    | **Delete a per-org upstream OIDC connection; SSO stops immediately.**    | ✓ | ✓ |
+| `orgOIDCConnection`          | Get a connection by id OR by org_id (supply exactly one).               | ✓ | ✓ |
+| `createOrgSAMLConnection`    | Create a per-org upstream SAML connection.                              | ✓ | ✓ |
+| `updateOrgSAMLConnection`    | Update a per-org upstream SAML connection.                              | ✓ | ✓ |
+| `deleteOrgSAMLConnection`    | **Delete a per-org upstream SAML connection; SSO stops immediately.**    | ✓ | ✓ |
+| `orgSAMLConnection`          | Get a connection by id OR by org_id (supply exactly one).               | ✓ | ✓ |
 
 #### SAML IdP (Authorizer as Identity Provider)
 
@@ -238,26 +237,26 @@ issues signed SAML assertions to, plus the per-org IdP signing keypairs used to 
 #### SCIM endpoints
 
 Per-org inbound SCIM 2.0 provisioning credential. The bearer token is returned exactly once,
-at creation and at rotation, and is never projected back afterwards. GraphQL only.
+at creation and at rotation, and is never projected back afterwards.
 
 | Method                | Description                                                     | rest | gql |
 | ------------------------ | ---------------------------------------------------------------------- | :--: | :-: |
-| `createScimEndpoint`   | Provision the org's inbound SCIM endpoint.                            |   | ✓ |
-| `rotateScimToken`      | **Mint a fresh bearer token; the old one stops working immediately.**  |   | ✓ |
-| `deleteScimEndpoint`   | **Remove the org's SCIM endpoint; inbound provisioning stops immediately.** |   | ✓ |
-| `scimEndpoint`         | Get the org's SCIM endpoint (never includes the token).                |   | ✓ |
+| `createScimEndpoint`   | Provision the org's inbound SCIM endpoint.                            | ✓ | ✓ |
+| `rotateScimToken`      | **Mint a fresh bearer token; the old one stops working immediately.**  | ✓ | ✓ |
+| `deleteScimEndpoint`   | **Remove the org's SCIM endpoint; inbound provisioning stops immediately.** | ✓ | ✓ |
+| `scimEndpoint`         | Get the org's SCIM endpoint (never includes the token).                | ✓ | ✓ |
 
 #### Org verified domains
 
-Verified DNS-domain-to-organization mappings used for home-realm discovery. GraphQL only.
+Verified DNS-domain-to-organization mappings used for home-realm discovery.
 
 | Method                  | Description                                                          | rest | gql |
 | --------------------------| --------------------------------------------------------------------------| :--: | :-: |
-| `requestOrgDomain`      | Start domain verification, returning the DNS TXT challenge to publish.  |   | ✓ |
-| `verifyOrgDomain`       | Check the published DNS challenge and record the verified domain.       |   | ✓ |
-| `addVerifiedOrgDomain`  | Record a verified domain without a DNS challenge (super-admin only).    |   | ✓ |
-| `deleteOrgDomain`       | **Remove a verified domain; home-realm discovery for it stops immediately.** |   | ✓ |
-| `orgDomains`            | List an organization's verified domains (paginated).                    |   | ✓ |
+| `requestOrgDomain`      | Start domain verification, returning the DNS TXT challenge to publish.  | ✓ | ✓ |
+| `verifyOrgDomain`       | Check the published DNS challenge and record the verified domain.       | ✓ | ✓ |
+| `addVerifiedOrgDomain`  | Record a verified domain without a DNS challenge (super-admin only).    | ✓ | ✓ |
+| `deleteOrgDomain`       | **Remove a verified domain; home-realm discovery for it stops immediately.** | ✓ | ✓ |
+| `orgDomains`            | List an organization's verified domains (paginated).                    | ✓ | ✓ |
 
 #### GraphQL-only extras
 
@@ -266,5 +265,5 @@ These have no REST equivalent and work **over GraphQL only**:
 | Method            | Description                          |
 | ----------------- | ------------------------------------ |
 | `adminSignup`     | Bootstrap the first admin.           |
-| `updateEnv`       | Update server environment/config.    |
+| `updateEnv`       | **Deprecated server-side** — v2 configures everything via CLI flags; the resolver always errors. |
 | `generateJWTKeys` | Generate a new JWT signing key pair. |

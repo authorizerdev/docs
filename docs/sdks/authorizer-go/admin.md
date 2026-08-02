@@ -18,10 +18,9 @@ default** and is 100% backward compatible — existing code keeps working unchan
 | `ProtocolREST`     | Typed `POST/GET /v1/...` routes | Same flat responses as GraphQL.                |
 | `ProtocolGRPC`     | Generated gRPC stub             | Uses a **separate endpoint** (default `:9091`). |
 
-Pass `WithProtocol` to `NewAuthorizerClient`. Most public methods work over every protocol,
-and all three return **identical flat response shapes**. Exceptions: the six `Webauthn*`
-methods and `TotpMfaSetup` are **GraphQL only** (the server has no REST/gRPC RPC for them);
-`GetToken` and `RevokeToken` always use REST (see the OAuth note below).
+Pass `WithProtocol` to `NewAuthorizerClient`. Public methods work over every protocol, and
+all three return **identical flat response shapes**. `GetToken` and `RevokeToken` always
+use REST (see the OAuth note below).
 
 ```go
 // REST (default endpoint, no extra config)
@@ -121,9 +120,9 @@ and JS admin clients (JS supports graphql + rest only).
 | Method        | Description                                  | grpc | rest | gql |
 | ------------- | -------------------------------------------- | :--: | :--: | :-: |
 | `AdminLogin`  | Exchange the admin secret for a session.     | ✓ | ✓ | ✓ |
-| `AdminLogout` | End the admin session.                       | ✓ | ✓ |   |
-| `AdminSession`| Get the current admin session.               | ✓ | ✓ |   |
-| `AdminMeta`   | Server metadata / feature flags.             | ✓ | ✓ |   |
+| `AdminLogout` | End the admin session.                       | ✓ | ✓ | ✓ |
+| `AdminSession`| Get the current admin session.               | ✓ | ✓ | ✓ |
+| `AdminMeta`   | Server metadata / feature flags.             | ✓ | ✓ | ✓ |
 
 #### Users & access
 
@@ -169,14 +168,14 @@ and JS admin clients (JS supports graphql + rest only).
 
 | Method            | Description                              | grpc | rest | gql |
 | ----------------- | ---------------------------------------- | :--: | :--: | :-: |
-| `FgaGetModel`     | Get the current FGA model.               | ✓ | ✓ |   |
+| `FgaGetModel`     | Get the current FGA model.               | ✓ | ✓ | ✓ |
 | `FgaWriteModel`   | **Write/overwrite the FGA model.**       | ✓ | ✓ | ✓ |
 | `FgaWriteTuples`  | Write relationship tuples.               | ✓ | ✓ | ✓ |
 | `FgaDeleteTuples` | **Delete relationship tuples.**          | ✓ | ✓ | ✓ |
 | `FgaReadTuples`   | Read relationship tuples.                | ✓ | ✓ | ✓ |
 | `FgaListUsers`    | List users with a relation to an object. | ✓ | ✓ | ✓ |
 | `FgaExpand`       | Expand a relation into its userset.      | ✓ | ✓ | ✓ |
-| `FgaReset`        | **Reset all FGA data.**                  | ✓ | ✓ |   |
+| `FgaReset`        | **Reset all FGA data.**                  | ✓ | ✓ | ✓ |
 
 #### OAuth clients (machine-to-machine / workload identity)
 
@@ -215,22 +214,23 @@ and JS admin clients (JS supports graphql + rest only).
 
 #### Organizations & members
 
-Organizations, members, SSO connections, SCIM endpoints and verified domains have no
-proto/gRPC or REST RPCs — they are **GraphQL only**. Types are declared directly in the
-Go SDK (not proto-generated): `Organization`, `OrgMember`, `CreateOrganizationRequest`,
-`ListOrganizationsRequest`, etc.
+Organizations, members, SSO connections, SCIM endpoints and verified domains work over
+every protocol as of server 2.4.0. Their types are declared directly in the Go SDK rather
+than proto-generated — `Organization`, `OrgMember`, `CreateOrganizationRequest`,
+`ListOrganizationsRequest`, etc. — because these operations predate the proto; the
+signatures were kept when the REST/gRPC transports were added.
 
 | Method               | Description                                          | grpc | rest | gql |
 | --------------------- | ----------------------------------------------------| :--: | :--: | :-: |
-| `CreateOrganization`  | Create an organization. `Name` must be a unique, URL-safe slug. | | | ✓ |
-| `UpdateOrganization`  | Update an organization.                              |  |  | ✓ |
-| `DeleteOrganization`  | **Delete an organization** and its memberships/connections. |  |  | ✓ |
-| `GetOrganization`     | Get a single organization by id.                     |  |  | ✓ |
-| `Organizations`       | List organizations (paginated).                      |  |  | ✓ |
-| `AddOrgMember`        | Add a user to an organization.                       |  |  | ✓ |
-| `RemoveOrgMember`     | Remove a user from an organization.                  |  |  | ✓ |
-| `OrgMembers`          | List an organization's members (paginated).          |  |  | ✓ |
-| `UserOrganizations`   | List a user's organizations, with per-org roles (paginated). |  |  | ✓ |
+| `CreateOrganization`  | Create an organization. `Name` must be a unique, URL-safe slug. | ✓ | ✓ | ✓ |
+| `UpdateOrganization`  | Update an organization.                              | ✓ | ✓ | ✓ |
+| `DeleteOrganization`  | **Delete an organization** and its memberships/connections. | ✓ | ✓ | ✓ |
+| `GetOrganization`     | Get a single organization by id.                     | ✓ | ✓ | ✓ |
+| `Organizations`       | List organizations (paginated).                      | ✓ | ✓ | ✓ |
+| `AddOrgMember`        | Add a user to an organization.                       | ✓ | ✓ | ✓ |
+| `RemoveOrgMember`     | Remove a user from an organization.                  | ✓ | ✓ | ✓ |
+| `OrgMembers`          | List an organization's members (paginated).          | ✓ | ✓ | ✓ |
+| `UserOrganizations`   | List a user's organizations, with per-org roles (paginated). | ✓ | ✓ | ✓ |
 
 `Organizations`, `OrgMembers` and `OrgDomains` (below) take pagination via this SDK's own
 `*PaginationRequest` type directly on the request — a single level, matching the proto
@@ -249,41 +249,40 @@ members, err := admin.OrgMembers(&authorizer.ListOrgMembersRequest{
 
 #### Org SSO connections (OIDC & SAML)
 
-Upstream SSO an organization's members sign in through. **GraphQL only.**
+Upstream SSO an organization's members sign in through.
 
 | Method                       | Description                                                              | grpc | rest | gql |
 | ------------------------------ | ------------------------------------------------------------------------| :--: | :--: | :-: |
-| `CreateOrgOIDCConnection`    | Create an org's upstream OIDC SSO connection.                            |  |  | ✓ |
-| `UpdateOrgOIDCConnection`    | Update it. Supplying `ClientSecret` rotates it; omitting leaves it intact. |  |  | ✓ |
-| `DeleteOrgOIDCConnection`    | **Delete it.** SSO logins through it stop working immediately.           |  |  | ✓ |
-| `GetOrgOIDCConnection`       | Get it by id or by org id (supply exactly one).                          |  |  | ✓ |
-| `CreateOrgSAMLConnection`    | Create an org's upstream SAML SSO connection.                            |  |  | ✓ |
-| `UpdateOrgSAMLConnection`    | Update it. Supplying `IdpCertificate` replaces it; omitting leaves it intact. |  |  | ✓ |
-| `DeleteOrgSAMLConnection`    | **Delete it.** SSO logins through it stop working immediately.           |  |  | ✓ |
-| `GetOrgSAMLConnection`       | Get it by id or by org id (supply exactly one).                          |  |  | ✓ |
+| `CreateOrgOIDCConnection`    | Create an org's upstream OIDC SSO connection.                            | ✓ | ✓ | ✓ |
+| `UpdateOrgOIDCConnection`    | Update it. Supplying `ClientSecret` rotates it; omitting leaves it intact. | ✓ | ✓ | ✓ |
+| `DeleteOrgOIDCConnection`    | **Delete it.** SSO logins through it stop working immediately.           | ✓ | ✓ | ✓ |
+| `GetOrgOIDCConnection`       | Get it by id or by org id (supply exactly one).                          | ✓ | ✓ | ✓ |
+| `CreateOrgSAMLConnection`    | Create an org's upstream SAML SSO connection.                            | ✓ | ✓ | ✓ |
+| `UpdateOrgSAMLConnection`    | Update it. Supplying `IdpCertificate` replaces it; omitting leaves it intact. | ✓ | ✓ | ✓ |
+| `DeleteOrgSAMLConnection`    | **Delete it.** SSO logins through it stop working immediately.           | ✓ | ✓ | ✓ |
+| `GetOrgSAMLConnection`       | Get it by id or by org id (supply exactly one).                          | ✓ | ✓ | ✓ |
 
 #### SCIM provisioning
 
-**GraphQL only.**
 
 | Method              | Description                                                                    | grpc | rest | gql |
 | -------------------- | --------------------------------------------------------------------------------| :--: | :--: | :-: |
-| `CreateScimEndpoint` | Provision a SCIM endpoint for an organization. The bearer token is returned **once**. |  |  | ✓ |
-| `RotateScimToken`    | Rotate the SCIM endpoint's bearer token. New token returned once; old one stops validating. |  |  | ✓ |
-| `DeleteScimEndpoint` | **Delete an organization's SCIM endpoint.** The IdP's provisioning token stops working immediately. |  |  | ✓ |
-| `GetScimEndpoint`    | Get an organization's SCIM endpoint (the bearer token is never returned).      |  |  | ✓ |
+| `CreateScimEndpoint` | Provision a SCIM endpoint for an organization. The bearer token is returned **once**. | ✓ | ✓ | ✓ |
+| `RotateScimToken`    | Rotate the SCIM endpoint's bearer token. New token returned once; old one stops validating. | ✓ | ✓ | ✓ |
+| `DeleteScimEndpoint` | **Delete an organization's SCIM endpoint.** The IdP's provisioning token stops working immediately. | ✓ | ✓ | ✓ |
+| `GetScimEndpoint`    | Get an organization's SCIM endpoint (the bearer token is never returned).      | ✓ | ✓ | ✓ |
 
 #### Org domains (home realm discovery)
 
-Verified DNS-domain-to-organization mappings used for home realm discovery. **GraphQL only.**
+Verified DNS-domain-to-organization mappings used for home realm discovery.
 
 | Method                 | Description                                                                                     | grpc | rest | gql |
 | ------------------------ | --------------------------------------------------------------------------------------------------| :--: | :--: | :-: |
-| `RequestOrgDomain`     | Start domain verification, returning the DNS TXT record the tenant must publish to prove control. |  |  | ✓ |
-| `VerifyOrgDomain`      | Check the DNS TXT challenge and, if satisfied, verify the domain.                                  |  |  | ✓ |
-| `AddVerifiedOrgDomain` | Directly register a verified domain, bypassing the DNS TXT challenge. Super-admin only.            |  |  | ✓ |
-| `DeleteOrgDomain`      | **Remove a verified domain.** Logins relying on it for home realm discovery stop resolving to the org. |  |  | ✓ |
-| `OrgDomains`           | List an organization's verified domains (paginated).                                               |  |  | ✓ |
+| `RequestOrgDomain`     | Start domain verification, returning the DNS TXT record the tenant must publish to prove control. | ✓ | ✓ | ✓ |
+| `VerifyOrgDomain`      | Check the DNS TXT challenge and, if satisfied, verify the domain.                                  | ✓ | ✓ | ✓ |
+| `AddVerifiedOrgDomain` | Directly register a verified domain, bypassing the DNS TXT challenge. Super-admin only.            | ✓ | ✓ | ✓ |
+| `DeleteOrgDomain`      | **Remove a verified domain.** Logins relying on it for home realm discovery stop resolving to the org. | ✓ | ✓ | ✓ |
+| `OrgDomains`           | List an organization's verified domains (paginated).                                               | ✓ | ✓ | ✓ |
 
 ```go
 domains, err := admin.OrgDomains(&authorizer.ListOrgDomainsRequest{
@@ -294,10 +293,10 @@ domains, err := admin.OrgDomains(&authorizer.ListOrgDomainsRequest{
 
 #### GraphQL-only extras
 
-These have no proto / REST / gRPC equivalent and work **over GraphQL only**:
+These are the only admin operations with no proto RPC, so they work **over GraphQL only**:
 
 | Method            | Description                          |
 | ----------------- | ------------------------------------ |
 | `AdminSignup`     | Bootstrap the first admin.           |
-| `UpdateEnv`       | Update server environment/config.    |
+| `UpdateEnv`       | **Deprecated server-side** — v2 configures everything via CLI flags; the resolver always errors. |
 | `GenerateJWTKeys` | Generate a new JWT signing key pair. |
