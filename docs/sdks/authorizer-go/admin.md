@@ -46,7 +46,7 @@ if err != nil {
     panic(err)
 }
 
-res, err := client.Login(&authorizer.LoginInput{Email: authorizer.NewStringRef("user@example.com"), Password: "Abc@123"})
+res, err := client.Login(&authorizer.LoginRequest{Email: authorizer.NewStringRef("user@example.com"), Password: "Abc@123"})
 ```
 
 > OAuth endpoints (`/oauth/token`, `/oauth/revoke`) always use REST regardless of the
@@ -77,7 +77,7 @@ for _, u := range res.Users {
 ```
 
 Request/response types for the proto-backed methods come from the generated package
-`authorizerv1 "github.com/authorizerdev/authorizer-go/internal/genpb/authorizer/v1"`.
+`authorizerv1 "github.com/authorizerdev/authorizer-proto-go/authorizer/v1"`.
 It lives under `internal/`, so Go's internal-package rule means it can only be imported by
 code whose import path is rooted at `github.com/authorizerdev/authorizer-go` — e.g. this
 module's own `examples/` tree, not an external application module. The Go-native admin

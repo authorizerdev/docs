@@ -23,7 +23,7 @@ The authorizer-go SDK works with both Authorizer v1 and v2 servers. When using w
 ### Step 1: Install authorizer-go SDK
 
 ```bash
-go get github.com/authorizerdev/authorizer-go
+go get github.com/authorizerdev/authorizer-go/v2
 ```
 
 ### Step 2: Initialize authorizer client
@@ -53,7 +53,7 @@ if err != nil {
 **Example: Login**
 
 ```go
-response, err := authorizerClient.Login(&authorizer.LoginInput{
+response, err := authorizerClient.Login(&authorizer.LoginRequest{
     Email:    authorizer.NewStringRef("test@yopmail.com"),
     Password: "Abc@123",
 })
@@ -67,7 +67,7 @@ if err != nil {
 **Example: Validate JWT Token**
 
 ```go
-res, err := authorizerClient.ValidateJWTToken(&authorizer.ValidateJWTTokenInput{
+res, err := authorizerClient.ValidateJWTToken(&authorizer.ValidateJWTTokenRequest{
     TokenType: authorizer.TokenTypeIDToken,
     Token:     "your-jwt-token",
 })

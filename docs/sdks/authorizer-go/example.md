@@ -42,7 +42,7 @@ func AuthorizeMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		res, err := authorizerClient.ValidateJWTToken(&authorizer.ValidateJWTTokenInput{
+		res, err := authorizerClient.ValidateJWTToken(&authorizer.ValidateJWTTokenRequest{
 			TokenType: authorizer.TokenTypeIDToken,
 			Token:     tokenSplit[1],
 		})
