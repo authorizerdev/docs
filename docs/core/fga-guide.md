@@ -162,7 +162,7 @@ Expected (Marco is `editor`):
 **Go SDK**:
 
 ```go
-import "github.com/authorizerdev/authorizer-go"
+import "github.com/authorizerdev/authorizer-go/v2"
 
 client, _ := authorizer.NewAuthorizerClient("123456", "http://localhost:8080", "", nil)
 

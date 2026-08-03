@@ -8,7 +8,7 @@ title: Functions
 The `AuthorizerClient` provides methods to interact with the Authorizer API. Every method takes a request struct as a parameter and returns a response struct or an error.
 
 ```go
-import "github.com/authorizerdev/authorizer-go"
+import "github.com/authorizerdev/authorizer-go/v2"
 
 client, err := authorizer.NewAuthorizerClient(
     "YOUR_CLIENT_ID",
@@ -110,7 +110,7 @@ All take a `headers` map with a bearer token (or, if the caller doesn't have one
 Get a token for a service account / machine identity created via the [admin `CreateClient`](./admin) method:
 
 ```go
-import "github.com/authorizerdev/authorizer-go"
+import "github.com/authorizerdev/authorizer-go/v2"
 
 machine, err := authorizer.NewAuthorizerClient(
     "SERVICE_CLIENT_ID",
@@ -137,7 +137,7 @@ fmt.Println(token.AccessToken, token.Scope)
 An agent acting on behalf of a signed-in user exchanges the user's token plus its own machine token for a delegated token. The original user stays the JWT `sub`; each hop narrows `scope` and appends to the nested `act` claim (re-widening scope is rejected):
 
 ```go
-import "github.com/authorizerdev/authorizer-go"
+import "github.com/authorizerdev/authorizer-go/v2"
 
 agent, err := authorizer.NewAuthorizerClient(
     "AGENT_CLIENT_ID",
@@ -196,7 +196,7 @@ if err != nil {
 ### Sign up
 
 ```go
-import "github.com/authorizerdev/authorizer-go"
+import "github.com/authorizerdev/authorizer-go/v2"
 
 client, err := authorizer.NewAuthorizerClient(
     "YOUR_CLIENT_ID",
@@ -224,7 +224,7 @@ fmt.Println(token.Message, *token.AccessToken)
 ### Log in and read the profile
 
 ```go
-import "github.com/authorizerdev/authorizer-go"
+import "github.com/authorizerdev/authorizer-go/v2"
 
 client, err := authorizer.NewAuthorizerClient(
     "YOUR_CLIENT_ID",
@@ -256,7 +256,7 @@ fmt.Println(user.ID, user.Email, user.Roles)
 ### Validate a JWT
 
 ```go
-import "github.com/authorizerdev/authorizer-go"
+import "github.com/authorizerdev/authorizer-go/v2"
 
 client, err := authorizer.NewAuthorizerClient(
     "YOUR_CLIENT_ID",
@@ -280,7 +280,7 @@ fmt.Println(res.IsValid, res.Claims)
 ### Magic-link login
 
 ```go
-import "github.com/authorizerdev/authorizer-go"
+import "github.com/authorizerdev/authorizer-go/v2"
 
 client, err := authorizer.NewAuthorizerClient(
     "YOUR_CLIENT_ID",
@@ -372,7 +372,7 @@ All response structs are deserializable from JSON via `json.Unmarshal()`.
 The SDK returns standard Go errors. Most API errors come back as error messages:
 
 ```go
-import "github.com/authorizerdev/authorizer-go"
+import "github.com/authorizerdev/authorizer-go/v2"
 
 client, err := authorizer.NewAuthorizerClient(
     "YOUR_CLIENT_ID",
@@ -399,7 +399,7 @@ if err != nil {
 By default, the client uses GraphQL. You can override this with `WithProtocol`:
 
 ```go
-import "github.com/authorizerdev/authorizer-go"
+import "github.com/authorizerdev/authorizer-go/v2"
 
 // Use REST endpoints
 client, err := authorizer.NewAuthorizerClient(
@@ -426,7 +426,7 @@ client, err = authorizer.NewAuthorizerClient(
 The SDK exports pointer constructor helpers for optional fields:
 
 ```go
-import "github.com/authorizerdev/authorizer-go"
+import "github.com/authorizerdev/authorizer-go/v2"
 
 // stringPtr(s) returns a *string pointing to s
 // intPtr(i) returns an *int64 pointing to i
