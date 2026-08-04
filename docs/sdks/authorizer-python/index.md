@@ -49,8 +49,17 @@ Note the `--client-id` value — you will need it in the SDK configuration below
 ## Step 3: Install the package
 
 ```bash
-pip install authorizer-py
+pip install --pre authorizer-py
 ```
+
+:::warning Use the 0.3.0 pre-release with server 2.4.0
+
+The latest stable release on PyPI is `0.2.0`, which predates server 2.4.0: it lacks
+`skip_mfa_setup` and still sends the old `PaginatedRequest` GraphQL type for paginated
+admin queries (renamed to `PaginationRequest` in 2.4.0). Install with `--pre` to pick up
+the `0.3.0` pre-release until it goes stable.
+
+:::
 
 The import name is `authorizer`:
 
