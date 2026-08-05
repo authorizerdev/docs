@@ -184,4 +184,5 @@ Everything fails closed:
 - [Token Exchange & Delegation](./token-exchange) — how the token is minted, scoped and chained
 - [Authorization (FGA)](../core/authorization) — the model, tuples and the permission APIs
 - [Client Registry](../core/client-registry) — registering an agent as a `service_account`
-- [`with-agent-delegation`](https://github.com/authorizerdev/examples/tree/main/with-agent-delegation) — runnable multi-hop example
+- [`with-agent-permissions`](https://github.com/authorizerdev/examples/tree/main/with-agent-permissions) — **runnable demo of everything on this page**: the intersection, enumeration, the explicit-`user` gate, per-agent revocation, and the model-declares-agent opt-in
+- [`with-agent-delegation`](https://github.com/authorizerdev/examples/tree/main/with-agent-delegation) — runnable multi-hop example of minting the token itself (scope attenuation, `act` chain)
