@@ -98,8 +98,11 @@ A runnable 4-hop example (`orchestrator → research-agent → crm-reader → ex
 ## Resource binding & validation
 
 - `aud` on the delegated token is the single `resource` — it is only valid at that resource server.
-- Delegated tokens are **stateless**: the downstream resource server validates them via local JWT verification against [`/.well-known/jwks.json`](../core/oauth2-oidc) (checking `iss`, `aud`, `exp`, `scope`) and/or `POST /oauth/introspect`.
-- They are **not refreshable**. TTL is fixed at **5 minutes**; the agent re-exchanges when it needs more time. The short TTL is the baseline revocation story — revoking the user stops the *next* exchange immediately (see below), and in-flight tokens die within the window.
+- Delegated tokens are **stateless at the resource server**: it validates them via local JWT verification against [`/.well-known/jwks.json`](../core/oauth2-oidc) (checking `iss`, `aud`, `exp`, `scope`) and/or `POST /oauth/introspect`.
+- They are **not refreshable**. TTL is fixed at **5 minutes**; the agent re-exchanges when it needs more time. At the resource server the short TTL is the entire revocation story — revoking the user stops the *next* exchange immediately (see below), and in-flight tokens die within the window.
+- The token carries an opaque `sid` naming the session it was derived from. At **Authorizer's own API** that makes it as revocable as the credential that seeded it — logout, password reset and admin session wipes all stop it on the next call. A resource server verifying offline cannot see this; do not design one that assumes it can.
+
+To let an agent call **Authorizer itself** (e.g. to ask `check_permissions` about its own authority), exchange with `resource` set to your Authorizer URL. What happens then — the `perms(agent) ∩ perms(user)` intersection — is covered in [Agent Identity & Permissions](./agent-identity).
 
 ## Security invariants
 

@@ -172,6 +172,13 @@ identities with `type service_account` and admit it in relevant type restriction
 (`viewer: [user, service_account]`) to put them in the same graph as humans; see
 the [DSL construct reference](./fga-guide#direct-assignment--type-restrictions).
 
+An **AI agent acting for a user** (an RFC 8693 delegated token) is checked
+against *both* `agent:<client_id>` and `user:<sub>`, and needs both to be
+allowed — its effective authority is `perms(agent) ∩ perms(user)`. This applies
+to `check_permissions` and `list_permissions` alike, and turns on by declaring
+`type agent` in your model; deployments without it are unaffected. See
+[Agent Identity & Permissions](../enterprise/agent-identity).
+
 ### `check_permissions` — one or many questions
 
 A single check is simply a list of one. Results come back **in order** and echo

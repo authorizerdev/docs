@@ -45,6 +45,7 @@ const sidebars: SidebarsConfig = {
         'enterprise/saml-idp',
         'enterprise/scim',
         'enterprise/token-exchange',
+        'enterprise/agent-identity',
         'enterprise/workload-identity',
       ],
     },
