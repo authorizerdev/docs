@@ -33,7 +33,7 @@ After deployment, configure the following required variables in Railway's enviro
 | `DATABASE_URL` | *(auto-configured by Railway)* |
 | `JWT_TYPE` | `HS256` |
 | `JWT_SECRET` | `test` |
-| `ENCRYPTION_KEY` | *(output of `openssl rand -hex 32`)* |
+| `ENCRYPTION_KEY` | *(generate once with `openssl rand -hex 32`)* |
 | `ADMIN_SECRET` | `admin` |
 | `CLIENT_ID` | `123456` |
 | `CLIENT_SECRET` | `secret` |

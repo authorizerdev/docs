@@ -54,7 +54,7 @@ Please ask as many questions as you need, either directly in the issue or on [Di
      --database-url=test.db \
      --jwt-type=HS256 \
      --jwt-secret=test \
-     --encryption-key="$(openssl rand -hex 32)" \
+     --encryption-key=test-encryption-key \
      --admin-secret=admin \
      --client-id=123456 \
      --client-secret=secret

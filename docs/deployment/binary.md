@@ -54,7 +54,8 @@ Example for SQLite:
   --client-secret=YOUR_CLIENT_SECRET \
   --admin-secret=your-admin-secret \
   --jwt-type=HS256 \
-  --jwt-secret=your-jwt-secret
+  --jwt-secret=your-jwt-secret \
+  --encryption-key=your-encryption-key
 ```
 
 > **Note:** In v2, flags such as `database_url`, `env_file`, and dashboard mutations like `_update_env` are **deprecated** -- use the `kebab-case` flags above instead.

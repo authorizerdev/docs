@@ -105,7 +105,8 @@ Pass all config as **CLI arguments** when starting the server:
   --client-secret=YOUR_CLIENT_SECRET \
   --admin-secret=your-admin-secret \
   --jwt-type=HS256 \
-  --jwt-secret=your-jwt-secret
+  --jwt-secret=your-jwt-secret \
+  --encryption-key=your-encryption-key
 ```
 
 For local development (from repo root):
@@ -114,7 +115,7 @@ For local development (from repo root):
 make dev
 # or
 go run main.go --database-type=sqlite --database-url=test.db \
-  --jwt-type=HS256 --jwt-secret=test --admin-secret=admin \
+  --jwt-type=HS256 --jwt-secret=test --encryption-key=test-encryption-key --admin-secret=admin \
   --client-id=123456 --client-secret=secret
 ```
 
@@ -131,6 +132,7 @@ To keep using env vars in your deployment:
     --database-url="$DATABASE_URL" \
     --client-id="$CLIENT_ID" \
     --client-secret="$CLIENT_SECRET" \
+    --encryption-key="$ENCRYPTION_KEY" \
     ...
   ```
 
@@ -144,13 +146,15 @@ docker run -p 8080:8080 \
   -e DATABASE_URL="postgres://..." \
   -e CLIENT_ID=... \
   -e CLIENT_SECRET=... \
+  -e ENCRYPTION_KEY=your-encryption-key \
   your-authorizer-image \
   ./authorizer \
     --database-type="$DATABASE_TYPE" \
     --database-url="$DATABASE_URL" \
     --client-id="$CLIENT_ID" \
     --client-secret="$CLIENT_SECRET" \
-    --admin-secret="$ADMIN_SECRET"
+    --admin-secret="$ADMIN_SECRET" \
+    --encryption-key="$ENCRYPTION_KEY"
 ```
 
 ### Build from source (v2)
@@ -551,7 +555,8 @@ docker run -p 8080:8080 your-image \
   --database-url="postgres://user:pass@host/db" \
   --client-id=... \
   --client-secret=... \
-  --admin-secret=...
+  --admin-secret=... \
+  --encryption-key=your-encryption-key
 ```
 
 Or use a script inside the image that maps env to flags and then runs `./authorizer ...`.
