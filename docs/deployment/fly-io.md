@@ -72,6 +72,7 @@ cmd = [
   "--database-url=postgres://user:pass@localhost:5432/authorizer",
   "--jwt-type=HS256",
   "--jwt-secret=test",
+  "--encryption-key=$ENCRYPTION_KEY",
   "--admin-secret=admin",
   "--client-id=123456",
   "--client-secret=secret"
@@ -115,6 +116,7 @@ flyctl secrets set \
     DATABASE_TYPE="postgres" \
     JWT_TYPE="HS256" \
     JWT_SECRET="your-jwt-secret" \
+    ENCRYPTION_KEY="$(openssl rand -hex 32)" \
     ADMIN_SECRET="your-admin-secret" \
     CLIENT_ID="123456" \
     CLIENT_SECRET="secret" \

@@ -140,6 +140,7 @@ Example with Redis:
   --database-url=test.db \
   --jwt-type=HS256 \
   --jwt-secret=test \
+  --encryption-key="$(openssl rand -hex 32)" \
   --admin-secret=admin \
   --client-id=123456 \
   --client-secret=secret \

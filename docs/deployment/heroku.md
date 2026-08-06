@@ -31,6 +31,7 @@ For Authorizer v2, configure the following required variables in your Heroku app
 | `DATABASE_URL` | *(auto-configured by Heroku add-on)* |
 | `JWT_TYPE` | `HS256` |
 | `JWT_SECRET` | `test` |
+| `ENCRYPTION_KEY` | *(output of `openssl rand -hex 32`)* |
 | `ADMIN_SECRET` | `admin` |
 | `CLIENT_ID` | `123456` |
 | `CLIENT_SECRET` | `secret` |
@@ -52,7 +53,7 @@ Use `REDIS_URL` for shared sessions and rate limits across dynos ([rate limiting
 Update the Procfile or startup command to pass CLI flags:
 
 ```
-web: ./authorizer --database-type=$DATABASE_TYPE --database-url=$DATABASE_URL --jwt-type=$JWT_TYPE --jwt-secret=$JWT_SECRET --admin-secret=$ADMIN_SECRET --client-id=$CLIENT_ID --client-secret=$CLIENT_SECRET
+web: ./authorizer --database-type=$DATABASE_TYPE --database-url=$DATABASE_URL --jwt-type=$JWT_TYPE --jwt-secret=$JWT_SECRET --encryption-key=$ENCRYPTION_KEY --admin-secret=$ADMIN_SECRET --client-id=$CLIENT_ID --client-secret=$CLIENT_SECRET
 ```
 
 ---

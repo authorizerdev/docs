@@ -37,6 +37,7 @@ Set the following required environment variables:
 | `DATABASE_URL` | *(auto-configured by Render)* |
 | `JWT_TYPE` | `HS256` |
 | `JWT_SECRET` | `test` |
+| `ENCRYPTION_KEY` | *(output of `openssl rand -hex 32`)* |
 | `ADMIN_SECRET` | `admin` |
 | `CLIENT_ID` | `123456` |
 | `CLIENT_SECRET` | `secret` |
@@ -63,6 +64,7 @@ Update the start command to pass CLI flags:
   --database-url=$DATABASE_URL \
   --jwt-type=$JWT_TYPE \
   --jwt-secret=$JWT_SECRET \
+  --encryption-key=$ENCRYPTION_KEY \
   --admin-secret=$ADMIN_SECRET \
   --client-id=$CLIENT_ID \
   --client-secret=$CLIENT_SECRET
