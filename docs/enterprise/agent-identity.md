@@ -43,7 +43,7 @@ type document
 
 Declaring the type IS the opt-in because the feature is meaningless without a model that can express agent grants, and because of how OpenFGA fails: checking `agent:x` against a model with **no** `agent` type does not return `false`, it **errors** — and permission checks fail closed on errors. A flag that could be switched on against an unprepared model would deny every permission check for every delegated caller: a total authorization outage, not a graceful degradation. Auto-detection makes that state unreachable.
 
-Detection is cached per authorization-model id, so writing a new model version takes effect immediately and costs no per-request read.
+Detection is cached per authorization-model id, so writing a new model version takes effect immediately. The model-id lookup itself still runs per delegated request; only the type enumeration is cached.
 
 :::note Before you declare the type
 The moment `type agent` appears in your model, every delegated caller must ALSO satisfy the agent half. Grant your agents before you deploy the model, or their calls start being denied. The [`denied_by_agent` metric](#observability) tells you exactly this is happening.
@@ -128,6 +128,16 @@ A token exchanged for `https://calendar.example` will **not** authenticate here,
 | User revoked or deprovisioned ([SCIM](./scim) `active:false`) | Yes | No |
 | Service-account subject deactivated | Yes | No |
 | Deleting the agent's FGA tuples | Yes — the next check denies | n/a |
+| **The agent's own service account deactivated** | **No** — see below | No |
+
+:::warning Deactivating the agent does not stop tokens it already holds
+Only the **subject** is checked for liveness at validation time; the acting
+agent is not. Deactivating an agent's service account blocks the **next**
+exchange, but a token it minted moments earlier keeps working until its
+5-minute TTL expires. Do not treat "disable the agent" as immediate
+containment — to cut an agent off now, delete its FGA tuples, which the very
+next check honours.
+:::
 
 A delegated token carries an opaque `sid` naming the session it was derived from, so at Authorizer's own API it is exactly as revocable as the credential that seeded it. A **downstream resource server** verifies the token offline against [`/.well-known/jwks.json`](../core/oauth2-oidc) and cannot see any of that — there, the short TTL remains the only bound. Keep it that way: do not build a resource server that treats a delegated token as long-lived.
 
@@ -156,6 +166,11 @@ Without this an agent's actions are indistinguishable from the user's own — sa
 | `not_enforced` | a delegated caller arrived but the model declares no `agent` type, so it was authorized as the **user alone** | declare `type agent` and grant your agents |
 
 `not_enforced` is the one to alert on: it is the only outcome that reports a security property *not* being enforced, and it is silent by construction — the request succeeds and nothing in the response says the agent was unconstrained.
+
+`allowed`, `denied_by_agent` and `denied_by_user` are emitted by
+**`check_permissions` only**. `list_permissions` intersects object *sets*
+rather than folding a per-check decision, so the only outcome it can ever
+report is `not_enforced`.
 
 Ordinary (non-delegated) callers do not appear in this series at all; they are counted in `authorizer_fga_checks_total` exactly as before.
 

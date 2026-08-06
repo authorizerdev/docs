@@ -159,7 +159,7 @@ once. See [Authorization (FGA)](./authorization).
 
 | Label | Values |
 |---|---|
-| `operation` | `check_permissions` · `list_permissions` |
+| `operation` | `check_permissions` · `list_permissions` (see note below) |
 | `outcome` | `allowed` · `denied_by_agent` · `denied_by_user` · `not_enforced` |
 
 The `outcome` label is what makes an intersection denial diagnosable:
@@ -171,6 +171,10 @@ The `outcome` label is what makes an intersection denial diagnosable:
   cannot help, and the user genuinely lacks access.
 - **`not_enforced`** — a delegated caller arrived but the active model declares
   no `agent` type, so the request was authorized as the **user alone**.
+
+Only `check_permissions` emits `allowed` / `denied_by_agent` / `denied_by_user`.
+`list_permissions` intersects object *sets* rather than folding a per-check
+decision, so it can only ever report `not_enforced`.
 
 `not_enforced` is the one to alert on. It is the only outcome that reports a
 security property *not* being enforced, and it is silent by construction: the
