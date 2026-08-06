@@ -34,7 +34,7 @@ The image **`EXPOSE`s `8080`, `8081`, and `9091`**. That only **documents** whic
 | Port | Role | Typical use |
 |------|------|-------------|
 | **8080** | Main HTTP (API, UI, `/healthz`, `/readyz`) | **Yes** — map to the host or front with a reverse proxy / load balancer. |
-| **8081** | Prometheus **`/metrics`** (separate listener) | **Depends** — see below. |
+| **8081** | [Prometheus](https://prometheus.io) **`/metrics`** (separate listener) | **Depends** — see below. |
 | **9091** | **gRPC** API (`AuthorizerService` + `AuthorizerAdminService`) | **Optional** — publish only if external gRPC clients connect; see [gRPC API](../core/grpc). |
 
 **Recommended defaults**

@@ -167,7 +167,7 @@ The SDK provides the following methods:
 - `CheckPermissions` -- Evaluate one or more permission checks (FGA)
 - `ListPermissions` -- List objects the subject holds a permission on (FGA)
 - `GetMetaData` -- Get server metadata / enabled feature flags
-- `GetToken` -- Exchange a grant (`authorization_code`, `refresh_token`, `client_credentials`, or RFC 8693 `token-exchange`) for a token at `/oauth/token` -- covers M2M and workload-identity flows
+- `GetToken` -- Exchange a grant (`authorization_code`, `refresh_token`, `client_credentials`, or [RFC 8693](https://datatracker.ietf.org/doc/html/rfc8693) `token-exchange`) for a token at `/oauth/token` -- covers M2M and workload-identity flows
 - `ExecuteGraphQL` -- Run a raw GraphQL request against the instance
 - `ResendOTP` -- Resend a one-time code
 - `ResendVerifyEmail` -- Resend the email verification link
@@ -176,7 +176,7 @@ The SDK provides the following methods:
 - `SkipMfaSetup` -- Skip optional MFA setup and issue the withheld access token
 - `EmailOtpMfaSetup` -- Start email-OTP MFA enrollment
 - `SmsOtpMfaSetup` -- Start SMS-OTP MFA enrollment
-- `TotpMfaSetup` -- Start TOTP MFA enrollment
+- `TotpMfaSetup` -- Start [TOTP](https://datatracker.ietf.org/doc/html/rfc6238) MFA enrollment
 - `DeactivateAccount` -- Deactivate the authenticated user's own account
 - `WebauthnRegistrationOptions` -- Get a passkey creation challenge
 - `WebauthnRegistrationVerify` -- Complete passkey enrollment

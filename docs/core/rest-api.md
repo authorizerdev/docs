@@ -229,7 +229,7 @@ Register a new user. Request/response fields match [`signup`](./graphql-api#sign
 ### `POST /v1/login`
 
 Authenticate with email/phone + password. Returns tokens, or an MFA challenge flag
-(`should_show_email_otp_screen` / `should_show_totp_screen`) when OTP/TOTP is enabled.
+(`should_show_email_otp_screen` / `should_show_totp_screen`) when OTP/[TOTP](https://datatracker.ietf.org/doc/html/rfc6238) is enabled.
 Mirrors [`login`](./graphql-api#login).
 
 ```bash
@@ -280,7 +280,7 @@ Generates a fresh TOTP secret, QR image, and recovery codes for the caller to en
 
 ### `POST /v1/webauthn_registration_options`
 
-Returns the WebAuthn creation options (an opaque JSON string) to hand to `navigator.credentials.create()`. Works for an already-authenticated caller adding a passkey, or for a caller in the withheld first-time MFA-offer state identified by the MFA session cookie.
+Returns the [WebAuthn](https://www.w3.org/TR/webauthn-2/) creation options (an opaque JSON string) to hand to `navigator.credentials.create()`. Works for an already-authenticated caller adding a passkey, or for a caller in the withheld first-time MFA-offer state identified by the MFA session cookie.
 
 ### `POST /v1/webauthn_registration_verify`
 
@@ -798,7 +798,7 @@ List fully-qualified user ids that have a relation on an object (reveals the acc
 
 #### `POST /v1/admin/fga/expand`
 
-Expand the relationship/userset tree for a relation on an object (admin-only; useful for debugging). Returns the OpenFGA userset tree as a JSON string.
+Expand the relationship/userset tree for a relation on an object (admin-only; useful for debugging). Returns the [OpenFGA](https://openfga.dev) userset tree as a JSON string.
 
 **Request body**
 
@@ -833,20 +833,20 @@ shapes and examples: [Client Registry guide](./client-registry).
 
 ### Trusted Issuers
 
-Manage external JWT issuers for RFC 7523 `private_key_jwt` client assertions. All
+Manage external JWT issuers for [RFC 7523](https://datatracker.ietf.org/doc/html/rfc7523) `private_key_jwt` client assertions. All
 admin-only. Field-level request/response shapes: [Workload Identity](../enterprise/workload-identity).
 
 | Endpoint                                  | Description                                                          |
 | ------------------------------------------ | --------------------------------------------------------------------- |
 | `POST /v1/admin/add_trusted_issuer`        | Register an issuer for a client (`subject_claim` defaults to `sub`). |
-| `POST /v1/admin/update_trusted_issuer`     | Update name, JWKS URL, expected audience, active state, or SPIFFE hint. |
+| `POST /v1/admin/update_trusted_issuer`     | Update name, JWKS URL, expected audience, active state, or [SPIFFE](https://spiffe.io) hint. |
 | `POST /v1/admin/delete_trusted_issuer`     | Delete a trusted issuer by id.                                        |
 | `POST /v1/admin/trusted_issuer`            | Get a single trusted issuer by id.                                    |
 | `POST /v1/admin/trusted_issuers`           | List trusted issuers, optionally filtered by client id.              |
 
 ### SAML IdP
 
-Manage Authorizer acting as a SAML 2.0 IdP for downstream service providers, plus IdP
+Manage Authorizer acting as a [SAML 2.0](https://www.oasis-open.org/standard/saml/) IdP for downstream service providers, plus IdP
 signing-key rotation. All admin-only. Field-level request/response shapes: [SAML IdP](../enterprise/saml-idp).
 
 | Endpoint                                        | Description                                                          |
@@ -911,7 +911,7 @@ upstream `client_secret` is stored encrypted and never returned. Field-level sha
 
 ### SCIM
 
-Inbound SCIM 2.0 provisioning endpoints, one per organization. The bearer token is
+Inbound [SCIM 2.0](https://datatracker.ietf.org/doc/html/rfc7644) provisioning endpoints, one per organization. The bearer token is
 returned exactly once — at creation and at rotation — and is never retrievable
 afterwards. Field-level shapes: [SCIM](../enterprise/scim).
 

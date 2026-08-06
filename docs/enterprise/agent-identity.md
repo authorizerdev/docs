@@ -22,7 +22,7 @@ Give an agent a token and it holds the user's authority. Give it its own grants 
 - **Only the user's authority** — a compromised or confused agent can do anything its user can. The classic [Confused Deputy](https://en.wikipedia.org/wiki/Confused_deputy_problem): a calendar-reading agent tricked into reading payroll, because its user *can* read payroll.
 - **Only the agent's authority** — the agent acts on resources its user was never allowed near, and "on behalf of Alice" becomes a fiction.
 
-Intersecting both means an agent can only ever do things that **it** is trusted with **and** that its **user** could have done themselves. Neither identity can widen the other. This matches how WorkOS, Auth0 FGA and OpenFGA model agentic access.
+Intersecting both means an agent can only ever do things that **it** is trusted with **and** that its **user** could have done themselves. Neither identity can widen the other. This matches how WorkOS, Auth0 FGA and [OpenFGA](https://openfga.dev) model agentic access.
 
 ## Turning it on
 
@@ -198,7 +198,7 @@ A delegated action is recorded as the **agent**, with the user preserved alongsi
 | `actor_email` | *(empty — an agent has no mailbox)* |
 | `metadata` | gains `delegated_user_id=…` and, when known, `delegated_user_email=…` |
 
-Without this an agent's actions are indistinguishable from the user's own — same id, same type, no trace anything automated was involved. RFC 8693 §1.1 draws exactly this line: delegation is "A representing B" with A keeping its identity, as against impersonation where A is indistinguishable from B. It cannot be reconstructed after the fact, because the information was never written.
+Without this an agent's actions are indistinguishable from the user's own — same id, same type, no trace anything automated was involved. [RFC 8693](https://datatracker.ietf.org/doc/html/rfc8693) §1.1 draws exactly this line: delegation is "A representing B" with A keeping its identity, as against impersonation where A is indistinguishable from B. It cannot be reconstructed after the fact, because the information was never written.
 
 ## Observability {#observability}
 

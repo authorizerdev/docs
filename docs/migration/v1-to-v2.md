@@ -74,7 +74,7 @@ In **v2**:
    - `--client-id` and `--client-secret` — **required**; the server will exit if they are missing.
    - `--admin-secret` — needed for admin dashboard access and admin API operations.
    - `--jwt-type` and `--jwt-secret` (for HMAC algorithms like HS256) or `--jwt-private-key` / `--jwt-public-key` (for RSA/ECDSA algorithms) — needed for token signing and verification.
-   - `--encryption-key` — encrypts TOTP secrets and OTP digests at rest (2.4.0+). **Required for RSA/ECDSA deployments**, which have no `--jwt-secret` to fall back to; the server refuses to start without it. HMAC deployments fall back to `--jwt-secret` automatically.
+   - `--encryption-key` — encrypts [TOTP](https://datatracker.ietf.org/doc/html/rfc6238) secrets and OTP digests at rest (2.4.0+). **Required for RSA/ECDSA deployments**, which have no `--jwt-secret` to fall back to; the server refuses to start without it. HMAC deployments fall back to `--jwt-secret` automatically.
 
 ---
 
@@ -225,7 +225,7 @@ Use these v2 **CLI flags** instead of v1 env or dashboard config. Flag names use
 | Metrics bind         | `--metrics-host` (default: `127.0.0.1`) for the dedicated metrics listener |
 | `LOG_LEVEL`          | `--log-level` |
 
-**`GET /metrics` is always** on the dedicated metrics listener at **`--metrics-host`:`--metrics-port`** (default **loopback**); **`--http-port` and `--metrics-port` must differ**. Health probes remain on the HTTP port. For in-cluster Prometheus, set **`--metrics-host=0.0.0.0`** and scrape over the private network.
+**`GET /metrics` is always** on the dedicated metrics listener at **`--metrics-host`:`--metrics-port`** (default **loopback**); **`--http-port` and `--metrics-port` must differ**. Health probes remain on the HTTP port. For in-cluster [Prometheus](https://prometheus.io), set **`--metrics-host=0.0.0.0`** and scrape over the private network.
 
 ### Database
 
@@ -279,7 +279,7 @@ Use these v2 **CLI flags** instead of v1 env or dashboard config. Flag names use
 | `DISABLE_MAGIC_LINK_LOGIN`      | `--enable-magic-link-login` (inverted) |
 | `ENFORCE_MULTI_FACTOR_AUTHENTICATION` | `--enforce-mfa` (default flipped: `true` → `false`; MFA is now optional unless you set this) |
 | `DISABLE_SIGN_UP`               | `--enable-signup` (inverted) |
-| TOTP / OTP / WebAuthn           | **Breaking**: `--enable-mfa`, `--enable-totp-login`, `--enable-email-otp`, and `--enable-sms-otp` are removed. TOTP, email OTP, SMS OTP, and WebAuthn-as-MFA are now **on by default**; opt out with `--disable-totp-login`, `--disable-email-otp`, `--disable-sms-otp`, `--disable-webauthn-mfa`, or turn everything off at once with `--disable-mfa`. See [MFA & WebAuthn/passkeys flags](../core/server-config#multi-factor-authentication-mfa--webauthnpasskeys). |
+| TOTP / OTP / [WebAuthn](https://www.w3.org/TR/webauthn-2/)           | **Breaking**: `--enable-mfa`, `--enable-totp-login`, `--enable-email-otp`, and `--enable-sms-otp` are removed. TOTP, email OTP, SMS OTP, and WebAuthn-as-MFA are now **on by default**; opt out with `--disable-totp-login`, `--disable-email-otp`, `--disable-sms-otp`, `--disable-webauthn-mfa`, or turn everything off at once with `--disable-mfa`. See [MFA & WebAuthn/passkeys flags](../core/server-config#multi-factor-authentication-mfa--webauthnpasskeys). |
 | Mobile basic auth               | `--enable-mobile-basic-authentication` |
 | Phone verification              | `--enable-phone-verification` |
 
@@ -620,7 +620,7 @@ import { SignUpRequest, LoginRequest } from '@authorizerdev/authorizer-js'
 
 ## Authorization (FGA)
 
-v2 adds an embedded **OpenFGA** engine for relationship-based access control (ReBAC). You author an authorization **model** (OpenFGA DSL: types + relations), grant access with **relationship tuples** (for example `user:<id>` is `viewer` of `document:1`), and have your apps check access with `check_permissions`.
+v2 adds an embedded **[OpenFGA](https://openfga.dev)** engine for relationship-based access control (ReBAC). You author an authorization **model** (OpenFGA DSL: types + relations), grant access with **relationship tuples** (for example `user:<id>` is `viewer` of `document:1`), and have your apps check access with `check_permissions`.
 
 ### What's new
 

@@ -5,7 +5,7 @@ title: Per-Org SAML 2.0 SSO
 
 # Per-Organization SAML 2.0 SSO (Service Provider)
 
-For [organizations](./organizations) whose IdP speaks SAML 2.0 (Okta, Microsoft Entra ID, ADFS, …), Authorizer acts as a **SAML Service Provider (SP)** per org. Users authenticate at the corporate IdP; Authorizer validates the signed assertion, JIT-provisions the user, and issues a normal Authorizer session.
+For [organizations](./organizations) whose IdP speaks [SAML 2.0](https://www.oasis-open.org/standard/saml/) (Okta, Microsoft Entra ID, ADFS, …), Authorizer acts as a **SAML Service Provider (SP)** per org. Users authenticate at the corporate IdP; Authorizer validates the signed assertion, JIT-provisions the user, and issues a normal Authorizer session.
 
 ## Endpoints (per org)
 

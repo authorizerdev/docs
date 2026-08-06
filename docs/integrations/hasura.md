@@ -13,18 +13,18 @@ To integrate Authorizer with Hasura, you will need an Authorizer instance deploy
 
 | **Infra provider** |                                                                                           **One-click link**                                                                                            |               **Additional information**               |
 | :----------------: | :-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :----------------------------------------------------: |
-|    Railway.app     |                      <a target="_blank" href="https://railway.com/deploy/authorizer-1?referralCode=FEF4uT&utm_medium=integration&utm_source=template&utm_campaign=generic"><img src="https://railway.com/button.svg" alt="Deploy on Railway"/></a>                      | [docs](https://docs.authorizer.dev/deployment/railway) |
-|       Heroku       |  <a target="_blank" href="https://heroku.com/deploy?template=https://github.com/authorizerdev/authorizer-heroku"><img src="https://www.herokucdn.com/deploy/button.svg" alt="Deploy to Heroku" /></a>   | [docs](https://docs.authorizer.dev/deployment/heroku)  |
-|       Render       | <a target="_blank" href="https://render.com/deploy?repo=https://github.com/authorizerdev/authorizer-render"><img alt="render button" src="https://render.com/images/deploy-to-render-button.svg" /></a> | [docs](https://docs.authorizer.dev/deployment/render)  |
+|    Railway.app     |                      <a target="_blank" href="https://railway.com/deploy/authorizer-1?referralCode=FEF4uT&utm_medium=integration&utm_source=template&utm_campaign=generic"><img src="https://railway.com/button.svg" alt="Deploy on Railway"/></a>                      | [docs](/deployment/railway) |
+|       Heroku       |  <a target="_blank" href="https://heroku.com/deploy?template=https://github.com/authorizerdev/authorizer-heroku"><img src="https://www.herokucdn.com/deploy/button.svg" alt="Deploy to Heroku" /></a>   | [docs](/deployment/heroku)  |
+|       Render       | <a target="_blank" href="https://render.com/deploy?repo=https://github.com/authorizerdev/authorizer-render"><img alt="render button" src="https://render.com/images/deploy-to-render-button.svg" /></a> | [docs](/deployment/render)  |
 
 OR
 
 You can also deploy Authorizer instance using
 
-- [Docker Image + Kubernetes](https://docs.authorizer.dev/deployment/kubernetes)
+- [Docker Image + Kubernetes](/deployment/kubernetes)
 - [Kubernetes HelmChart](https://github.com/authorizerdev/authorizer-helm-chart)
-- [Binary](https://docs.authorizer.dev/deployment/binary)
-- [fly.io](https://docs.authorizer.dev/deployment/flydotio)
+- [Binary](/deployment/binary)
+- [fly.io](/deployment/fly-io)
 
 > **Note:** If you are trying out with one click deployment options like railway then template is configured in a way that it will also deploy postgres + redis for you. For other deployment options, start the server with the required CLI flags:
 > ```bash

@@ -156,7 +156,7 @@ protocol returns a clear error rather than emitting a 404.
 
 #### OAuth clients (service accounts / M2M)
 
-Registered OAuth clients used by the `client_credentials` and RFC 8693 token-exchange grants
+Registered OAuth clients used by the `client_credentials` and [RFC 8693](https://datatracker.ietf.org/doc/html/rfc8693) token-exchange grants
 (see [`getToken`](/sdks/authorizer-js/functions#--gettoken)). `client_secret` is returned
 exactly once, at creation and at rotation, and is never projected back afterwards.
 
@@ -171,8 +171,8 @@ exactly once, at creation and at rotation, and is never projected back afterward
 
 #### Trusted issuers (secretless client authentication)
 
-External token issuers trusted to authenticate a service account via RFC 7523
-`client_assertion` (Kubernetes SA tokens, SPIFFE JWT-SVIDs, cloud OIDC tokens) instead of a
+External token issuers trusted to authenticate a service account via [RFC 7523](https://datatracker.ietf.org/doc/html/rfc7523)
+`client_assertion` (Kubernetes SA tokens, [SPIFFE](https://spiffe.io) JWT-SVIDs, cloud OIDC tokens) instead of a
 shared secret.
 
 | Method                  | Description                                              | rest | gql |
@@ -203,7 +203,7 @@ domains gained REST routes in server 2.4.0; on older servers these are GraphQL o
 #### Org SSO connections
 
 Per-organization upstream identity providers. `createOrgOIDCConnection` brokers Authorizer as
-an OIDC Relying Party; `createOrgSAMLConnection` brokers Authorizer as a SAML 2.0 Service
+an OIDC Relying Party; `createOrgSAMLConnection` brokers Authorizer as a [SAML 2.0](https://www.oasis-open.org/standard/saml/) Service
 Provider. Upstream secrets/certificates are accepted on write but never projected back.
 
 | Method                       | Description                                                       | rest | gql |
@@ -236,7 +236,7 @@ issues signed SAML assertions to, plus the per-org IdP signing keypairs used to 
 
 #### SCIM endpoints
 
-Per-org inbound SCIM 2.0 provisioning credential. The bearer token is returned exactly once,
+Per-org inbound [SCIM 2.0](https://datatracker.ietf.org/doc/html/rfc7644) provisioning credential. The bearer token is returned exactly once,
 at creation and at rotation, and is never projected back afterwards.
 
 | Method                | Description                                                     | rest | gql |

@@ -191,7 +191,7 @@ and JS admin clients (JS supports graphql + rest only).
 
 | Method                 | Description                                                                                          | grpc | rest | gql |
 | ---------------------- | ------------------------------------------------------------------------------------------------------ | :--: | :--: | :-: |
-| `AddTrustedIssuer`     | Register an external token issuer (K8s service account, SPIFFE, OIDC) allowed to authenticate as a service account via JWT-bearer assertions. | ✓ | ✓ | ✓ |
+| `AddTrustedIssuer`     | Register an external token issuer (K8s service account, [SPIFFE](https://spiffe.io), OIDC) allowed to authenticate as a service account via JWT-bearer assertions. | ✓ | ✓ | ✓ |
 | `UpdateTrustedIssuer`  | Update a trusted issuer.                                                                                | ✓ | ✓ | ✓ |
 | `DeleteTrustedIssuer`  | **Delete a trusted issuer.** Assertions from it stop authenticating immediately.                       | ✓ | ✓ | ✓ |
 | `GetTrustedIssuer`     | Get a single trusted issuer by id.                                                                     | ✓ | ✓ | ✓ |
@@ -201,7 +201,7 @@ and JS admin clients (JS supports graphql + rest only).
 
 | Method                      | Description                                                                                     | grpc | rest | gql |
 | ---------------------------- | -------------------------------------------------------------------------------------------------| :--: | :--: | :-: |
-| `CreateSamlServiceProvider` | Register a downstream SAML 2.0 SP that Authorizer (acting as IdP) issues signed assertions to.  | ✓ | ✓ | ✓ |
+| `CreateSamlServiceProvider` | Register a downstream [SAML 2.0](https://www.oasis-open.org/standard/saml/) SP that Authorizer (acting as IdP) issues signed assertions to.  | ✓ | ✓ | ✓ |
 | `UpdateSamlServiceProvider` | Update a downstream SP's name, endpoints, certificate, attribute mapping, or active state.       | ✓ | ✓ | ✓ |
 | `DeleteSamlServiceProvider` | **Delete a downstream SP.** SSO assertions to it stop being issued immediately.                  | ✓ | ✓ | ✓ |
 | `GetSamlServiceProvider`    | Get a single downstream SP by id.                                                                | ✓ | ✓ | ✓ |

@@ -108,7 +108,7 @@ Client responses never contain a secret or secret hash — there is no `client_s
 
 ## Authenticating: `client_credentials`
 
-Service accounts get tokens with the RFC 6749 §4.4 grant at `POST /oauth/token`:
+Service accounts get tokens with the [RFC 6749](https://datatracker.ietf.org/doc/html/rfc6749) §4.4 grant at `POST /oauth/token`:
 
 ```bash
 curl -s -X POST $AUTHORIZER_URL/oauth/token \
@@ -167,7 +167,7 @@ A deactivated (`is_active: false`) service account is denied even while its alre
 
 ## Secretless authentication: client assertions & trusted issuers
 
-Instead of a stored secret, a service account can authenticate with a signed JWT it already possesses — a Kubernetes ServiceAccount token or a SPIFFE JWT-SVID — presented as an RFC 7523 `client_assertion`:
+Instead of a stored secret, a service account can authenticate with a signed JWT it already possesses — a Kubernetes ServiceAccount token or a [SPIFFE](https://spiffe.io) JWT-SVID — presented as an [RFC 7523](https://datatracker.ietf.org/doc/html/rfc7523) `client_assertion`:
 
 ```
 POST /oauth/token

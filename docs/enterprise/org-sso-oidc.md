@@ -104,4 +104,4 @@ Verified in the broker implementation:
 
 ## SAML instead?
 
-If the org's IdP only speaks SAML 2.0, use the [per-org SAML SP](./org-saml) — same org model, same JIT provisioning.
+If the org's IdP only speaks [SAML 2.0](https://www.oasis-open.org/standard/saml/), use the [per-org SAML SP](./org-saml) — same org model, same JIT provisioning.

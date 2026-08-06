@@ -22,10 +22,18 @@ description: Authorizer is an open-source authentication and authorization solut
 - APIs to update profile securely
 - Forgot password flow using email
 - Social logins (Google, GitHub, Facebook, LinkedIn, Apple, Discord, Twitter, Twitch, Roblox, Microsoft)
-- Role-based access management and [fine-grained authorization (FGA)](./core/authorization)
+- Role-based access management and [fine-grained authorization (FGA)](./core/authorization) via an embedded [OpenFGA](https://openfga.dev) ([Zanzibar](https://research.google/pubs/pub48190/) ReBAC) engine
 - Password-less login with magic link
-- TOTP-based multi-factor authentication
-- SMS OTP via Twilio
+- [WebAuthn](https://www.w3.org/TR/webauthn-2/) / [passkey](https://fidoalliance.org/passkeys/) registration and login
+- Multi-factor authentication: [TOTP](https://datatracker.ietf.org/doc/html/rfc6238), email OTP, SMS OTP, and passkey as a second factor
+- SMS OTP via [Twilio](https://www.twilio.com)
+- Enterprise SSO — [SAML 2.0](https://www.oasis-open.org/standard/saml/) as Service Provider and Identity Provider, OIDC federation, verified email domains, and home realm discovery ([SSO guide](./core/sso-guide))
+- [SCIM 2.0](https://datatracker.ietf.org/doc/html/rfc7644) user and group provisioning ([SCIM](./enterprise/scim))
+- [Organizations and multi-tenancy](./enterprise/organizations) with org-scoped admin roles
+- Machine-to-machine auth (`client_credentials`) and secretless workload identity — [RFC 7523](https://datatracker.ietf.org/doc/html/rfc7523) client assertions, [SPIFFE](https://spiffe.io) JWT-SVIDs, Kubernetes [TokenReview](https://kubernetes.io/docs/reference/kubernetes-api/authentication-resources/token-review-v1/) ([Workload Identity](./enterprise/workload-identity))
+- Agent delegation via [RFC 8693](https://datatracker.ietf.org/doc/html/rfc8693) token exchange ([Token Exchange](./enterprise/token-exchange))
+- Email templating and webhooks
+- Rate limiting, security hardening, and [Prometheus](https://prometheus.io) metrics ([Metrics & Monitoring](./core/metrics-monitoring))
 - [GraphQL](./core/graphql-api), [REST](./core/rest-api), and [gRPC](./core/grpc) APIs
 - [MCP server](./core/mcp) for AI agents
 
@@ -85,9 +93,9 @@ docker run -p 8080:8080 quay.io/authorizer/authorizer:latest \
 
 Authorizer supports a wide range of databases:
 
-- PostgreSQL, MySQL, MariaDB, SQLite, SQL Server
-- MongoDB, ArangoDB, CouchDB
-- CassandraDB, ScyllaDB, DynamoDB, Couchbase
+- PostgreSQL, MySQL, MariaDB, SQLite, libSQL / Turso, SQL Server
+- MongoDB, ArangoDB, Couchbase
+- CassandraDB, ScyllaDB, DynamoDB
 - Yugabyte, PlanetScale, CockroachDB
 
 See [Databases](./core/databases) for connection string formats.
@@ -98,16 +106,16 @@ See [Databases](./core/databases) for connection string formats.
 
 ### Frontend SDKs
 
-- [JavaScript / TypeScript](https://github.com/authorizerdev/authorizer-js) — v3.2.1; user + admin client; GraphQL + REST protocols
+- [JavaScript / TypeScript](https://github.com/authorizerdev/authorizer-js) — v3.3.0; user + admin client; GraphQL + REST protocols
 - [React](https://github.com/authorizerdev/authorizer-react) — v2.x; `protocol` prop; pre-built login/signup/MFA components
-- [Vue](https://github.com/authorizerdev/authorizer-vue)
-- [Svelte](https://github.com/authorizerdev/authorizer-svelte)
+- [Vue](https://github.com/authorizerdev/authorizer-vue) — beta; no admin client or protocol selection yet
+- [Svelte](https://github.com/authorizerdev/authorizer-svelte) — beta; no admin client or protocol selection yet
 - [Flutter](https://github.com/authorizerdev/authorizer-flutter-sdk) — not released yet; no package on pub.dev
 
 ### Backend SDKs
 
 - [Go](https://github.com/authorizerdev/authorizer-go) — user + admin client; protocol selection (gRPC / REST / GraphQL); FGA helpers
-- [Python](https://github.com/authorizerdev/authorizer-python) — v0.3.0 pre-release; sync + async; admin API (`pip install --pre authorizer-py`)
+- [Python](https://github.com/authorizerdev/authorizer-py) — v0.3.0 pre-release; sync + async; admin API (`pip install --pre authorizer-py`)
 - [Node.js](https://github.com/authorizerdev/authorizer-js) — same package as the frontend SDK, works server-side
 
 See the [SDK reference](./sdks/authorizer-js) for usage docs.

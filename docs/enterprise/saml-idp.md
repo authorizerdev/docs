@@ -5,7 +5,7 @@ title: SAML 2.0 Identity Provider
 
 # SAML 2.0 Identity Provider (IdP)
 
-Per [organization](./organizations), Authorizer can also act as a **SAML 2.0 Identity Provider** — issuing signed assertions to downstream Service Providers (Zendesk, Salesforce, Notion, …) so their SAML-based SSO logs users in with their existing Authorizer session. This is the architectural inverse of [Authorizer as SAML SP](./org-saml): there Authorizer *consumes* an assertion from a corporate IdP; here it *produces* one for a downstream SP. Do not confuse the two — a `SAMLServiceProvider` row (this page) and an `OrgSAMLConnection` row (the SP-role doc) are unrelated tables.
+Per [organization](./organizations), Authorizer can also act as a **[SAML 2.0](https://www.oasis-open.org/standard/saml/) Identity Provider** — issuing signed assertions to downstream Service Providers (Zendesk, Salesforce, Notion, …) so their SAML-based SSO logs users in with their existing Authorizer session. This is the architectural inverse of [Authorizer as SAML SP](./org-saml): there Authorizer *consumes* an assertion from a corporate IdP; here it *produces* one for a downstream SP. Do not confuse the two — a `SAMLServiceProvider` row (this page) and an `OrgSAMLConnection` row (the SP-role doc) are unrelated tables.
 
 ```mermaid
 flowchart LR

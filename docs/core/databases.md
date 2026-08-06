@@ -51,6 +51,12 @@ Authorizer v2 configures the database via CLI flags. The required flags are `--d
   --database-type=sqlite --database-url=test.db
   ```
 
+- [libSQL / Turso](https://turso.tech/)
+
+  ```bash
+  --database-type=libsql --database-url="libsql://your-db.turso.io?authToken=YOUR_TOKEN"
+  ```
+
 - [SQLServer](https://www.microsoft.com/en-us/sql-server/)
 
   ```bash

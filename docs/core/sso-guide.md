@@ -35,7 +35,7 @@ Every app talks to Authorizer using standard **OIDC Discovery**. Point your app 
 |---------|---------|
 | **Single user store** | One account per person across all apps. No duplicate credentials, no sync headaches. |
 | **One login, all apps** | Session cookie means users authenticate once. Subsequent apps get silent SSO via `prompt=none`. |
-| **Centralized MFA** | TOTP, email OTP, or SMS OTP configured once per user, enforced everywhere. |
+| **Centralized MFA** | [TOTP](https://datatracker.ietf.org/doc/html/rfc6238), email OTP, or SMS OTP configured once per user, enforced everywhere. |
 | **Unified roles** | Assign roles centrally; each app reads the `roles` claim from the JWT and enforces its own authorization. |
 | **Self-hosted & sovereign** | Your infrastructure, your data. No third-party vendor sees your user credentials. |
 | **Standards-based** | Full OIDC Core 1.0, OAuth 2.0, PKCE, token introspection, revocation. Any OIDC-compliant library works. |
@@ -142,7 +142,7 @@ Many tools support "Login with OIDC" out of the box. Examples:
 | Tool | Configuration |
 |------|--------------|
 | **Grafana** | Set `[auth.generic_oauth]` with `auth_url`, `token_url`, `api_url` from Authorizer's discovery endpoint. |
-| **GitLab** | Use the OmniAuth OpenID Connect provider with Authorizer's issuer URL. |
+| **GitLab** | Use the OmniAuth [OpenID Connect](https://openid.net/specs/openid-connect-core-1_0.html) provider with Authorizer's issuer URL. |
 | **HashiCorp Vault** | Configure the OIDC auth method with Authorizer as the provider. |
 | **MinIO** | Set `MINIO_IDENTITY_OPENID_CONFIG_URL` to Authorizer's discovery URL. |
 | **Kubernetes** | Use `--oidc-issuer-url` flag on the API server for OIDC-based kubectl authentication. |
@@ -233,7 +233,7 @@ Authorizer supports multiple login methods, all managed centrally:
 | **Email + Password** | Classic signup/login with email verification |
 | **Magic Links** | Passwordless login via email link |
 | **Email OTP** | One-time password sent to email |
-| **SMS OTP** | One-time password sent via SMS (Twilio) |
+| **SMS OTP** | One-time password sent via SMS ([Twilio](https://www.twilio.com)) |
 | **TOTP** | Time-based one-time password (Google Authenticator, Authy) |
 | **Social Logins** | Google, GitHub, Facebook, LinkedIn, Apple, Discord, Twitter, Microsoft, Twitch, Roblox |
 
@@ -301,7 +301,7 @@ Model tenants as organizations with per-org members and per-org roles, and attac
 
 ### Per-Organization SAML 2.0 SSO (SP)
 
-Authorizer acts as a SAML 2.0 Service Provider per organization: register a corporate IdP's entity ID, SSO URL, and signing certificate, and that org's users log in through their IdP with JIT provisioning. See [SAML SSO](../enterprise/org-saml).
+Authorizer acts as a [SAML 2.0](https://www.oasis-open.org/standard/saml/) Service Provider per organization: register a corporate IdP's entity ID, SSO URL, and signing certificate, and that org's users log in through their IdP with JIT provisioning. See [SAML SSO](../enterprise/org-saml).
 
 ### SAML 2.0 Identity Provider (IdP)
 
@@ -317,11 +317,11 @@ Organizations can prove ownership of an email domain — via a DNS TXT challenge
 
 ### SCIM 2.0 Provisioning (RFC 7644)
 
-Per-org inbound SCIM 2.0 endpoints let enterprise directories (Okta, Microsoft Entra ID, OneLogin) provision and deprovision users automatically. Deactivation synchronously revokes sessions and refresh tokens. See [SCIM Provisioning](../enterprise/scim).
+Per-org inbound [SCIM 2.0](https://datatracker.ietf.org/doc/html/rfc7644) endpoints let enterprise directories (Okta, Microsoft Entra ID, OneLogin) provision and deprovision users automatically. Deactivation synchronously revokes sessions and refresh tokens. See [SCIM Provisioning](../enterprise/scim).
 
 ### Workload Identity & Delegation
 
-Machines can authenticate without stored secrets (Kubernetes ServiceAccount tokens, SPIFFE JWT-SVIDs — see [Workload Identity](../enterprise/workload-identity)), and agents can act on behalf of users with attenuated, audience-bound tokens via RFC 8693 token exchange (see [Token Exchange](../enterprise/token-exchange)).
+Machines can authenticate without stored secrets (Kubernetes ServiceAccount tokens, [SPIFFE](https://spiffe.io) JWT-SVIDs — see [Workload Identity](../enterprise/workload-identity)), and agents can act on behalf of users with attenuated, audience-bound tokens via [RFC 8693](https://datatracker.ietf.org/doc/html/rfc8693) token exchange (see [Token Exchange](../enterprise/token-exchange)).
 
 ---
 

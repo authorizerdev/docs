@@ -15,11 +15,11 @@ Deploy production ready Authorizer instance using one click deployment options a
 
 | **Infra provider** | **One-click link** | **Additional information** |
 | :----------------: | :-----------------: | :----------------------------------------------------: |
-| Railway.app | [Deploy on Railway](https://railway.com/deploy/authorizer-1?referralCode=FEF4uT&utm_medium=integration&utm_source=template&utm_campaign=generic) | [docs](https://docs.authorizer.dev/deployment/railway) |
-| Heroku | [Deploy to Heroku](https://heroku.com/deploy?template=https://github.com/authorizerdev/authorizer-heroku) | [docs](https://docs.authorizer.dev/deployment/heroku) |
-| Render | [Deploy to Render](https://render.com/deploy?repo=https://github.com/authorizerdev/authorizer-render) | [docs](https://docs.authorizer.dev/deployment/render) |
+| Railway.app | [Deploy on Railway](https://railway.com/deploy/authorizer-1?referralCode=FEF4uT&utm_medium=integration&utm_source=template&utm_campaign=generic) | [docs](/deployment/railway) |
+| Heroku | [Deploy to Heroku](https://heroku.com/deploy?template=https://github.com/authorizerdev/authorizer-heroku) | [docs](/deployment/heroku) |
+| Render | [Deploy to Render](https://render.com/deploy?repo=https://github.com/authorizerdev/authorizer-render) | [docs](/deployment/render) |
 
-For more information check [docs](https://docs.authorizer.dev/getting-started/)
+For more information check [docs](/getting-started/)
 
 ## Step 2: Setup Instance
 
@@ -55,7 +55,7 @@ Authorizer comes with global context `authorizerContext` which is available once
 
 Configure `AuthorizerProvider` at root level in your application and import `default.css`.
 
-> Note: You can override default style with `css` variables. Check [docs](https://docs.authorizer.dev/authorizer-svelte) for more details.
+> Note: You can override default style with `css` variables. Check [docs](/sdks/authorizer-svelte) for more details.
 
 `eg: routes/+layout.svelte`
 

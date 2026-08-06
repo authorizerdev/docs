@@ -71,7 +71,7 @@ const App = () => {
 A core component that includes:
 
 - social logins (incl. Discord, when enabled on the backend)
-- passkey ("Sign in with a passkey") login, shown automatically when the browser supports WebAuthn
+- passkey ("Sign in with a passkey") login, shown automatically when the browser supports [WebAuthn](https://www.w3.org/TR/webauthn-2/)
 - signup view
 - login view
 - forgot password view
@@ -293,7 +293,7 @@ const ResetPassword = () => {
 
 ## `AuthorizerVerifyOtp`
 
-A component to render the OTP/MFA verification form. It handles email/SMS OTP and TOTP codes, and — when offered alongside a code factor — a "Verify with a passkey" WebAuthn option. On SMS OTP it also attempts WebOTP auto-fill (`navigator.credentials.get({ otp: ... })`) so supporting browsers can fill the code automatically. Make sure it is used as Child of `AuthorizerProvider`.
+A component to render the OTP/MFA verification form. It handles email/SMS OTP and [TOTP](https://datatracker.ietf.org/doc/html/rfc6238) codes, and — when offered alongside a code factor — a "Verify with a passkey" WebAuthn option. On SMS OTP it also attempts WebOTP auto-fill (`navigator.credentials.get({ otp: ... })`) so supporting browsers can fill the code automatically. Make sure it is used as Child of `AuthorizerProvider`.
 
 ### Props
 

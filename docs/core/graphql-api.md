@@ -100,10 +100,10 @@ It returns `Meta` type with the following possible values
 | `is_basic_authentication_enabled` | It gives information, if basic auth is enabled or not         |
 | `is_magic_link_login_enabled`     | It gives information if password less login is enabled or not |
 | `is_sign_up_enabled`              | It gives information if sign up is enabled or not             |
-| `is_totp_mfa_enabled`             | Whether TOTP MFA enrollment and login are available           |
+| `is_totp_mfa_enabled`             | Whether [TOTP](https://datatracker.ietf.org/doc/html/rfc6238) MFA enrollment and login are available           |
 | `is_email_otp_mfa_enabled`        | Whether email OTP MFA enrollment and login are available (requires SMTP configured) |
-| `is_sms_otp_mfa_enabled`          | Whether SMS OTP MFA enrollment and login are available (requires Twilio configured) |
-| `is_webauthn_enabled`             | Whether WebAuthn/passkey enrollment is available              |
+| `is_sms_otp_mfa_enabled`          | Whether SMS OTP MFA enrollment and login are available (requires [Twilio](https://www.twilio.com) configured) |
+| `is_webauthn_enabled`             | Whether [WebAuthn](https://www.w3.org/TR/webauthn-2/)/passkey enrollment is available              |
 
 **Sample Query**
 
@@ -2007,7 +2007,7 @@ query {
 
 #### `_fga_expand`
 
-Expand the relationship/userset tree for a relation on an object (admin only — reveals the access graph). Useful for debugging how access is derived. Returns `{ tree }` — the OpenFGA userset tree serialized as a JSON string.
+Expand the relationship/userset tree for a relation on an object (admin only — reveals the access graph). Useful for debugging how access is derived. Returns `{ tree }` — the [OpenFGA](https://openfga.dev) userset tree serialized as a JSON string.
 
 Input `params` (`FgaExpandInput`): `{ relation: String!, object: String! }`.
 

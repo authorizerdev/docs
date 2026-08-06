@@ -5,7 +5,7 @@ title: OAuth 2.0, OIDC & SSO
 
 # OAuth 2.0, OpenID Connect & SSO
 
-Authorizer is a fully conformant OAuth 2.0 and OpenID Connect (OIDC) provider. You can:
+Authorizer is a fully conformant OAuth 2.0 and [OpenID Connect](https://openid.net/specs/openid-connect-core-1_0.html) (OIDC) provider. You can:
 
 - **Use it standalone** as an SSO identity provider for your own apps — any OIDC-compliant client library "just works" against its Discovery URL.
 - **Federate it into an existing SSO** (Auth0, Okta, Keycloak, etc.) as an upstream OIDC identity provider.
@@ -22,15 +22,15 @@ This page is the one-stop reference for every endpoint, parameter, and integrati
 | OIDC Hybrid Flow (§3.3)               | Implemented   | `code id_token`, `code token`, `code id_token token`, `id_token token` |
 | OIDC RP-Initiated Logout 1.0          | Implemented   | `post_logout_redirect_uri`, `state` echo, `id_token_hint`          |
 | OIDC Back-Channel Logout 1.0          | Implemented   | Opt-in via `--backchannel-logout-uri`                              |
-| RFC 6749 (OAuth 2.0)                  | Implemented   | Authorization Code + Refresh Token + Implicit + Client Credentials grants |
+| [RFC 6749](https://datatracker.ietf.org/doc/html/rfc6749) (OAuth 2.0)                  | Implemented   | Authorization Code + Refresh Token + Implicit + Client Credentials grants |
 | RFC 6750 (Bearer Token)               | Implemented   | `WWW-Authenticate` on 401                                          |
 | RFC 7009 (Token Revocation)           | Implemented   | Returns 200 for invalid tokens                                     |
 | RFC 7517 (JWK)                        | Implemented   | RSA, ECDSA, HMAC; manual multi-key rotation                        |
-| RFC 7523 (JWT client assertions)      | Implemented   | `private_key_jwt` via [trusted issuers](../enterprise/workload-identity) — K8s SA tokens, SPIFFE JWT-SVIDs |
-| RFC 7636 (PKCE)                       | Implemented   | `S256` and `plain` methods; defaults to `plain` when the method is omitted (§4.2) |
+| [RFC 7523](https://datatracker.ietf.org/doc/html/rfc7523) (JWT client assertions)      | Implemented   | `private_key_jwt` via [trusted issuers](../enterprise/workload-identity) — K8s SA tokens, [SPIFFE](https://spiffe.io) JWT-SVIDs |
+| [RFC 7636](https://datatracker.ietf.org/doc/html/rfc7636) (PKCE)                       | Implemented   | `S256` and `plain` methods; defaults to `plain` when the method is omitted (§4.2) |
 | RFC 7662 (Token Introspection)        | Implemented   | Non-disclosure for inactive tokens                                 |
 | RFC 8414 (Authorization Server Metadata) | Implemented | `/.well-known/oauth-authorization-server` — alias of the OIDC discovery document |
-| RFC 8693 (Token Exchange)             | Implemented   | [Delegation-only profile](../enterprise/token-exchange) with nested `act` chain |
+| [RFC 8693](https://datatracker.ietf.org/doc/html/rfc8693) (Token Exchange)             | Implemented   | [Delegation-only profile](../enterprise/token-exchange) with nested `act` chain |
 | RFC 8707 (Resource Indicators)        | Implemented   | Optional `resource` on `/authorize` + `/oauth/token` (authorization code flow); exactly one required on the token-exchange grant |
 
 **Not yet implemented** (tracked for future releases): RFC 7591 dynamic client registration, RFC 9101 JAR / Request Object, OIDC Session Management iframe, front-channel logout, automated time-based key rotation.
