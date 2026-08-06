@@ -77,12 +77,11 @@ for _, u := range res.Users {
 ```
 
 Request/response types for the proto-backed methods come from the generated package
-`authorizerv1 "github.com/authorizerdev/authorizer-proto-go/authorizer/v1"`.
-It lives under `internal/`, so Go's internal-package rule means it can only be imported by
-code whose import path is rooted at `github.com/authorizerdev/authorizer-go` — e.g. this
-module's own `examples/` tree, not an external application module. The Go-native admin
-operations (organizations, org SSO connections, SCIM, org domains — see below) avoid this
-by declaring their request/response types directly in the top-level `authorizer` package
+`authorizerv1 "github.com/authorizerdev/authorizer-proto-go/authorizer/v1"`. It is a
+public module of its own, so application code can import it directly — it is pulled in
+transitively when you `go get github.com/authorizerdev/authorizer-go/v2`. The Go-native
+admin operations (organizations, org SSO connections, SCIM, org domains — see below)
+declare their request/response types directly in the top-level `authorizer` package
 instead.
 
 ### Admin client options

@@ -185,12 +185,12 @@ See [Server Configuration](../core/server-config) for all flags and hardening op
 
 When talking to a v2 server, use:
 
-- **`@authorizerdev/authorizer-js` v3** (`^3.0.0-rc.1` or compatible v3)
-- **`@authorizerdev/authorizer-react` v2** (`^2.0.0-rc.1` or compatible v2)
+- **`@authorizerdev/authorizer-js` v3** (`^3.3.0` or compatible v3)
+- **`@authorizerdev/authorizer-react` v2** (`^2.0.0` or compatible v2)
 
 ```bash
-npm install @authorizerdev/authorizer-js@^3.0.0-rc.1 \
-            @authorizerdev/authorizer-react@^2.0.0-rc.1
+npm install @authorizerdev/authorizer-js@^3.3.0 \
+            @authorizerdev/authorizer-react@^2.0.0
 ```
 
 If you used types directly from `authorizer-js`, rename them for v2:

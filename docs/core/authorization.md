@@ -172,6 +172,13 @@ identities with `type service_account` and admit it in relevant type restriction
 (`viewer: [user, service_account]`) to put them in the same graph as humans; see
 the [DSL construct reference](./fga-guide#direct-assignment--type-restrictions).
 
+An **AI agent acting for a user** (an RFC 8693 delegated token) is checked
+against *both* `agent:<client_id>` and `user:<sub>`, and needs both to be
+allowed — its effective authority is `perms(agent) ∩ perms(user)`. This applies
+to `check_permissions` and `list_permissions` alike, and turns on by declaring
+`type agent` in your model; deployments without it are unaffected. See
+[Agent Identity & Permissions](../enterprise/agent-identity).
+
 ### `check_permissions` — one or many questions
 
 A single check is simply a list of one. Results come back **in order** and echo
@@ -315,7 +322,14 @@ cookie is used automatically.
 - **Metrics.** The engine exports Prometheus metrics — `authorizer_fga_checks_total`
   (allow/deny/error), `authorizer_fga_check_duration_seconds`, and
   `authorizer_fga_operations_total` — for adoption tracking and denial/error alerting.
-  See [Metrics & Monitoring → Authorization (FGA) Metrics](./metrics-monitoring#authorization-fga-metrics).
+  Delegated (agent) callers additionally report
+  `authorizer_fga_delegated_checks_total{operation,outcome}`, whose `outcome`
+  label is the only thing that distinguishes *the agent lacks a grant*
+  (`denied_by_agent`) from *the user genuinely lacks access* (`denied_by_user`) —
+  and `not_enforced`, which means agent traffic is arriving unconstrained
+  because the model declares no `agent` type. See
+  [Metrics & Monitoring → Authorization (FGA) Metrics](./metrics-monitoring#authorization-fga-metrics)
+  and [Agent Identity & Permissions](../enterprise/agent-identity#observability).
 - **Learn the model language.** See the OpenFGA docs:
   [modeling guide](https://openfga.dev/docs/modeling/getting-started) and
   [configuration language](https://openfga.dev/docs/configuration-language).

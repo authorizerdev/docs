@@ -14,7 +14,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/authorizerdev/authorizer-go"
+	authorizer "github.com/authorizerdev/authorizer-go/v2"
 	"github.com/gin-gonic/gin"
 )
 

@@ -5,8 +5,11 @@ title: Getting Started
 
 # Getting Started
 
-The Authorizer Flutter SDK documentation is coming soon.
+The Authorizer Flutter SDK has not been released yet. The
+[repository](https://github.com/authorizerdev/authorizer-flutter-sdk) is a placeholder — it
+contains no source code, and there is no package on pub.dev.
 
-In the meantime, you can find the source code and usage instructions on the GitHub repository:
-
-[https://github.com/authorizerdev/authorizer-flutter-sdk](https://github.com/authorizerdev/authorizer-flutter-sdk)
+Until it ships, call the server directly from Dart: every SDK operation is available over
+the [REST endpoints](/core/endpoints) and the [GraphQL API](/core/graphql-api), which work
+with any HTTP client (`package:http`, Dio, and so on). For browser-based OAuth flows, see
+[OAuth 2.0 / OIDC](/core/oauth2-oidc).

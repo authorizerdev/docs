@@ -7,7 +7,7 @@ title: Getting Started
 
 ## Official Documentation
 
-For detailed explanation of each function, check the authorizer-go [pkg.go.dev docs](https://pkg.go.dev/github.com/authorizerdev/authorizer-go).
+For detailed explanation of each function, check the authorizer-go [pkg.go.dev docs](https://pkg.go.dev/github.com/authorizerdev/authorizer-go/v2).
 
 **Prerequisite**: You need an Authorizer instance running. See the [deployment guides](../../deployment/) for setup options.
 

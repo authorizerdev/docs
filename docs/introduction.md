@@ -97,15 +97,15 @@ See [Databases](./core/databases) for connection string formats.
 ### Frontend SDKs
 
 - [JavaScript / TypeScript](https://github.com/authorizerdev/authorizer-js) — v3.2.1; user + admin client; GraphQL + REST protocols
-- [React](https://github.com/authorizerdev/authorizer-react) — v2.1.0; `protocol` prop; pre-built login/signup/MFA components
+- [React](https://github.com/authorizerdev/authorizer-react) — v2.x; `protocol` prop; pre-built login/signup/MFA components
 - [Vue](https://github.com/authorizerdev/authorizer-vue)
 - [Svelte](https://github.com/authorizerdev/authorizer-svelte)
-- [Flutter](https://github.com/nickolasgomez/authorizer-flutter-sdk) (community)
+- [Flutter](https://github.com/authorizerdev/authorizer-flutter-sdk) — not released yet; no package on pub.dev
 
 ### Backend SDKs
 
 - [Go](https://github.com/authorizerdev/authorizer-go) — user + admin client; protocol selection (gRPC / REST / GraphQL); FGA helpers
-- [Python](https://github.com/authorizerdev/authorizer-python) — v0.2.0; sync + async; admin API (`pip install authorizer-py`)
+- [Python](https://github.com/authorizerdev/authorizer-python) — v0.3.0 pre-release; sync + async; admin API (`pip install --pre authorizer-py`)
 - [Node.js](https://github.com/authorizerdev/authorizer-js) — same package as the frontend SDK, works server-side
 
 See the [SDK reference](./sdks/authorizer-js) for usage docs.

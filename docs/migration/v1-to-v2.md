@@ -571,14 +571,14 @@ Or use a script inside the image that maps env to flags and then runs `./authori
 Upgrade:
 
 ```bash
-npm install @authorizerdev/authorizer-js@^3.0.0-rc.1
+npm install @authorizerdev/authorizer-js@^3.3.0
 # or
-pnpm add @authorizerdev/authorizer-js@^3.0.0-rc.1
+pnpm add @authorizerdev/authorizer-js@^3.3.0
 ```
 
 ### `@authorizerdev/authorizer-react` (v2)
 
-- **Version:** use **authorizer-react** `2.0.0-rc.1` (or compatible v2) with **authorizer-js** v3.
+- **Version:** use **authorizer-react** `^2.0.0` (or compatible v2) with **authorizer-js** v3.
 - **Breaking:** build system (tsdx to tsup), output paths (for example `dist/index.cjs`, `dist/index.mjs`), and **Node.js >= 18**.
 - **Types:** same renames as authorizer-js (for example `SignUpRequest`, `LoginRequest`).
 

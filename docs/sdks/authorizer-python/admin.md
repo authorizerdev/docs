@@ -39,7 +39,7 @@ token = client.login(LoginRequest(email="user@example.com", password="Abc@123"))
 gRPC requires the optional extra:
 
 ```bash
-pip install 'authorizer-py[grpc]'
+pip install --pre 'authorizer-py[grpc]'
 ```
 
 It listens on its own port, separate from the HTTP URL. When `grpc_endpoint` is omitted,
