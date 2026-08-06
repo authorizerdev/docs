@@ -313,12 +313,38 @@ No flags. The protection applies to:
 OTP and TOTP secrets are now protected at rest:
 
 - **OTPs (email/SMS one-time codes):** stored as HMAC-SHA256 digests
-  keyed by `--jwt-secret`. The verifier hashes the candidate and
+  keyed by `--encryption-key`. The verifier hashes the candidate and
   compares constant-time against the stored digest. The plaintext is
   only ever held in memory long enough to send the email/SMS body.
 - **TOTP shared secrets (authenticator app):** encrypted at rest with
-  AES-256-GCM (using HKDF-derived keys from `--jwt-secret`) and stored
+  AES-256-GCM (using HKDF-derived keys from `--encryption-key`) and stored
   with an `enc:v1:` prefix.
+
+:::danger Security advisory — affected versions 2.2.1 through 2.4.0-rc.13
+
+In those releases the at-rest key was **not** a separate input. It derived from
+`--jwt-secret`, and when a deployment used an asymmetric JWT algorithm
+(`RS*`/`ES*` with `--jwt-private-key`/`--jwt-public-key`) and set **no**
+`--jwt-secret`, the derivation ran over empty keying material and produced a
+**constant compiled into the open-source binary**. Anyone who can read the
+repository can compute it.
+
+**If you ran an affected version with `RS*`/`ES*` and no `--jwt-secret`,** a
+copy of your database yields recoverable TOTP seeds and every outstanding OTP
+digest — including password-reset codes, whose 10⁶ search space is trivial once
+the key is known.
+
+Remediation, in order:
+
+1. Set `--encryption-key` to a fresh random value (`openssl rand -hex 32`).
+2. Force TOTP re-enrolment for all users — existing ciphertext was written
+   under the old key and **cannot** be decrypted with the new one. There is no
+   re-encryption path.
+3. Invalidate outstanding password-reset and verification OTPs.
+
+From 2.4.0 the key is its own input and an `RS*`/`ES*` deployment without one
+**refuses to start** rather than falling back silently.
+:::
 
 ### Migration
 
@@ -357,16 +383,23 @@ this is a non-issue — there are no other replicas to disagree with.
 
 ### Key rotation
 
-Both OTP and TOTP at-rest protection are keyed by `--jwt-secret`.
-Rotating `--jwt-secret` will lock out every user with an enrolled TOTP
-authenticator until they re-enrol, because the existing ciphertext can
-no longer be decrypted. If you must rotate the JWT secret, plan a
-TOTP re-enrolment campaign (or a temporary fallback path) before doing so.
+Both OTP and TOTP at-rest protection are keyed by `--encryption-key`.
+Rotating it will lock out every user with an enrolled TOTP authenticator
+until they re-enrol, because the existing ciphertext can no longer be
+decrypted. If you must rotate, plan a TOTP re-enrolment campaign (or a
+temporary fallback path) before doing so.
+
+`--encryption-key` falls back to `--jwt-secret` when it is not set, which keeps
+HMAC (`HS*`) deployments working unchanged — but it means rotating
+`--jwt-secret` on such a deployment silently rotates the at-rest key too. Set
+`--encryption-key` explicitly to decouple the two; the server warns at startup
+when both are set to the same value.
+
 The server logs an explicit error on every TOTP validation that fails
 to decrypt:
 
 ```
-failed to decrypt stored TOTP secret; check that --jwt-secret has not changed since enrollment
+failed to decrypt stored TOTP secret; check that --encryption-key (or --jwt-secret, if no encryption key is set) has not changed since enrollment
 ```
 
 ---

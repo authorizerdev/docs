@@ -220,11 +220,32 @@ Additional flags:
 - **`--refresh-token-expires-in`** (default `2592000`, 30 days): refresh-token
   lifetime in seconds. Previously hardcoded — now operator-configurable.
 
+- **`--encryption-key`** (no default): the key used to encrypt secrets **at
+  rest** — TOTP shared secrets and OTP digests. Separate from the JWT signing
+  material.
+
 In v2, the `_generate_jwt_keys` mutation is deprecated and returns an error; configure keys **only via flags**.
 
-> **Note on key rotation:** `--jwt-secret` is also used to encrypt TOTP shared
-> secrets at rest and to HMAC OTPs. Rotating it will lock out every user with
-> an enrolled TOTP authenticator until they re-enrol. See
+:::warning Breaking change in 2.4.0 — `--encryption-key`
+
+At-rest encryption no longer derives from `--jwt-secret`. **A deployment using
+an asymmetric JWT algorithm (`RS*`/`ES*`) with no `--jwt-secret` will refuse to
+start until `--encryption-key` is set.**
+
+HMAC deployments (`HS256`/`HS384`/`HS512`) are unaffected: the key still falls
+back to `--jwt-secret`, so no change is required.
+
+This closes a vulnerability in **2.2.1 through 2.4.0-rc.13** where that
+fallback produced a publicly known constant for asymmetric deployments — read
+the [security advisory](./security#otp-and-totp-at-rest) before upgrading, as
+remediation includes forcing TOTP re-enrolment.
+:::
+
+> **Note on key rotation:** `--encryption-key` protects TOTP shared secrets at
+> rest and HMACs OTPs. Rotating it will lock out every user with an enrolled
+> TOTP authenticator until they re-enrol. When it is unset it falls back to
+> `--jwt-secret`, so on those deployments rotating the JWT secret rotates the
+> at-rest key too. See
 > [OTP and TOTP at rest](./security#otp-and-totp-at-rest).
 
 ---
