@@ -52,7 +52,8 @@ Before any client can use Authorizer for SSO, you need to tell the server which 
   --allowed-origins=https://app.example.com,http://localhost:3000 \
   --jwt-type=RS256 \
   --jwt-private-key="$(cat /etc/authorizer/jwt-private.pem)" \
-  --jwt-public-key="$(cat /etc/authorizer/jwt-public.pem)"
+  --jwt-public-key="$(cat /etc/authorizer/jwt-public.pem)" \
+  --encryption-key="$(openssl rand -hex 32)"
 ```
 
 For production, use RSA or ECDSA keys (not HMAC) so public clients can verify tokens via the JWKS endpoint without sharing the signing secret. See the [Server Configuration guide](./server-config) for all flags.

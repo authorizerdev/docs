@@ -74,6 +74,7 @@ In **v2**:
    - `--client-id` and `--client-secret` — **required**; the server will exit if they are missing.
    - `--admin-secret` — needed for admin dashboard access and admin API operations.
    - `--jwt-type` and `--jwt-secret` (for HMAC algorithms like HS256) or `--jwt-private-key` / `--jwt-public-key` (for RSA/ECDSA algorithms) — needed for token signing and verification.
+   - `--encryption-key` — encrypts TOTP secrets and OTP digests at rest (2.4.0+). **Required for RSA/ECDSA deployments**, which have no `--jwt-secret` to fall back to; the server refuses to start without it. HMAC deployments fall back to `--jwt-secret` automatically.
 
 ---
 
@@ -292,6 +293,7 @@ Use these v2 **CLI flags** instead of v1 env or dashboard config. Flag names use
 | `JWT_SECRET`               | `--jwt-secret` |
 | `JWT_PRIVATE_KEY`, `JWT_PUBLIC_KEY` | `--jwt-private-key`, `--jwt-public-key` |
 | `JWT_ROLE_CLAIM`           | `--jwt-role-claim` |
+| *(new in 2.4.0)*           | `--encryption-key` |
 | `CUSTOM_ACCESS_TOKEN_SCRIPT` | `--custom-access-token-script` |
 
 ### SMTP

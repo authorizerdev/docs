@@ -15,6 +15,17 @@ Key differences from v1:
 
 ## Required Variables
 
+:::info `--encryption-key` (2.4.0+)
+
+Encrypts TOTP shared secrets and OTP digests at rest. **Required when `--jwt-type`
+is `RS*`/`ES*`** — with no `--jwt-secret` to fall back to, the server refuses to
+start without it. With HMAC types (`HS*`) it falls back to `--jwt-secret`, but a
+distinct value is recommended: rotating the JWT secret otherwise re-keys at-rest
+data and locks out every enrolled TOTP user. Omit the flag on releases before
+2.4.0, which do not have it. See [Server Configuration](/core/server-config).
+
+:::
+
 All deployments require these flags with sample values:
 
 ```bash
@@ -22,6 +33,7 @@ All deployments require these flags with sample values:
 --database-url=test.db \
 --jwt-type=HS256 \
 --jwt-secret=test \
+--encryption-key="$(openssl rand -hex 32)" \
 --admin-secret=admin \
 --client-id=123456 \
 --client-secret=secret

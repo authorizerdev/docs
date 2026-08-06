@@ -87,7 +87,8 @@ ExecStart=/path_to_authorizer_parent_folder/authorizer/build/authorizer \
   --admin-secret=${ADMIN_SECRET} \
   --jwt-type=RS256 \
   --jwt-private-key=${JWT_PRIVATE_KEY} \
-  --jwt-public-key=${JWT_PUBLIC_KEY}
+  --jwt-public-key=${JWT_PUBLIC_KEY} \
+  --encryption-key=${ENCRYPTION_KEY}
 WorkingDirectory=/path_to_authorizer_parent_folder/authorizer/
 Environment=DATABASE_URL=postgres://user:pass@host/db
 Environment=CLIENT_ID=your-client-id
@@ -95,6 +96,7 @@ Environment=CLIENT_SECRET=your-client-secret
 Environment=ADMIN_SECRET=your-admin-secret
 Environment=JWT_PRIVATE_KEY=...
 Environment=JWT_PUBLIC_KEY=...
+Environment=ENCRYPTION_KEY=generate-with-openssl-rand-hex-32
 
 [Install]
 WantedBy=multi-user.target

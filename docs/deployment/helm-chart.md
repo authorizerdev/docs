@@ -59,6 +59,7 @@ helm install \
     --set authorizer.database_url="postgres://user:pass@host:5432/authorizer" \
     --set authorizer.jwt_type=HS256 \
     --set authorizer.jwt_secret=your-jwt-secret \
+    --set authorizer.encryption_key="$(openssl rand -hex 32)" \
     --set authorizer.admin_secret=your-admin-secret \
     --set authorizer.client_id=123456 \
     --set authorizer.client_secret=secret \
@@ -155,6 +156,7 @@ containers:
       - "--database-url=$(DATABASE_URL)"
       - "--jwt-type=HS256"
       - "--jwt-secret=$(JWT_SECRET)"
+      - "--encryption-key=$(ENCRYPTION_KEY)"
       - "--admin-secret=$(ADMIN_SECRET)"
       - "--client-id=$(CLIENT_ID)"
       - "--client-secret=$(CLIENT_SECRET)"

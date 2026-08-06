@@ -93,6 +93,7 @@ spec:
             - "--client-secret=$(CLIENT_SECRET)"
             - "--admin-secret=$(ADMIN_SECRET)"
             - "--jwt-type=RS256"
+            - "--encryption-key=$(ENCRYPTION_KEY)"
             # Example: mount keys from files or use env and expand here
             - "--enable-login-page=true"
             - "--enable-playground=false"

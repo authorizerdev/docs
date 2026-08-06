@@ -68,6 +68,7 @@ authorizer serve \
 Key flags for SSO:
 - `--allowed-origins` — Whitelist all app domains that will redirect to Authorizer for login.
 - `--jwt-type` and `--jwt-secret` / `--jwt-private-key` — Configure token signing (RS256 recommended for multi-app setups since apps verify with the public key via JWKS).
+- `--encryption-key` — Encrypts TOTP secrets and OTP digests at rest. **Required with `RS*`/`ES*`** (2.4.0+): there is no `--jwt-secret` to fall back to, so the server refuses to start without it.
 
 ### 2. Note Your Client Credentials
 

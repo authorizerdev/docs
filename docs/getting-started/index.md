@@ -14,12 +14,24 @@ If you are upgrading from v1, read the [Migration v1 to v2](../migration/v1-to-v
 
 All examples below use these required variables. Replace with your own values for production:
 
+:::info `--encryption-key` (2.4.0+)
+
+Encrypts TOTP shared secrets and OTP digests at rest. **Required when `--jwt-type`
+is `RS*`/`ES*`** — with no `--jwt-secret` to fall back to, the server refuses to
+start without it. With HMAC types (`HS*`) it falls back to `--jwt-secret`, but a
+distinct value is recommended: rotating the JWT secret otherwise re-keys at-rest
+data and locks out every enrolled TOTP user. Omit the flag on releases before
+2.4.0, which do not have it. See [Server Configuration](/core/server-config).
+
+:::
+
 | Flag | Description | Sample Value |
 | ---- | ----------- | ------------ |
 | `--database-type` | Database type | `sqlite` |
 | `--database-url` | Database connection string | `test.db` |
 | `--jwt-type` | JWT signing algorithm | `HS256` |
 | `--jwt-secret` | JWT signing secret | `test` |
+| `--encryption-key` | At-rest key for TOTP secrets and OTP digests (2.4.0+). Required with `RS*`/`ES*` | `openssl rand -hex 32` |
 | `--admin-secret` | Admin secret for admin operations | `admin` |
 | `--client-id` | Client identifier **(required)** | `123456` |
 | `--client-secret` | Client secret **(required)** | `secret` |
@@ -49,6 +61,7 @@ go build -o build/authorizer .
   --database-url=test.db \
   --jwt-type=HS256 \
   --jwt-secret=test \
+  --encryption-key="$(openssl rand -hex 32)" \
   --admin-secret=admin \
   --client-id=123456 \
   --client-secret=secret
@@ -64,6 +77,7 @@ go run main.go \
   --database-url=test.db \
   --jwt-type=HS256 \
   --jwt-secret=test \
+  --encryption-key="$(openssl rand -hex 32)" \
   --admin-secret=admin \
   --client-id=123456 \
   --client-secret=secret
@@ -79,6 +93,7 @@ docker run -p 8080:8080 quay.io/authorizer/authorizer:latest \
   --database-url=test.db \
   --jwt-type=HS256 \
   --jwt-secret=test \
+  --encryption-key="$(openssl rand -hex 32)" \
   --admin-secret=admin \
   --client-id=123456 \
   --client-secret=secret
@@ -92,6 +107,7 @@ docker run -p 8080:8080 quay.io/authorizer/authorizer:latest \
   --database-url="postgres://user:pass@host:5432/authorizer" \
   --jwt-type=HS256 \
   --jwt-secret=test \
+  --encryption-key="$(openssl rand -hex 32)" \
   --admin-secret=admin \
   --client-id=123456 \
   --client-secret=secret
@@ -116,6 +132,7 @@ cd authorizer
   --database-url=test.db \
   --jwt-type=HS256 \
   --jwt-secret=test \
+  --encryption-key="$(openssl rand -hex 32)" \
   --admin-secret=admin \
   --client-id=123456 \
   --client-secret=secret
@@ -174,6 +191,7 @@ For a quick local dev setup:
   --admin-secret=admin \
   --jwt-type=HS256 \
   --jwt-secret=test \
+  --encryption-key="$(openssl rand -hex 32)" \
   --allowed-origins=http://localhost:3000
 ```
 
