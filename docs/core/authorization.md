@@ -322,7 +322,14 @@ cookie is used automatically.
 - **Metrics.** The engine exports Prometheus metrics — `authorizer_fga_checks_total`
   (allow/deny/error), `authorizer_fga_check_duration_seconds`, and
   `authorizer_fga_operations_total` — for adoption tracking and denial/error alerting.
-  See [Metrics & Monitoring → Authorization (FGA) Metrics](./metrics-monitoring#authorization-fga-metrics).
+  Delegated (agent) callers additionally report
+  `authorizer_fga_delegated_checks_total{operation,outcome}`, whose `outcome`
+  label is the only thing that distinguishes *the agent lacks a grant*
+  (`denied_by_agent`) from *the user genuinely lacks access* (`denied_by_user`) —
+  and `not_enforced`, which means agent traffic is arriving unconstrained
+  because the model declares no `agent` type. See
+  [Metrics & Monitoring → Authorization (FGA) Metrics](./metrics-monitoring#authorization-fga-metrics)
+  and [Agent Identity & Permissions](../enterprise/agent-identity#observability).
 - **Learn the model language.** See the OpenFGA docs:
   [modeling guide](https://openfga.dev/docs/modeling/getting-started) and
   [configuration language](https://openfga.dev/docs/configuration-language).

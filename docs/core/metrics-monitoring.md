@@ -146,6 +146,7 @@ once. See [Authorization (FGA)](./authorization).
 | `authorizer_fga_checks_total` | Counter | `operation`, `result` | Access decisions from `check_permissions`. The headline metric for adoption and denial/error alerting. |
 | `authorizer_fga_check_duration_seconds` | Histogram | `operation` | Latency of the client-facing FGA engine reads. |
 | `authorizer_fga_operations_total` | Counter | `operation`, `result` | Non-decision FGA operations (model/tuple management, enumeration, reset) by outcome. |
+| `authorizer_fga_delegated_checks_total` | Counter | `operation`, `outcome` | Decisions for **delegated** (agent-acting-for-user) callers, and which side of the intersection refused. Ordinary callers never appear here. |
 
 **`authorizer_fga_checks_total` labels:**
 
@@ -153,6 +154,28 @@ once. See [Authorization (FGA)](./authorization).
 |---|---|
 | `operation` | `check_permissions` (each supplied pair is counted individually) |
 | `result` | `allowed` · `denied` · `error` (the engine call failed — fail-closed, so the caller was denied) |
+
+**`authorizer_fga_delegated_checks_total` labels:**
+
+| Label | Values |
+|---|---|
+| `operation` | `check_permissions` · `list_permissions` |
+| `outcome` | `allowed` · `denied_by_agent` · `denied_by_user` · `not_enforced` |
+
+The `outcome` label is what makes an intersection denial diagnosable:
+
+- **`denied_by_agent`** — the agent has no grant of its own. The user may well
+  have access. Fix: grant the **agent** a tuple.
+- **`denied_by_user`** — the agent had its grant, the delegating user does not.
+  This is the Confused Deputy being stopped. Do **not** widen the agent; it
+  cannot help, and the user genuinely lacks access.
+- **`not_enforced`** — a delegated caller arrived but the active model declares
+  no `agent` type, so the request was authorized as the **user alone**.
+
+`not_enforced` is the one to alert on. It is the only outcome that reports a
+security property *not* being enforced, and it is silent by construction: the
+request succeeds and nothing in the response says the agent was unconstrained.
+See [Agent Identity &amp; Permissions](../enterprise/agent-identity#observability).
 
 **`authorizer_fga_check_duration_seconds`** `operation`: `check_permissions` · `list_permissions`. The histogram's `_count` also gives you a call rate per operation for free.
 
