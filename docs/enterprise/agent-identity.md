@@ -113,6 +113,52 @@ query {
 
 A token exchanged for `https://calendar.example` will **not** authenticate here, and vice versa. That is the audience binding doing its job, not a misconfiguration.
 
+## What an agent may do: scope
+
+The intersection above decides **which resources** an agent may reach. A second,
+independent gate decides **which operations** it may call at Authorizer's own
+API — the token's `scope` claim, enforced per operation.
+
+| Operation | Required scope |
+|---|---|
+| `check_permissions`, `list_permissions` | `openid` |
+| `profile`, `meta` | `openid` |
+| `update_profile` | `authorizer:profile:write` |
+| `deactivate_account` | `authorizer:account:delete` |
+| anything else | **denied** — see below |
+
+Read-only identity and permission queries need only `openid`, which every token
+carries, so the questions an agent must be able to ask to function at all just
+work. That set is exactly the [MCP](../core/mcp) tool surface.
+
+Mutating operations need a scope **no client requests by default**. Since a
+delegated token's scope is `subject_token.scope ∩ agent.allowed_scopes`, granting
+one takes *both* parties:
+
+1. the delegating user's own token must carry the scope (request it at login), **and**
+2. an admin must add it to the agent's `allowed_scopes` ceiling.
+
+Neither can widen an agent alone. A refusal is `insufficient_scope`
+([RFC 6750 §3.1](https://www.rfc-editor.org/rfc/rfc6750#section-3.1)).
+
+:::note Fail closed by default
+Any operation not in that table is **denied to delegated callers**, whatever
+scope they hold. New operations are therefore unreachable by agents until
+someone deliberately clears them — the opposite of an allowlist that quietly
+widens when a contributor forgets to update it.
+:::
+
+### Why first-party tokens are not gated
+
+A first-party `scope` is whatever the client asked for at login — it is not
+validated against an allow-list — so it is a hint, not a boundary. Enforcing it
+would break existing clients and buy no security.
+
+A delegated token is different: its ceiling comes from `allowed_scopes` on the
+agent's `service_account`, which only an admin can set. That is what makes the
+same claim a real boundary, and it is the same asymmetry Microsoft draws between
+delegated and application permissions.
+
 ### The subject cannot be changed
 
 `check_permissions` and `list_permissions` accept an optional `user`. For a delegated caller it may only ever be the caller's own subject — supplied or not, the agent half is still applied. Naming any other subject is rejected outright, even if the request also carries an admin credential. An agent must not be able to shed its own constraint, or probe access that neither half of its intersection has.
