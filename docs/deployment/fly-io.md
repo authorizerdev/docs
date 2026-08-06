@@ -116,7 +116,7 @@ flyctl secrets set \
     DATABASE_TYPE="postgres" \
     JWT_TYPE="HS256" \
     JWT_SECRET="your-jwt-secret" \
-    ENCRYPTION_KEY="$(openssl rand -hex 32)" \
+    ENCRYPTION_KEY="your-encryption-key" \
     ADMIN_SECRET="your-admin-secret" \
     CLIENT_ID="123456" \
     CLIENT_SECRET="secret" \
