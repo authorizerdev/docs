@@ -42,6 +42,7 @@ helm install \
     --set authorizer.database_url="/tmp/test.db" \
     --set authorizer.jwt_type=HS256 \
     --set authorizer.jwt_secret=test \
+    --set authorizer.encryption_key=test-encryption-key \
     --set authorizer.admin_secret=admin \
     --set authorizer.client_id=123456 \
     --set authorizer.client_secret=secret \

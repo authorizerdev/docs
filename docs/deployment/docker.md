@@ -80,6 +80,7 @@ services:
       - "--database-url=/data/test.db"
       - "--jwt-type=HS256"
       - "--jwt-secret=test"
+      - "--encryption-key=test-encryption-key"
       - "--admin-secret=admin"
       - "--client-id=123456"
       - "--client-secret=secret"
@@ -130,6 +131,7 @@ services:
       - "--redis-url=redis://redis:6379"
       - "--jwt-type=HS256"
       - "--jwt-secret=test"
+      - "--encryption-key=test-encryption-key"
       - "--admin-secret=admin"
       - "--client-id=123456"
       - "--client-secret=secret"
@@ -150,6 +152,7 @@ docker run -p 8080:8080 \
   -e DATABASE_TYPE=sqlite \
   -e DATABASE_URL=test.db \
   -e JWT_SECRET=test \
+  -e ENCRYPTION_KEY=test-encryption-key \
   -e ADMIN_SECRET=admin \
   -e CLIENT_ID=123456 \
   -e CLIENT_SECRET=secret \
@@ -158,6 +161,7 @@ docker run -p 8080:8080 \
     --database-url="$DATABASE_URL" \
     --jwt-type=HS256 \
     --jwt-secret="$JWT_SECRET" \
+    --encryption-key="$ENCRYPTION_KEY" \
     --admin-secret="$ADMIN_SECRET" \
     --client-id="$CLIENT_ID" \
     --client-secret="$CLIENT_SECRET"

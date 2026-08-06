@@ -62,7 +62,8 @@ authorizer serve \
   --smtp-port 587 \
   --smtp-username "auth@yourcompany.com" \
   --smtp-password "..." \
-  --sender-email "auth@yourcompany.com"
+  --sender-email "auth@yourcompany.com" \
+  --encryption-key your-encryption-key
 ```
 
 Key flags for SSO:

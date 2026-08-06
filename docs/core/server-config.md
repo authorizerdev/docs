@@ -211,7 +211,8 @@ Or for asymmetric keys:
 ./authorizer \
   --jwt-type=RS256 \
   --jwt-private-key="$(cat /path/to/private.key)" \
-  --jwt-public-key="$(cat /path/to/public.key)"
+  --jwt-public-key="$(cat /path/to/public.key)" \
+  --encryption-key=your-encryption-key
 ```
 
 Additional flags:
