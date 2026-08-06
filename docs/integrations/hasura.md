@@ -28,7 +28,7 @@ You can also deploy Authorizer instance using
 
 > **Note:** If you are trying out with one click deployment options like railway then template is configured in a way that it will also deploy postgres + redis for you. For other deployment options, start the server with the required CLI flags:
 > ```bash
-> ./authorizer --database-type=sqlite --database-url=test.db --jwt-type=HS256 --jwt-secret=test --encryption-key="$(openssl rand -hex 32)" --admin-secret=admin --client-id=123456 --client-secret=secret
+> ./authorizer --database-type=sqlite --database-url=test.db --jwt-type=HS256 --jwt-secret=test --encryption-key=test-encryption-key --admin-secret=admin --client-id=123456 --client-secret=secret
 > ```
 > You can also configure `--redis-url` to have persisted sessions. For more information check [Server Configuration](/core/server-config).
 
@@ -44,7 +44,7 @@ Configure your Authorizer instance using CLI flags at startup. In v2, all config
   --database-url="postgres://user:pass@host:5432/authorizer" \
   --jwt-type=HS256 \
   --jwt-secret=test \
-  --encryption-key="$(openssl rand -hex 32)" \
+  --encryption-key=test-encryption-key \
   --admin-secret=admin \
   --client-id=123456 \
   --client-secret=secret \

@@ -52,7 +52,7 @@ Authorizer v2 focuses on simpler, more secure configuration and a cleaner operat
   --database-url=test.db \
   --jwt-type=HS256 \
   --jwt-secret=test \
-  --encryption-key="$(openssl rand -hex 32)" \
+  --encryption-key=test-encryption-key \
   --admin-secret=admin \
   --client-id=123456 \
   --client-secret=secret
@@ -66,7 +66,7 @@ docker run -p 8080:8080 quay.io/authorizer/authorizer:latest \
   --database-url=test.db \
   --jwt-type=HS256 \
   --jwt-secret=test \
-  --encryption-key="$(openssl rand -hex 32)" \
+  --encryption-key=test-encryption-key \
   --admin-secret=admin \
   --client-id=123456 \
   --client-secret=secret
