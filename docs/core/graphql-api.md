@@ -1242,7 +1242,7 @@ mutation {
 
 #### `_delete_user`
 
-Mutation to delete user. This mutation is only allowed for super admins. It accepts `params` of type `DeleteUserInput` with following keys
+Mutation to delete user. This mutation is only allowed for super admins. It accepts `params` of type `DeleteUserRequest` with following keys
 
 > Note: the super admin query can be access via special header with super admin secret (this is set via ENV) or `authorizer-admin` as http only cookie.
 
