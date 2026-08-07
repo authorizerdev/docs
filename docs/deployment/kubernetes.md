@@ -143,7 +143,7 @@ spec:
 
 - Declare **both** `containerPort: 8080` and **`8081`** on the pod so the API contract matches the image (`EXPOSE 8080 8081` in the Dockerfile). This is documentation for humans and tooling; it does not by itself expose traffic to the internet.
 - The **`Service`** that backs your **Ingress** (or cloud load balancer) should forward **only** the app port (**80 → 8080** in the example above). **Do not** add `8081` to that same public-facing `Service` or `Ingress`.
-- For Prometheus, scrape **`8081`** via the **pod network** or a **separate ClusterIP `Service`** (below). Set **`--metrics-host=0.0.0.0`** in `args` so the metrics listener accepts connections from other pods; without it, metrics stay on container loopback and in-cluster scrapes will fail.
+- For [Prometheus](https://prometheus.io), scrape **`8081`** via the **pod network** or a **separate ClusterIP `Service`** (below). Set **`--metrics-host=0.0.0.0`** in `args` so the metrics listener accepts connections from other pods; without it, metrics stay on container loopback and in-cluster scrapes will fail.
 
 **Summary:** expose **both** ports on the **Pod**; expose **only HTTP (8080)** to clients via Ingress/LB; keep **metrics (8081)** internal to the cluster.
 

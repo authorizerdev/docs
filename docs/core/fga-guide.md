@@ -533,7 +533,7 @@ instance's `--roles` JWT claim — see [the note on roles](./authorization#3-gra
 
 ## Part 3 — DSL construct reference
 
-Every relationship-definition construct OpenFGA's DSL (`schema 1.1`) supports, and how
+Every relationship-definition construct [OpenFGA](https://openfga.dev)'s DSL (`schema 1.1`) supports, and how
 it behaves through `check_permissions` / `list_permissions`. All of these are verified
 against Authorizer's embedded engine — except where explicitly marked unsupported.
 

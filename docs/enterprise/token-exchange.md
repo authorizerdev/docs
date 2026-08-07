@@ -34,7 +34,7 @@ Three guarantees on every downstream call:
 
 ## Request
 
-`POST /oauth/token` with the calling agent authenticated as a `service_account` (`client_secret_basic`, `client_secret_post`, or an RFC 7523 [`client_assertion`](./workload-identity)):
+`POST /oauth/token` with the calling agent authenticated as a `service_account` (`client_secret_basic`, `client_secret_post`, or an [RFC 7523](https://datatracker.ietf.org/doc/html/rfc7523) [`client_assertion`](./workload-identity)):
 
 | Parameter | Required | Notes |
 |-----------|----------|-------|
@@ -65,7 +65,7 @@ curl -s -X POST $AUTHORIZER_URL/oauth/token \
   -d "scope=calendar:read"
 ```
 
-**Response** (RFC 8693 §2.2):
+**Response** ([RFC 8693](https://datatracker.ietf.org/doc/html/rfc8693) §2.2):
 
 ```json
 {

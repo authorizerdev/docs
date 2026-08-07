@@ -11,11 +11,11 @@ Deploy production ready Authorizer instance using one click deployment options a
 
 | **Infra provider** |                                                                                           **One-click link**                                                                                            |               **Additional information**               |
 | :----------------: | :-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :----------------------------------------------------: |
-|    Railway.app     |                      <a target="_blank" href="https://railway.com/deploy/authorizer-1?referralCode=FEF4uT&utm_medium=integration&utm_source=template&utm_campaign=generic"><img src="https://railway.com/button.svg" alt="Deploy on Railway"/></a>                      | [docs](https://docs.authorizer.dev/deployment/railway) |
-|       Heroku       |  <a target="_blank" href="https://heroku.com/deploy?template=https://github.com/authorizerdev/authorizer-heroku"><img src="https://www.herokucdn.com/deploy/button.svg" alt="Deploy to Heroku" /></a>   | [docs](https://docs.authorizer.dev/deployment/heroku)  |
-|       Render       | <a target="_blank" href="https://render.com/deploy?repo=https://github.com/authorizerdev/authorizer-render"><img alt="render button" src="https://render.com/images/deploy-to-render-button.svg" /></a> | [docs](https://docs.authorizer.dev/deployment/render)  |
+|    Railway.app     |                      <a target="_blank" href="https://railway.com/deploy/authorizer-1?referralCode=FEF4uT&utm_medium=integration&utm_source=template&utm_campaign=generic"><img src="https://railway.com/button.svg" alt="Deploy on Railway"/></a>                      | [docs](/deployment/railway) |
+|       Heroku       |  <a target="_blank" href="https://heroku.com/deploy?template=https://github.com/authorizerdev/authorizer-heroku"><img src="https://www.herokucdn.com/deploy/button.svg" alt="Deploy to Heroku" /></a>   | [docs](/deployment/heroku)  |
+|       Render       | <a target="_blank" href="https://render.com/deploy?repo=https://github.com/authorizerdev/authorizer-render"><img alt="render button" src="https://render.com/images/deploy-to-render-button.svg" /></a> | [docs](/deployment/render)  |
 
-For more information check [docs](https://docs.authorizer.dev/getting-started/)
+For more information check [docs](/getting-started/)
 
 ## Step 2: Setup Instance
 

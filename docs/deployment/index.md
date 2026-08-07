@@ -17,7 +17,7 @@ Key differences from v1:
 
 :::info `--encryption-key` (2.4.0+)
 
-Encrypts TOTP shared secrets and OTP digests at rest. **Required when `--jwt-type`
+Encrypts [TOTP](https://datatracker.ietf.org/doc/html/rfc6238) shared secrets and OTP digests at rest. **Required when `--jwt-type`
 is `RS*`/`ES*`** — with no `--jwt-secret` to fall back to, the server refuses to
 start without it. With HMAC types (`HS*`) it falls back to `--jwt-secret`, but a
 distinct value is recommended: rotating the JWT secret otherwise re-keys at-rest

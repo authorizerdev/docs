@@ -216,7 +216,7 @@ Each message mirrors its GraphQL/REST counterpart — see the linked
 
 ### `Login`
 
-*Public.* Authenticate with email/phone + password. Returns tokens, or an MFA challenge flag when OTP/TOTP is enabled. Mirrors [`login`](./graphql-api#login).
+*Public.* Authenticate with email/phone + password. Returns tokens, or an MFA challenge flag when OTP/[TOTP](https://datatracker.ietf.org/doc/html/rfc6238) is enabled. Mirrors [`login`](./graphql-api#login).
 
 ### `MagicLinkLogin`
 
@@ -480,7 +480,7 @@ Manage machine/workload identity clients (`service_account` and similar client t
 
 ### Trusted Issuers
 
-Manage external JWT issuers used for RFC 7523 `private_key_jwt` client assertions. See [Workload Identity](../enterprise/workload-identity).
+Manage external JWT issuers used for [RFC 7523](https://datatracker.ietf.org/doc/html/rfc7523) `private_key_jwt` client assertions. See [Workload Identity](../enterprise/workload-identity).
 
 #### `AddTrustedIssuer`
 
@@ -488,7 +488,7 @@ Manage external JWT issuers used for RFC 7523 `private_key_jwt` client assertion
 
 #### `UpdateTrustedIssuer`
 
-*Admin-only.* Update an issuer's name, JWKS URL, expected audience, active state, or SPIFFE refresh hint.
+*Admin-only.* Update an issuer's name, JWKS URL, expected audience, active state, or [SPIFFE](https://spiffe.io) refresh hint.
 
 #### `DeleteTrustedIssuer`
 
@@ -504,7 +504,7 @@ Manage external JWT issuers used for RFC 7523 `private_key_jwt` client assertion
 
 ### SAML IdP
 
-Manage Authorizer acting as a SAML 2.0 identity provider for downstream service providers, plus IdP signing-key rotation. See [SAML IdP](../enterprise/saml-idp).
+Manage Authorizer acting as a [SAML 2.0](https://www.oasis-open.org/standard/saml/) identity provider for downstream service providers, plus IdP signing-key rotation. See [SAML IdP](../enterprise/saml-idp).
 
 #### `CreateSamlServiceProvider`
 

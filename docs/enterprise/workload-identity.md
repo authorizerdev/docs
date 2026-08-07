@@ -5,7 +5,7 @@ title: Workload Identity
 
 # Workload Identity (Secretless Client Authentication)
 
-A [`service_account` client](../core/client-registry) normally authenticates with a stored `client_secret`. Workload identity removes the stored secret entirely: the workload authenticates at `POST /oauth/token` with a signed JWT it **already possesses** — a Kubernetes projected ServiceAccount token or a SPIFFE JWT-SVID — presented as an [RFC 7523](https://www.rfc-editor.org/rfc/rfc7523) `client_assertion`. Nothing to distribute, rotate, or leak.
+A [`service_account` client](../core/client-registry) normally authenticates with a stored `client_secret`. Workload identity removes the stored secret entirely: the workload authenticates at `POST /oauth/token` with a signed JWT it **already possesses** — a Kubernetes projected ServiceAccount token or a [SPIFFE](https://spiffe.io) JWT-SVID — presented as an [RFC 7523](https://www.rfc-editor.org/rfc/rfc7523) `client_assertion`. Nothing to distribute, rotate, or leak.
 
 The assertion works as client authentication on both machine grants: [`client_credentials`](../core/client-registry) and [token exchange](./token-exchange).
 
@@ -25,7 +25,7 @@ sequenceDiagram
 
 ## Request
 
-No `client_id` and no `client_secret` — the client is derived from the trusted issuer the assertion's `iss` resolves to. Presenting a `client_assertion` together with any other authentication method is rejected (RFC 6749 §2.3).
+No `client_id` and no `client_secret` — the client is derived from the trusted issuer the assertion's `iss` resolves to. Presenting a `client_assertion` together with any other authentication method is rejected ([RFC 6749](https://datatracker.ietf.org/doc/html/rfc6749) §2.3).
 
 | Parameter | Value |
 |-----------|-------|
@@ -134,7 +134,7 @@ For testing: `kubectl create token worker -n payments --audience=https://your-au
 
 ### Online hardening: Kubernetes TokenReview
 
-Offline JWKS validation proves the token was signed by the cluster — **not** that the bound Pod/ServiceAccount still exists. A deleted pod's not-yet-expired token would still verify. For high-security workloads a trust row can opt in to online validation via `enable_token_review` + `kubernetes_api_server_url` — admin-settable fields on `_add_trusted_issuer` / `_update_trusted_issuer` (`kubernetes_api_server_url` must be a non-empty `https` URL whenever `enable_token_review` is `true`, checked at write time): after the offline checks pass, Authorizer calls the cluster's `authentication.k8s.io/v1` TokenReview API and rejects the assertion fail-closed unless the apiserver reports it still authenticated.
+Offline JWKS validation proves the token was signed by the cluster — **not** that the bound Pod/ServiceAccount still exists. A deleted pod's not-yet-expired token would still verify. For high-security workloads a trust row can opt in to online validation via `enable_token_review` + `kubernetes_api_server_url` — admin-settable fields on `_add_trusted_issuer` / `_update_trusted_issuer` (`kubernetes_api_server_url` must be a non-empty `https` URL whenever `enable_token_review` is `true`, checked at write time): after the offline checks pass, Authorizer calls the cluster's `authentication.k8s.io/v1` [TokenReview](https://kubernetes.io/docs/reference/kubernetes-api/authentication-resources/token-review-v1/) API and rejects the assertion fail-closed unless the apiserver reports it still authenticated.
 
 ```graphql
 mutation {

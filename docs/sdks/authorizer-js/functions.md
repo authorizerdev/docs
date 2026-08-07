@@ -130,7 +130,7 @@ It accepts JSON object as a parameter with following keys
 | `refresh_token`          | Refresh token used to get the new access token. Required in case of `refresh_token` grant type                               | false    |
 | `client_secret`          | Service-account secret. Used with `client_credentials`. Server-side only.                                                     | false    |
 | `scope`                  | Space-delimited OAuth2 scope. Omit for `client_credentials` to get the service account's full allowed scope set.             | false    |
-| `client_assertion`       | RFC 7523 JWT-bearer client credential (secretless workload identity: K8s SA tokens, SPIFFE JWT-SVIDs, cloud OIDC tokens).     | false    |
+| `client_assertion`       | [RFC 7523](https://datatracker.ietf.org/doc/html/rfc7523) JWT-bearer client credential (secretless workload identity: K8s SA tokens, [SPIFFE](https://spiffe.io) JWT-SVIDs, cloud OIDC tokens).     | false    |
 | `client_assertion_type`  | Type of `client_assertion`. Use the exported `CLIENT_ASSERTION_TYPE_JWT_BEARER` constant.                                     | false    |
 | `subject_token`          | The authority being exercised (the user's token). Required for token exchange.                                               | false    |
 | `subject_token_type`     | Type of `subject_token`. Use the exported `TOKEN_TYPE_ACCESS_TOKEN` / `TOKEN_TYPE_JWT` constants.                             | false    |
@@ -623,10 +623,10 @@ It returns the following keys in response `data` object
 | `is_multi_factor_auth_enabled`             | It gives information if multi-factor authentication is enabled      |
 | `is_mobile_basic_authentication_enabled`   | It gives information if mobile (phone number) basic auth is enabled |
 | `is_phone_verification_enabled`            | It gives information if phone verification is enabled               |
-| `is_totp_mfa_enabled`                      | It gives information if TOTP is available as an MFA method          |
+| `is_totp_mfa_enabled`                      | It gives information if [TOTP](https://datatracker.ietf.org/doc/html/rfc6238) is available as an MFA method          |
 | `is_email_otp_mfa_enabled`                 | It gives information if email OTP is available as an MFA method     |
 | `is_sms_otp_mfa_enabled`                   | It gives information if SMS OTP is available as an MFA method       |
-| `is_webauthn_enabled`                      | It gives information if WebAuthn/passkeys are available as an MFA method |
+| `is_webauthn_enabled`                      | It gives information if [WebAuthn](https://www.w3.org/TR/webauthn-2/)/passkeys are available as an MFA method |
 | `is_mfa_enforced`                          | It gives information if MFA is enforced for all users               |
 | `is_org_discovery_enabled`                 | It gives information if home-realm/org discovery is enabled         |
 

@@ -139,8 +139,8 @@ See the [Auth behavior mapping](../migration/v1-to-v2#auth-behavior) for exact c
 ### Multi-factor authentication (MFA) & WebAuthn/passkeys
 
 **Breaking change**: `--enable-mfa`, `--enable-totp-login`, `--enable-email-otp`,
-and `--enable-sms-otp` are **removed**. TOTP, email OTP, SMS OTP, and
-WebAuthn/passkey-as-MFA are now all **on by default**; opt out per method with
+and `--enable-sms-otp` are **removed**. [TOTP](https://datatracker.ietf.org/doc/html/rfc6238), email OTP, SMS OTP, and
+[WebAuthn](https://www.w3.org/TR/webauthn-2/)/passkey-as-MFA are now all **on by default**; opt out per method with
 the `--disable-*` flags below. `--enforce-mfa` also flipped its default from
 `true` to `false` — MFA is now optional and skippable unless you explicitly
 enforce it.
@@ -173,7 +173,7 @@ enforce it.
   takes effect when SMTP is configured (`--smtp-*`); otherwise email OTP is
   unavailable regardless of this flag.
 - **`--disable-sms-otp`** (default `false`): disable SMS-OTP MFA. Only takes
-  effect when Twilio is configured (`--twilio-*`); otherwise SMS OTP is
+  effect when [Twilio](https://www.twilio.com) is configured (`--twilio-*`); otherwise SMS OTP is
   unavailable regardless of this flag.
 
 Effective availability of each method is exposed on the public `meta`
@@ -346,7 +346,7 @@ New in v2:
 - **`--graphql-max-body-bytes`** (default `1048576`, 1 MiB): max GraphQL request body size.
 
 `GET /graphql` is no longer accepted — clients must POST. Rejections are
-counted in the `authorizer_graphql_limit_rejections_total` Prometheus
+counted in the `authorizer_graphql_limit_rejections_total` [Prometheus](https://prometheus.io)
 metric, labelled by limit kind. See
 [GraphQL hardening](./security#graphql-hardening) for details.
 
@@ -360,7 +360,7 @@ metric, labelled by limit kind. See
   --authorization-log-all-checks=false
 ```
 
-- **`--fga-store`**: backing store for the embedded OpenFGA engine — one of `sqlite`, `postgres`, `mysql`, or `memory`. Only needed when the main database is NoSQL (see paragraph below); for SQL main databases the engine reuses that database automatically.
+- **`--fga-store`**: backing store for the embedded [OpenFGA](https://openfga.dev) engine — one of `sqlite`, `postgres`, `mysql`, or `memory`. Only needed when the main database is NoSQL (see paragraph below); for SQL main databases the engine reuses that database automatically.
 - **`--fga-store-url`**: connection string for the FGA store when `--fga-store` is set to a database driver.
 - **`--include-permissions-in-token`** (default `false`): when true, the access token's claims include the caller's flat `(resource, scope)` grant list. Useful for stateless downstream services that don't want to round-trip back to Authorizer per check.
 - **`--authorization-log-all-checks`** (default `false`): audit-log every `CheckPermission` call, not just denials. Diagnostic; expensive at scale.

@@ -208,7 +208,7 @@ function SecuritySettings() {
 ```
 
 `AuthorizerPasskeyLogin` and passkey verification only render for browsers that support
-WebAuthn — there is no backend flag to gate them on, so gate any custom UI you build
+[WebAuthn](https://www.w3.org/TR/webauthn-2/) — there is no backend flag to gate them on, so gate any custom UI you build
 around them on `isWebauthnSupported()` from `@authorizerdev/authorizer-js` the same way.
 
 ## Next.js integration

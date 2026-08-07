@@ -5,7 +5,7 @@ title: SCIM 2.0 Provisioning
 
 # SCIM 2.0 Provisioning
 
-Authorizer exposes a per-[organization](./organizations) inbound **SCIM 2.0** (RFC 7644) endpoint so enterprise directories (Okta, Microsoft Entra ID, OneLogin, …) can provision and deprovision that org's users automatically.
+Authorizer exposes a per-[organization](./organizations) inbound **[SCIM 2.0](https://datatracker.ietf.org/doc/html/rfc7644)** ([RFC 7644](https://datatracker.ietf.org/doc/html/rfc7644)) endpoint so enterprise directories (Okta, Microsoft Entra ID, OneLogin, …) can provision and deprovision that org's users automatically.
 
 - Base URL: `https://your-authorizer.example/scim/v2`
 - Authentication: `Authorization: Bearer <endpoint token>` — one token per org
@@ -130,7 +130,7 @@ curl -s -G https://your-authorizer.example/scim/v2/Users \
 
 ## Group provisioning
 
-SCIM Groups (RFC 7643 §4.2) provision org-scoped groups whose membership drives both authorization and SAML assertions. A group carries only identity/metadata (`displayName`, `externalId`, timestamps) — membership is **not** a database column. It's modelled as [FGA](../core/fga-guide) relationship tuples (`group:<org>/<id>#member@user:<uid>`), the same graph that resolves roles and nested groups, so the group→role grant and the SAML group projection are both just reads of that one graph.
+SCIM Groups ([RFC 7643](https://datatracker.ietf.org/doc/html/rfc7643) §4.2) provision org-scoped groups whose membership drives both authorization and SAML assertions. A group carries only identity/metadata (`displayName`, `externalId`, timestamps) — membership is **not** a database column. It's modelled as [FGA](../core/fga-guide) relationship tuples (`group:<org>/<id>#member@user:<uid>`), the same graph that resolves roles and nested groups, so the group→role grant and the SAML group projection are both just reads of that one graph.
 
 - **Cross-org isolation (H6)**: a group is only visible/mutable through the SCIM connection whose org it belongs to; a cross-org group id resolves to `404`, indistinguishable from a nonexistent one.
 - **`displayName` uniqueness** is enforced per-org at the service layer (not a DB constraint, for identical behavior across every storage backend) — a create that collides on `displayName` with no matching `externalId` gets `409 uniqueness`.
@@ -158,7 +158,7 @@ Both the RFC/Okta filtered-path shape (`{"op":"remove","path":"members[value eq 
 
 Group membership isn't read directly by clients — it's projected into two places at session-issuance time:
 
-- **OpenFGA roles**: a role granted to a group (`role:<org>/<name>#assignee@group:<org>/<gid>#member`) is resolved transitively for every member and unioned onto the roles already minted into that org's session/JWT — see the [FGA guide](../core/fga-guide) for the tuple model (in particular [groups as subjects](../core/fga-guide#groups-as-subjects)). This only ever *adds* roles; a lookup failure derives none rather than blocking login.
+- **[OpenFGA](https://openfga.dev) roles**: a role granted to a group (`role:<org>/<name>#assignee@group:<org>/<gid>#member`) is resolved transitively for every member and unioned onto the roles already minted into that org's session/JWT — see the [FGA guide](../core/fga-guide) for the tuple model (in particular [groups as subjects](../core/fga-guide#groups-as-subjects)). This only ever *adds* roles; a lookup failure derives none rather than blocking login.
 - **SAML group assertions**: when Authorizer acts as an [IdP](./saml-idp), a user's groups *in the org the assertion is being issued for* are resolved and emitted as a multi-valued attribute (`groups` by default) — see [Group assertion](./saml-idp#group-assertion-scim-groups--saml-groups).
 
 Both projections are org-namespaced and fail closed: a user who belongs to groups/roles in other orgs never leaks them into a token or assertion issued for this org, and any FGA lookup error yields nothing rather than a partial or wrongly-scoped set.

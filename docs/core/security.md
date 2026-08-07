@@ -107,7 +107,7 @@ proxy you **must** set this flag, otherwise:
 | Per-IP rate limiting | All requests appear to come from the proxy → one rate-limit bucket for the entire fleet → trivial to exhaust. |
 | Audit logs | Every event is recorded with the proxy IP, not the user's. |
 | CSRF same-origin enforcement | Uses the request `Host` header (unaffected); but combined with the wrong client IP makes investigations harder. |
-| Prometheus metrics | `authorizer_http_requests_total` labelled by proxy IP only. |
+| [Prometheus](https://prometheus.io) metrics | `authorizer_http_requests_total` labelled by proxy IP only. |
 
 ### Common deployments
 
@@ -227,7 +227,7 @@ The following headers are always set:
 
 Token endpoint responses (`/oauth/token`) additionally set
 `Cache-Control: no-store, no-cache, must-revalidate, private` and
-`Pragma: no-cache` per RFC 6749 §5.1.
+`Pragma: no-cache` per [RFC 6749](https://datatracker.ietf.org/doc/html/rfc6749) §5.1.
 
 Two opt-in flags:
 
@@ -310,7 +310,7 @@ No flags. The protection applies to:
 
 ## OTP and TOTP at rest
 
-OTP and TOTP secrets are now protected at rest:
+OTP and [TOTP](https://datatracker.ietf.org/doc/html/rfc6238) secrets are now protected at rest:
 
 - **OTPs (email/SMS one-time codes):** stored as HMAC-SHA256 digests
   keyed by `--encryption-key`. The verifier hashes the candidate and
@@ -406,7 +406,7 @@ failed to decrypt stored TOTP secret; check that --encryption-key (or --jwt-secr
 
 ## Multi-factor authentication (MFA) & Passkeys
 
-MFA methods — TOTP, email OTP, SMS OTP, and WebAuthn/passkey as a second
+MFA methods — TOTP, email OTP, SMS OTP, and [WebAuthn](https://www.w3.org/TR/webauthn-2/)/passkey as a second
 factor — are **enabled by default**. `--enforce-mfa` defaults to `false`:
 MFA is optional and skippable unless you turn enforcement on. See
 [Server Configuration](./server-config#multi-factor-authentication-mfa--webauthnpasskeys)
@@ -424,7 +424,7 @@ configured):
 |---|---|
 | `is_totp_mfa_enabled` | MFA enabled and `--disable-totp-login` is not set |
 | `is_email_otp_mfa_enabled` | MFA enabled, `--disable-email-otp` is not set, and SMTP is configured |
-| `is_sms_otp_mfa_enabled` | MFA enabled, `--disable-sms-otp` is not set, and Twilio is configured |
+| `is_sms_otp_mfa_enabled` | MFA enabled, `--disable-sms-otp` is not set, and [Twilio](https://www.twilio.com) is configured |
 | `is_webauthn_enabled` | MFA enabled and `--disable-webauthn-mfa` is not set — this reflects WebAuthn's availability **as an MFA factor only**; primary passkey login/registration has no flag and is always available regardless of this field |
 | `is_mfa_enforced` | mirrors `--enforce-mfa` |
 
@@ -652,7 +652,7 @@ This kills the user-enumeration attack surface entirely.
 
 ## Fine-grained authorization
 
-Authorizer ships an embedded **OpenFGA** (ReBAC) engine, and access checks **fail closed** — a `check_permissions` for a relation that the relationship tuples don't grant is denied, and any engine or store error denies rather than allows. There is no permissive "log but allow" mode. See [Authorization (FGA)](./authorization) for the authorization model, admin mutations, and per-endpoint usage.
+Authorizer ships an embedded **[OpenFGA](https://openfga.dev)** (ReBAC) engine, and access checks **fail closed** — a `check_permissions` for a relation that the relationship tuples don't grant is denied, and any engine or store error denies rather than allows. There is no permissive "log but allow" mode. See [Authorization (FGA)](./authorization) for the authorization model, admin mutations, and per-endpoint usage.
 
 ---
 

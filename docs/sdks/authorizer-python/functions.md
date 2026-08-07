@@ -105,7 +105,7 @@ registered passkeys.
 
 `get_token` posts a form-encoded (`application/x-www-form-urlencoded`) request to
 `/oauth/token` and supports four grants: `authorization_code` (default, needs `code` +
-`code_verifier`), `refresh_token`, `client_credentials` (RFC 6749 §4.4), and RFC 8693
+`code_verifier`), `refresh_token`, `client_credentials` ([RFC 6749](https://datatracker.ietf.org/doc/html/rfc6749) §4.4), and [RFC 8693](https://datatracker.ietf.org/doc/html/rfc8693)
 token exchange. The `client_credentials` and token-exchange grants are **machine /
 agent-to-agent flows — server-side only**: never send `client_secret`,
 `client_assertion`, or a `subject_token`/`actor_token` to untrusted or browser code.
@@ -313,7 +313,7 @@ the constants themselves, to `grant_type`, `*_token_type`, and `client_assertion
 | `GRANT_TYPE_TOKEN_EXCHANGE`        | `"urn:ietf:params:oauth:grant-type:token-exchange"` (RFC 8693)  |
 | `TOKEN_TYPE_ACCESS_TOKEN`          | `"urn:ietf:params:oauth:token-type:access_token"`               |
 | `TOKEN_TYPE_JWT`                   | `"urn:ietf:params:oauth:token-type:jwt"`                        |
-| `CLIENT_ASSERTION_TYPE_JWT_BEARER` | `"urn:ietf:params:oauth:client-assertion-type:jwt-bearer"` (RFC 7523) |
+| `CLIENT_ASSERTION_TYPE_JWT_BEARER` | `"urn:ietf:params:oauth:client-assertion-type:jwt-bearer"` ([RFC 7523](https://datatracker.ietf.org/doc/html/rfc7523)) |
 
 ## Error handling
 

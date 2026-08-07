@@ -147,7 +147,7 @@ discovery path instead of falling back to OIDC discovery.
 The [`with-mcp`](https://github.com/authorizerdev/examples/tree/main/with-mcp) example
 builds this end to end: a ~150-line Express MCP server that validates Authorizer-issued
 JWTs (issuer + `aud`) and a client walkthrough that goes 401 → RFC 9728 discovery →
-`client_credentials` (rejected — wrong `aud`) → RFC 8693 token exchange with
+`client_credentials` (rejected — wrong `aud`) → [RFC 8693](https://datatracker.ietf.org/doc/html/rfc8693) token exchange with
 `resource=<mcp-server-uri>` → 200. Its own bonus section documents this page's
 built-in stdio server too, for the "which one do I want" question.
 

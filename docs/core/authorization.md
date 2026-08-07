@@ -35,7 +35,7 @@ The engine stores its model and tuples in a SQL datastore.
 
 - **SQL main database** (SQLite, Postgres, MySQL, …): FGA is **enabled by default** and
   reuses your main database. Nothing to configure.
-- **NoSQL main database** (MongoDB, DynamoDB, …): OpenFGA can't use these, so FGA is
+- **NoSQL main database** (MongoDB, DynamoDB, …): [OpenFGA](https://openfga.dev) can't use these, so FGA is
   **disabled** unless you point it at a SQL store with `--fga-store`.
 
 | Flag | Purpose |
@@ -166,7 +166,7 @@ A **machine caller** (a `client_credentials` token from a `service_account` clie
 has its own subject too: it resolves to `service_account:<client_id>`, not
 `user:<sub>`, so a machine credential presenting its own token can self-check
 `service_account` tuples the same way a human token self-checks `user` ones. An
-RFC 8693 delegated/token-exchange token stays a `user:<sub>` subject regardless —
+[RFC 8693](https://datatracker.ietf.org/doc/html/rfc8693) delegated/token-exchange token stays a `user:<sub>` subject regardless —
 only an autonomous machine token classifies as `service_account:`. Model machine
 identities with `type service_account` and admit it in relevant type restrictions
 (`viewer: [user, service_account]`) to put them in the same graph as humans; see
@@ -319,7 +319,7 @@ cookie is used automatically.
   silently — delete the tuples first. The action is audited (`admin.fga_reset`).
 - **Auditing.** Model writes, tuple writes/deletes, and resets are recorded as admin
   audit events, visible under **Audit Logs** in the dashboard.
-- **Metrics.** The engine exports Prometheus metrics — `authorizer_fga_checks_total`
+- **Metrics.** The engine exports [Prometheus](https://prometheus.io) metrics — `authorizer_fga_checks_total`
   (allow/deny/error), `authorizer_fga_check_duration_seconds`, and
   `authorizer_fga_operations_total` — for adoption tracking and denial/error alerting.
   Delegated (agent) callers additionally report

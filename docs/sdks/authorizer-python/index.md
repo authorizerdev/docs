@@ -22,11 +22,11 @@ Deploy a production-ready Authorizer instance using one of the one-click options
 
 | **Infra provider** | **One-click link** | **Additional information** |
 | :----------------: | :-----------------: | :----------------------------------------------------: |
-| Railway.app | [Deploy on Railway](https://railway.com/deploy/authorizer-1?referralCode=FEF4uT&utm_medium=integration&utm_source=template&utm_campaign=generic) | [docs](https://docs.authorizer.dev/deployment/railway) |
-| Heroku | [Deploy to Heroku](https://heroku.com/deploy?template=https://github.com/authorizerdev/authorizer-heroku) | [docs](https://docs.authorizer.dev/deployment/heroku) |
-| Render | [Deploy to Render](https://render.com/deploy?repo=https://github.com/authorizerdev/authorizer-render) | [docs](https://docs.authorizer.dev/deployment/render) |
+| Railway.app | [Deploy on Railway](https://railway.com/deploy/authorizer-1?referralCode=FEF4uT&utm_medium=integration&utm_source=template&utm_campaign=generic) | [docs](/deployment/railway) |
+| Heroku | [Deploy to Heroku](https://heroku.com/deploy?template=https://github.com/authorizerdev/authorizer-heroku) | [docs](/deployment/heroku) |
+| Render | [Deploy to Render](https://render.com/deploy?repo=https://github.com/authorizerdev/authorizer-render) | [docs](/deployment/render) |
 
-For more information check the [deployment docs](https://docs.authorizer.dev/deployment/).
+For more information check the [deployment docs](/deployment/).
 
 ## Step 2: Set up the instance
 

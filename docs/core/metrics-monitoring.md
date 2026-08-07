@@ -33,7 +33,7 @@ Returns `503` with `{"status":"not ready","error":"storage unavailable"}` when t
 
 ### `/metrics` - Prometheus Metrics
 
-Serves all metrics in Prometheus exposition format.
+Serves all metrics in [Prometheus](https://prometheus.io) exposition format.
 
 **`/metrics` is never on the main HTTP server.** It is always served by a **separate minimal HTTP server** that runs in parallel with the main Gin app (same pattern as running distinct app and metrics listeners). By default `--http-port` is `8080` and `--metrics-port` is `8081`; **`--http-port` and `--metrics-port` must differ** or the process exits at startup.
 
@@ -137,7 +137,7 @@ limits themselves.
 
 ### Authorization (FGA) Metrics
 
-These metrics cover the embedded fine-grained authorization (OpenFGA) engine. They
+These metrics cover the embedded fine-grained authorization ([OpenFGA](https://openfga.dev)) engine. They
 appear only once FGA is enabled and the corresponding operation has run at least
 once. See [Authorization (FGA)](./authorization).
 
