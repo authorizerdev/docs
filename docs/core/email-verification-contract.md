@@ -74,7 +74,22 @@ With `--enable-email-verification`, `signup` creates the verification request
 and sends the mail before returning "Verification email has been sent. Please
 check your inbox". Clicking that link is the normal path and needs nothing else.
 
-**The link is valid for 30 minutes.** If it expires or never arrives:
+**The link is valid for 30 minutes.** Expiry is enforced when the token is
+validated, so an expired link is refused even if the underlying request row is
+still there.
+
+:::info Requesting a new link invalidates the old one
+
+A link can also stop working *before* its 30 minutes are up. Each request
+rotates a nonce, and redemption checks the token's nonce against the stored
+row — so **the most recent link is always the only valid one**.
+
+If a user clicks an older link after requesting a fresh one, it will be
+refused. That is intended, and it is the usual explanation for "the link in my
+inbox doesn't work" when the user has more than one.
+:::
+
+If it expires or never arrives:
 
 | Route | Who drives it | Notes |
 |---|---|---|
@@ -82,6 +97,14 @@ check your inbox". Clicking that link is the normal path and needs nothing else.
 | **Password login** | the user | An unverified account's password login emails an OTP instead; verifying that OTP marks the address verified. |
 | **`_update_user { email_verified: true }`** | an admin | The escape hatch when the user genuinely cannot receive mail. |
 | Forgot password | the user | Completing a token reset also verifies the address — a side effect of proving mailbox control, not the route to reach for. |
+
+None of these needs an administrator except the last. Prefer **Resend
+Verification Email** over force-verifying: it has the user prove control rather
+than asserting it on their behalf.
+
+The response to a resend is deliberately generic ("if a verification is
+pending …") and identical whether or not the address exists, so the endpoint
+cannot be used to test which addresses are registered.
 
 ## Hard requirement: verification needs a working email service
 
