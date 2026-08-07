@@ -516,13 +516,19 @@ Update user profile fields (email, roles, name, etc.).
 
 #### `POST /v1/admin/delete_user`
 
-Delete a user by email (and all associated OTP/verification data).
+Delete a user by id (and all associated OTP/verification data).
 
 **Request body**
 
-| Field   | Type     | Description | Required |
-| ------- | -------- | ----------- | -------- |
-| `email` | `string` | User email. | yes      |
+| Field | Type     | Description | Required |
+| ----- | -------- | ----------- | -------- |
+| `id`  | `string` | User id.    | yes      |
+
+:::warning Breaking in 2.4.0
+
+This took `email` and now takes `id` only — a phone-only account has no email,
+so it could not be deleted at all.
+:::
 
 **Response** `{ message: string }`
 

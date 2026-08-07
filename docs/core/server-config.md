@@ -136,6 +136,23 @@ Organization / UI:
 These replace v1 flags such as `DISABLE_BASIC_AUTHENTICATION`, `DISABLE_EMAIL_VERIFICATION`, etc.
 See the [Auth behavior mapping](../migration/v1-to-v2#auth-behavior) for exact correspondences.
 
+:::danger Breaking in 2.4.0 — `--enable-email-verification` requires SMTP
+
+Starting the server with `--enable-email-verification=true` and no working mail
+path is now a **fatal boot error**. It used to start and fail silently per user.
+
+Every route back into an unverified account terminates at the same mailbox, so
+without SMTP a user is created unverified and can never recover — and an
+unverified account also blocks a federated login for the same address. That is
+unrecoverable state, so it fails where an operator can see it rather than one
+user at a time.
+
+A "working mail path" means all three of `--smtp-host`, `--smtp-port` (greater
+than zero) and `--smtp-sender-email`. Setting only the host still fails.
+
+Either configure SMTP or set `--enable-email-verification=false`.
+:::
+
 ### Multi-factor authentication (MFA) & WebAuthn/passkeys
 
 **Breaking change**: `--enable-mfa`, `--enable-totp-login`, `--enable-email-otp`,
@@ -296,13 +313,51 @@ Each provider uses its own set of flags:
 Other supported providers follow the same pattern:
 
 - `--facebook-client-id`, `--facebook-client-secret`, `--facebook-scopes`
-- `--microsoft-client-id`, `--microsoft-client-secret`, `--microsoft-tenant-id`, `--microsoft-scopes`
+- `--microsoft-client-id`, `--microsoft-client-secret`, `--microsoft-tenant-id`, `--microsoft-allowed-tenants`, `--microsoft-scopes`
 - `--apple-client-id`, `--apple-client-secret`, `--apple-scopes`
 - `--linkedin-client-id`, `--linkedin-client-secret`, `--linkedin-scopes`
 - `--discord-client-id`, `--discord-client-secret`, `--discord-scopes`
 - `--twitter-client-id`, `--twitter-client-secret`, `--twitter-scopes`
 - `--twitch-client-id`, `--twitch-client-secret`, `--twitch-scopes`
 - `--roblox-client-id`, `--roblox-client-secret`, `--roblox-scopes`
+
+### Provider email attestation (2.4.0)
+
+:::warning Breaking in 2.4.0
+
+A social login whose provider does **not** attest the email address no longer
+signs the user into an existing account with that address.
+
+OAuth proves the user holds an account at the provider. It proves nothing about
+the email address that provider hands back — which is why OIDC has a separate
+`email_verified` claim. Microsoft Entra is the practical case: on a multi-tenant
+alias the `email` claim is **mutable and unattested**, so anyone able to set a
+directory attribute in *their own* tenant could assert your address and be
+logged into your account. This is the [nOAuth](https://www.descope.com/blog/post/noauth)
+class of account takeover.
+
+Signup with an unattested address still works — it just creates its own account
+instead of reaching an existing one.
+:::
+
+Attestation comes from the provider's `email_verified` claim, or Entra's
+`xms_edov` optional claim. To make Entra attest:
+
+- pin `--microsoft-tenant-id` to a single tenant, **or**
+- enable the `xms_edov` optional claim on the app registration, **or**
+- list the tenants you trust in `--microsoft-allowed-tenants` when
+  `--microsoft-tenant-id` is a multi-tenant alias (`common`, `organizations`,
+  `consumers`). Empty means no restriction — and in that mode the tenant is
+  untrusted, so the email it asserts will not link to an existing account.
+
+`--oauth-allow-unverified-provider-email=true` is a temporary compatibility
+escape hatch. It does **not** disable the check: an unattested address still
+cannot cross into an account owned by another credential. It only re-permits
+same-provider linking, which leaves two Entra tenants able to collide on one
+address. The server logs a warning on every boot while it is set.
+
+See [Email verification contract](./email-verification-contract) for the
+per-provider signal table and the upgrade path.
 
 ---
 

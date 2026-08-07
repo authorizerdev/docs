@@ -231,7 +231,7 @@ mutation UpdateUser {
 }
 
 mutation DeleteUser {
-  _delete_user(params: { email: "signup.test134523@yopmail.com" }) {
+  _delete_user(params: { id: "b1e2c3d4-5678-90ab-cdef-1234567890ab" }) {
     message
   }
 }

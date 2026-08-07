@@ -30,6 +30,7 @@ const sidebars: SidebarsConfig = {
         'core/client-registry',
         'core/sso-guide',
         'core/email',
+        'core/email-verification-contract',
         'core/rate-limiting',
         'core/metrics-monitoring',
       ],
