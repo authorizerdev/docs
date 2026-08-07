@@ -340,7 +340,15 @@ The `AuthorizerAdminService` is served on the same gRPC port and address as `Aut
 
 #### `DeleteUser`
 
-*Admin-only.* Delete a user by email and all associated OTP/verification data. Mirrors [`_delete_user`](./graphql-api#_delete_user).
+*Admin-only.* Delete a user by id and all associated OTP/verification data. Mirrors [`_delete_user`](./graphql-api#_delete_user).
+
+:::warning Breaking in 2.4.0
+
+`DeleteUserRequest.email` (field 1) is removed and replaced by `id` (field 2).
+Field 1 is **reserved**, not reused: both are strings, so reusing the tag would
+let an old client's email decode silently as an id on a delete path. Reserving
+makes an old client fail loudly instead.
+:::
 
 #### `VerificationRequests`
 

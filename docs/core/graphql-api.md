@@ -1248,9 +1248,18 @@ Mutation to delete user. This mutation is only allowed for super admins. It acce
 
 **Request Params**
 
-| Key     | Description                                          | Required |
-| ------- | ---------------------------------------------------- | -------- |
-| `email` | Email of user that needs to be removed from platform | true     |
+| Key  | Description                                       | Required |
+| ---- | ------------------------------------------------- | -------- |
+| `id` | ID of user that needs to be removed from platform | true     |
+
+:::warning Breaking in 2.4.0
+
+This took `email` and now takes `id` only. Email is not an identifier every
+account has — a phone-only signup has none — so an email-keyed delete could not
+reach those accounts at all, and there was no second identifier accepted.
+
+Pass the `id` you already have from `_users` or `_user`.
+:::
 
 This mutation returns `Response` type with following keys
 
