@@ -26,7 +26,7 @@ Intersecting both means an agent can only ever do things that **it** is trusted 
 
 ## Turning it on
 
-**Declare `type agent` in your authorization model.** That is the whole opt-in — there is no flag.
+**Declare `type agent` in your authorization model.** That is the whole opt-in — there is no flag to enable it.
 
 ```dsl
 model
@@ -44,6 +44,19 @@ type document
 Declaring the type IS the opt-in because the feature is meaningless without a model that can express agent grants, and because of how OpenFGA fails: checking `agent:x` against a model with **no** `agent` type does not return `false`, it **errors** — and permission checks fail closed on errors. A flag that could be switched on against an unprepared model would deny every permission check for every delegated caller: a total authorization outage, not a graceful degradation. Auto-detection makes that state unreachable.
 
 Detection is cached per authorization-model id, so writing a new model version takes effect immediately. The model-id lookup itself still runs per delegated request; only the type enumeration is cached.
+
+:::info What happens before you declare the type (changed in 2.4.0)
+
+A delegated check against a model with **no** `type agent` is now **denied**.
+Before 2.4.0 it authorized as the delegating user alone, which silently dropped
+the agent half of the intersection.
+
+If that denial blocks you mid-migration,
+[`--fga-allow-unconstrained-agents`](../core/server-config#--fga-allow-unconstrained-agents)
+restores the old behaviour — with the agent carrying its user's full authority,
+logged and metered on every request. It is a migration aid, not a setting to
+leave on.
+:::
 
 :::note Before you declare the type
 The moment `type agent` appears in your model, every delegated caller must ALSO satisfy the agent half. Grant your agents before you deploy the model, or their calls start being denied. The [`denied_by_agent` metric](#observability) tells you exactly this is happening.

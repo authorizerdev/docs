@@ -206,10 +206,36 @@ and the WebAuthn/passkey GraphQL operations.
 ```bash
 ./authorizer \
   --app-cookie-secure=true \
-  --admin-cookie-secure=true
+  --admin-cookie-secure=true \
+  --app-cookie-same-site=none
 ```
 
-Use `true` for HTTPS-only cookies in production.
+- **`--app-cookie-secure`** / **`--admin-cookie-secure`** (both default `true`):
+  use `true` for HTTPS-only cookies in production.
+- **`--app-cookie-same-site`** (default `none`): `SameSite` attribute for the
+  session cookies — one of `lax`, `strict`, or `none`.
+
+The default of `none` is what allows an app on a **different site** to complete
+a credentialed `/session` call at all. Set `lax` only when every app that reads
+the session shares this host; it is the tighter setting, but it stops
+cross-site session reads working.
+
+:::caution The value is validated at boot (2.4.0)
+
+An unrecognised value now **exits at startup** instead of silently falling back
+to `lax`. That fallback was the dangerous part: an operator who asked for
+`strict` and mistyped it got `lax` — a real downgrade from what they requested,
+with nothing anywhere saying so. A mistyped `none` went the other way and
+withheld the session cookie from cross-site apps, which presents as "login
+randomly doesn't stick" with the cause three layers away.
+:::
+
+`strict` is accepted, but note that one cookie deliberately ignores this
+setting: the short-lived OAuth `state` cookie used during social login is
+always `Lax`, or `None` when secure. A provider's callback arrives as a
+cross-site redirect — a cross-site `form_post` for Apple — and `Strict`
+withholds cookies on exactly those, so honouring `strict` there would break
+every social login on the deployment.
 
 ---
 
@@ -417,6 +443,33 @@ metric, labelled by limit kind. See
 
 - **`--fga-store`**: backing store for the embedded [OpenFGA](https://openfga.dev) engine — one of `sqlite`, `postgres`, `mysql`, or `memory`. Only needed when the main database is NoSQL (see paragraph below); for SQL main databases the engine reuses that database automatically.
 - **`--fga-store-url`**: connection string for the FGA store when `--fga-store` is set to a database driver.
+- **`--fga-allow-unconstrained-agents`** (default `false`): see below.
+
+#### `--fga-allow-unconstrained-agents`
+
+:::warning Escape hatch — changes an authorization outcome
+
+A delegated (agent-acting-for-user) permission check evaluates
+`perms(agent) ∩ perms(user)`. If the authorization model declares no
+`type agent`, the agent half **cannot be evaluated at all**.
+
+As of 2.4.0 that check is **denied**. Previously it authorized as the delegating
+user alone, which silently handed the agent the user's full authority — the
+Confused Deputy the intersection exists to prevent. A security check that cannot
+be evaluated is not a check that passes.
+
+Setting this flag to `true` restores the pre-2.4.0 behaviour while you migrate a
+model. It does not make anything more permissive than 2.3.x was, but it does
+mean **agents carry their delegating user's full authority**.
+
+Every such request is logged at warn level and recorded as `not_enforced` on the
+delegated-check metric, so the exposure shows up in dashboards rather than being
+discovered during an incident.
+
+The fix is to add `type agent` to your model — see
+[Agent identity](../enterprise/agent-identity). Grant your agents *before*
+deploying the model, or their calls start being denied.
+:::
 - **`--include-permissions-in-token`** (default `false`): when true, the access token's claims include the caller's flat `(resource, scope)` grant list. Useful for stateless downstream services that don't want to round-trip back to Authorizer per check.
 - **`--authorization-log-all-checks`** (default `false`): audit-log every `CheckPermission` call, not just denials. Diagnostic; expensive at scale.
 
