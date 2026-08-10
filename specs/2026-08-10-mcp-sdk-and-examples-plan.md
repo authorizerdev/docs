@@ -7,6 +7,26 @@ authorizerdev/authorizer#757; this is what has to follow it, and in what order.
 
 ---
 
+## 0. Correction after testing with a real client
+
+An earlier version of this plan (and of the docs) claimed Claude Code could
+connect over OAuth once RFC 8252 loopback matching landed. **That is wrong.**
+Tested against Claude Code 2.1.226:
+
+```
+authorizer-local: http://localhost:8099/mcp (HTTP)
+  - ✘ Failed to connect — Incompatible auth server: does not support dynamic client registration
+```
+
+Claude Code does not fall back to a manually-supplied client id; it refuses the
+server. The loopback fix is necessary but nowhere near sufficient. The only
+verified path today is a static bearer token bound to `<url>/mcp`, which does
+work — `claude mcp list` reports **✔ Connected**, and `tools/list` and
+`tools/call` both function over the wire.
+
+This raises the priority of CIMD from "nice for zero-touch onboarding" to "the
+thing that makes the OAuth machinery reachable by the flagship client at all".
+
 ## 1. What actually changed for a client
 
 Three server changes have client-visible consequences. Everything below follows

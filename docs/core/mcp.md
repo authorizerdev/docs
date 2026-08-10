@@ -91,20 +91,45 @@ retry. The audience binding survives refresh, so a rotated token keeps working.
 
 ### Connecting a client
 
-Authorizer does not yet implement [RFC 7591](https://datatracker.ietf.org/doc/html/rfc7591)
-dynamic client registration, so clients that self-register are not supported. Register a
-client once in the dashboard under **Identity → Clients** and hand out its client ID.
+**Verified against a real Claude Code client**, so this table says what actually
+happens rather than what the specs allow.
 
-| Client | Supported | How |
+| Client | Works | How |
 | --- | --- | --- |
-| **Claude.ai / Desktop / mobile** custom connector | yes | Redirect URI `https://claude.ai/api/mcp/auth_callback`. Paste the client ID under *Advanced settings* when adding the connector. |
-| **Claude Code, VS Code** — OAuth | yes | Register `http://localhost/callback` and `http://127.0.0.1/callback`. The port is ignored ([RFC 8252 §7.3](https://datatracker.ietf.org/doc/html/rfc8252#section-7.3)) because native clients bind an ephemeral one. |
-| **Claude Code, VS Code** — static token | yes | Mint a token with `resource=<url>/mcp` and send it as a fixed `Authorization` header. |
-| Clients requiring dynamic registration | not yet | Tracked for a future release, together with Client ID Metadata Documents. |
+| **Claude Code, VS Code** — static token | **yes, verified** | Mint a token bound to `<url>/mcp` and pass it as a fixed header (below) |
+| **Claude Code** — OAuth | **no** | Claude Code refuses: *"Incompatible auth server: does not support dynamic client registration"* |
+| **Claude.ai custom connector** — pasted client ID | unverified | Anthropic documents an OAuth Client ID field under *Advanced settings*; not confirmed here |
+| Any client that needs to self-register | no | Needs RFC 7591 DCR or a Client ID Metadata Document; Authorizer has neither yet |
+
+Authorizer does not implement RFC 7591 dynamic client registration, and Claude
+Code will not fall back to anything else — it refuses the server outright rather
+than prompting for a client ID. Until DCR or CIMD lands, **the static-token path
+is the supported way to connect Claude Code.**
 
 ```sh
-claude mcp add --transport http authorizer https://auth.example.com/mcp
+# 1. Create a service account: dashboard → Identity → Clients (note the id + secret)
+# 2. Mint a token bound to the MCP resource
+curl -s -X POST https://auth.example.com/oauth/token \
+  -d grant_type=client_credentials \
+  -d client_id=$CLIENT_ID -d client_secret=$CLIENT_SECRET \
+  -d scope=openid \
+  -d resource=https://auth.example.com/mcp
+
+# 3. Register it
+claude mcp add --transport http authorizer https://auth.example.com/mcp \
+  --header "Authorization: Bearer $ACCESS_TOKEN"
 ```
+
+`claude mcp list` should then report **✔ Connected**.
+
+The `resource` parameter is the part people miss: without it the token's audience
+is the client id, and `/mcp` rejects it. That is the audience binding working, not
+a bug.
+
+Note this token identifies the *service account*, not a human — `profile` returns
+nothing useful and permission checks resolve to `service_account:<client_id>`. For
+per-user identity you need the OAuth flow, which is why DCR/CIMD support matters
+and is tracked for a future release.
 
 ## Exposed tools
 
