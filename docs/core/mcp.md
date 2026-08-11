@@ -97,7 +97,7 @@ happens rather than what the specs allow.
 | Client | Works | How |
 | --- | --- | --- |
 | **Claude Code, VS Code** — static token | **yes, verified** | Mint a token bound to `<url>/mcp` and pass it as a fixed header (below) |
-| **Claude Code** — OAuth | **no** | Claude Code refuses: *"Incompatible auth server: does not support dynamic client registration"* |
+| **Claude Code** — OAuth | with `--enable-client-id-metadata-document` | Without it Claude Code refuses the server outright. With it the client engages and runs the OAuth flow; the browser leg (login + consent) has not been verified end to end here |
 | **Claude.ai custom connector** — pasted client ID | unverified | Anthropic documents an OAuth Client ID field under *Advanced settings*; not confirmed here |
 | Any client that needs to self-register | no | Needs RFC 7591 DCR or a Client ID Metadata Document; Authorizer has neither yet |
 
@@ -130,6 +130,37 @@ Note this token identifies the *service account*, not a human — `profile` retu
 nothing useful and permission checks resolve to `service_account:<client_id>`. For
 per-user identity you need the OAuth flow, which is why DCR/CIMD support matters
 and is tracked for a future release.
+
+### Connecting a client that self-registers (CIMD)
+
+Set `--enable-client-id-metadata-document` alongside `--mcp-enabled` and a client
+can identify itself with an HTTPS URL pointing at a JSON document, instead of a
+`client_id` you registered in advance:
+
+```json
+{
+  "client_id": "https://app.example.com/oauth/client.json",
+  "client_name": "Example MCP Client",
+  "redirect_uris": ["http://127.0.0.1:0/callback"],
+  "token_endpoint_auth_method": "none"
+}
+```
+
+The `client_id` must equal the URL the document is served from — that equality is
+what stops any host claiming to be any client. Authorizer fetches it through an
+SSRF-hardened client (one-shot DNS, dial pinned to the validated IP, private and
+loopback addresses refused), validates the presented `redirect_uri` against the
+document's list, and caches it with a clamped TTL.
+
+Because such a client asserts its own identity, **a consent screen is shown
+before any code is issued**. It leads with the redirect host — the only fact
+about the client the server has verified — and warns when a client's redirect
+URIs are all loopback, since any local process can bind the same port and present
+the same document. Clients you registered yourself are unaffected.
+
+Restrict which hosts may serve a document with
+`--client-id-metadata-allowed-domains` if you want a closed deployment; leaving it
+empty accepts any HTTPS host, which is what a public MCP server wants.
 
 ### Why there is no `/register` endpoint
 
