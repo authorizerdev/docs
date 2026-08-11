@@ -18,21 +18,149 @@ permission-aware RAG pattern as the
 example (see [Real-world recipes → Permission-aware retrieval](./authorization#permission-aware-retrieval-rag--ai-agents)),
 but driven from inside the model instead of your backend.
 
-## Design & security model
+## Two ways to run it
 
-The MCP server is deliberately minimal and **stdio-only**:
+| | **Remote (`--mcp-enabled`)** | **Local (`authorizer mcp`)** |
+| --- | --- | --- |
+| Transport | Streamable HTTP at `POST <url>/mcp` | stdio subprocess |
+| Identity | per request, from the caller's own token | one process-wide `--mcp-bearer` |
+| Runs | inside the server you already run | a second process with its own DB pool |
+| Status | **use this** | deprecated, removed in 2.5.0 |
 
-- **Transport is stdio only.** The host launches `authorizer mcp` as a child process and
-  talks to it over standard input/output using MCP's JSON-RPC framing. There is **no**
-  HTTP, SSE, or TCP listener — the server cannot be exposed over the network. This is
-  enforced in code, not configuration.
-- **Only safe tools are exposed.** Credential-issuing operations (`signup`, `login`,
-  `session`) and destructive ones (`deactivate_account`) are explicitly **not** exposed
-  as tools. The model can read identity and permissions, never mint tokens or mutate
-  accounts.
-- **Identity comes from a bearer token** you pass at launch — the model never sees a
-  login form and cannot escalate beyond that token's subject. Permission checks run
-  through the exact same FGA trust gates as the GraphQL/REST APIs.
+The stdio subcommand still works and still prints a deprecation notice. It cannot be
+deployed: it starts a second copy of every provider — storage, memory store, embedded
+FGA engine — and serves exactly one user for the lifetime of the process.
+
+## Remote MCP server
+
+Enable it on the server you already run:
+
+```sh
+authorizer --url https://auth.example.com --mcp-enabled  # ...your other flags
+```
+
+`--url` is **required** with `--mcp-enabled`, and the server refuses to start without it.
+Every token presented at `/mcp` is checked against this deployment's canonical resource
+identifier, `<url>/mcp`. Without `--url` that identifier would be derived from request
+headers, which would let a caller name the audience their own token has to match — no
+check at all.
+
+### Security model
+
+- **Every request carries its own token.** No ambient authority, no shared credential.
+- **Audience-bound tokens only.** A token is accepted at `/mcp` only when its `aud` is
+  exactly `<url>/mcp`. An ordinary login token — the kind that works at `/graphql`,
+  `/v1/*` and gRPC — is rejected here, and an MCP token is rejected there. Neither rule
+  has an "or" in it: a token you hand to a semi-trusted agent cannot become a full API
+  credential.
+- **Bearer only.** No cookie, no admin secret, and no admin operation reaches this
+  surface, so it is safe to expose to the public internet and exempt from CSRF.
+- **Shared middleware.** Because it is mounted on the main listener, it inherits CORS,
+  security headers, rate limiting, trusted-proxy handling, request logging and metrics.
+
+### Discovery
+
+Authorizer is both the authorization server and the resource server here, so a client
+needs nothing configured beyond the URL:
+
+1. The client calls `POST https://auth.example.com/mcp` with no token.
+2. Authorizer answers `401` with
+   `WWW-Authenticate: Bearer realm="authorizer", resource_metadata="https://auth.example.com/.well-known/oauth-protected-resource/mcp"`.
+3. The client fetches that document ([RFC 9728](https://datatracker.ietf.org/doc/html/rfc9728)):
+
+   ```json
+   {
+     "resource": "https://auth.example.com/mcp",
+     "authorization_servers": ["https://auth.example.com"],
+     "bearer_methods_supported": ["header"],
+     "scopes_supported": ["openid", "email", "profile", "phone", "offline_access"]
+   }
+   ```
+
+4. It reads Authorizer's own metadata from `/.well-known/oauth-authorization-server`,
+   runs the OAuth 2.1 authorization-code flow with PKCE, and passes
+   `resource=https://auth.example.com/mcp` on both the authorization and token requests
+   ([RFC 8707](https://datatracker.ietf.org/doc/html/rfc8707)) so the issued token is
+   bound to this server.
+
+That `resource` value must match **exactly** what a user types when adding the connector,
+including the path — give them `https://auth.example.com/mcp`, not the bare origin.
+
+An expired token gets the same `401`, which is what tells a client to refresh rather than
+retry. The audience binding survives refresh, so a rotated token keeps working.
+
+### Connecting a client
+
+**Verified against a real Claude Code client**, so this table says what actually
+happens rather than what the specs allow.
+
+| Client | Works | How |
+| --- | --- | --- |
+| **Claude Code, VS Code** — static token | **yes, verified** | Mint a token bound to `<url>/mcp` and pass it as a fixed header (below) |
+| **Claude Code** — OAuth | **no** | Claude Code refuses: *"Incompatible auth server: does not support dynamic client registration"* |
+| **Claude.ai custom connector** — pasted client ID | unverified | Anthropic documents an OAuth Client ID field under *Advanced settings*; not confirmed here |
+| Any client that needs to self-register | no | Needs RFC 7591 DCR or a Client ID Metadata Document; Authorizer has neither yet |
+
+Authorizer does not implement RFC 7591 dynamic client registration, and Claude
+Code will not fall back to anything else — it refuses the server outright rather
+than prompting for a client ID. Until DCR or CIMD lands, **the static-token path
+is the supported way to connect Claude Code.**
+
+```sh
+# 1. Create a service account: dashboard → Identity → Clients (note the id + secret)
+# 2. Mint a token bound to the MCP resource
+curl -s -X POST https://auth.example.com/oauth/token \
+  -d grant_type=client_credentials \
+  -d client_id=$CLIENT_ID -d client_secret=$CLIENT_SECRET \
+  -d scope=openid \
+  -d resource=https://auth.example.com/mcp
+
+# 3. Register it
+claude mcp add --transport http authorizer https://auth.example.com/mcp \
+  --header "Authorization: Bearer $ACCESS_TOKEN"
+```
+
+`claude mcp list` should then report **✔ Connected**.
+
+The `resource` parameter is the part people miss: without it the token's audience
+is the client id, and `/mcp` rejects it. That is the audience binding working, not
+a bug.
+
+Note this token identifies the *service account*, not a human — `profile` returns
+nothing useful and permission checks resolve to `service_account:<client_id>`. For
+per-user identity you need the OAuth flow, which is why DCR/CIMD support matters
+and is tracked for a future release.
+
+### Why there is no `/register` endpoint
+
+Authorizer deliberately does **not** implement RFC 7591 dynamic client
+registration, and this is unlikely to change.
+
+The [MCP authorization spec (2025-11-25)](https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization)
+demoted it. Authorization servers **SHOULD** support Client ID Metadata
+Documents and **MAY** support DCR, which the spec keeps only *"for backwards
+compatibility with earlier versions of the MCP authorization spec"*. The client
+priority order it defines is: pre-registered → CIMD → DCR → prompt the user.
+
+The industry moved the same way:
+
+| Product | Approach |
+| --- | --- |
+| [Auth0](https://auth0.com/ai/docs/mcp/guides/registering-your-mcp-client-application/dynamic-client-registration) | DCR is Enterprise-only, disabled by default, and needs tenant ACLs or a reverse proxy in front. Auth0 recommends CIMD instead for production |
+| Keycloak | Has had OIDC DCR for years; ships experimental CIMD |
+| Google Drive's MCP server | Rejects DCR outright (HTTP 400) |
+| [Anthropic](https://claude.com/docs/connectors/building/authentication) | Steers directory traffic to CIMD or Anthropic-held credentials, because DCR registers a fresh client on every connection |
+
+Auth0's stated objections — resource depletion from mass registration, security
+probing, unvetted misconfigured clients, audit gaps — apply with more force to a
+self-hosted product, where every operator would inherit an open, unauthenticated
+write endpoint and unbounded client-row growth.
+
+**CIMD is the planned path instead.** It makes the `client_id` an HTTPS URL that
+the authorization server fetches and validates — no write endpoint, no row
+growth, no schema change. It also requires a consent screen, because CIMD makes
+client identity self-asserted: the spec requires the authorization server to
+display the redirect URI hostname and to warn on `localhost`-only clients.
 
 ## Exposed tools
 
@@ -56,7 +184,12 @@ example, `check_permissions` accepts:
 }
 ```
 
-## Running the server
+## Local stdio server (deprecated)
+
+Kept working for existing setups, with a deprecation notice on every run. Prefer
+`--mcp-enabled` above.
+
+### Running the server
 
 ```bash
 authorizer mcp \
@@ -78,7 +211,7 @@ you want FGA on a separate store; `--fga-store` takes one of `sqlite`,
 The `mcp` command inherits the root server flags (database, JWT, client-id, `--fga-store`,
 etc.) so it can resolve identity and run the FGA engine in-process.
 
-### MCP-specific flags
+#### MCP-specific flags
 
 | Flag                    | Description                                                                                                        | Required        |
 | ----------------------- | ---------------------------------------------------------------------------------------------------------------- | --------------- |
@@ -88,7 +221,7 @@ etc.) so it can resolve identity and run the FGA engine in-process.
 > Logging goes to **stderr** only — `stdout` is reserved for the MCP JSON-RPC stream, so
 > never print to it.
 
-## Connecting a host
+### Connecting a host
 
 Most MCP hosts read a JSON config that declares the command to spawn. For
 **Claude Desktop** (`claude_desktop_config.json`) or **Claude Code**
@@ -126,11 +259,10 @@ Typical messages mirror the gRPC status: `Unauthenticated`, `PermissionDenied`,
 
 ## Authorizer as the authorization server protecting *your own* MCP server
 
-Everything above is about the **built-in stdio server** — Authorizer's own tools,
-consumed by a host on your machine. The other direction is just as common: your MCP
-server (streamable HTTP, hosted anywhere) needs a real OAuth 2.1 authorization server
-in front of it, and Authorizer can be that AS. This is a **different pattern** —
-plain OAuth, no `authorizer mcp` involved:
+Everything above is about Authorizer's **own** MCP surface. The other direction is just
+as common: your MCP server, hosted anywhere, needs a real OAuth 2.1 authorization server
+in front of it, and Authorizer can be that AS. Same specs, different division of labour —
+there, you implement the resource-server half:
 
 | Spec | What it says | Who implements it |
 | --- | --- | --- |
