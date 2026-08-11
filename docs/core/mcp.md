@@ -131,6 +131,37 @@ nothing useful and permission checks resolve to `service_account:<client_id>`. F
 per-user identity you need the OAuth flow, which is why DCR/CIMD support matters
 and is tracked for a future release.
 
+### Why there is no `/register` endpoint
+
+Authorizer deliberately does **not** implement RFC 7591 dynamic client
+registration, and this is unlikely to change.
+
+The [MCP authorization spec (2025-11-25)](https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization)
+demoted it. Authorization servers **SHOULD** support Client ID Metadata
+Documents and **MAY** support DCR, which the spec keeps only *"for backwards
+compatibility with earlier versions of the MCP authorization spec"*. The client
+priority order it defines is: pre-registered → CIMD → DCR → prompt the user.
+
+The industry moved the same way:
+
+| Product | Approach |
+| --- | --- |
+| [Auth0](https://auth0.com/ai/docs/mcp/guides/registering-your-mcp-client-application/dynamic-client-registration) | DCR is Enterprise-only, disabled by default, and needs tenant ACLs or a reverse proxy in front. Auth0 recommends CIMD instead for production |
+| Keycloak | Has had OIDC DCR for years; ships experimental CIMD |
+| Google Drive's MCP server | Rejects DCR outright (HTTP 400) |
+| [Anthropic](https://claude.com/docs/connectors/building/authentication) | Steers directory traffic to CIMD or Anthropic-held credentials, because DCR registers a fresh client on every connection |
+
+Auth0's stated objections — resource depletion from mass registration, security
+probing, unvetted misconfigured clients, audit gaps — apply with more force to a
+self-hosted product, where every operator would inherit an open, unauthenticated
+write endpoint and unbounded client-row growth.
+
+**CIMD is the planned path instead.** It makes the `client_id` an HTTPS URL that
+the authorization server fetches and validates — no write endpoint, no row
+growth, no schema change. It also requires a consent screen, because CIMD makes
+client identity self-asserted: the spec requires the authorization server to
+display the redirect URI hostname and to warn on `localhost`-only clients.
+
 ## Exposed tools
 
 | Tool                | Auth required | Description                                                          |
