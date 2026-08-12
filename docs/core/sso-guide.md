@@ -293,7 +293,7 @@ Several capabilities that used to live on this page's roadmap have shipped. Each
 
 Authorizer maintains a client registry: admins can register additional clients — machine service accounts with their own `client_id`, one-time-revealed `client_secret`, and a per-client scope allow-list — alongside the reserved interactive client. Service accounts authenticate via the OAuth2 `client_credentials` grant. See the [Client Registry guide](./client-registry).
 
-> Programmatic *self-service* registration (RFC 7591 Dynamic Client Registration) is still on the roadmap — today clients are registered by an admin via the admin API or dashboard.
+> Programmatic *self-service* registration (RFC 7591 Dynamic Client Registration) ships in 2.4.0 but is **off by default** and is scoped to public MCP-style clients — see [Self-registering clients](./mcp#self-registering-clients-cimd-vs-dcr). For everything else, clients are registered by an admin via the admin API or dashboard.
 
 ### Organizations
 
@@ -331,7 +331,7 @@ Still planned for future releases:
 
 ### Dynamic Client Registration (RFC 7591)
 
-Self-service programmatic client registration (the `registration_endpoint`). Today, new clients are created by an admin through the [client registry](./client-registry) admin API.
+Self-service programmatic client registration (the `registration_endpoint`) is available from 2.4.0 behind `--enable-dynamic-client-registration`, and is deliberately narrow: it registers **public** clients only, for the MCP onboarding case. Confidential clients are still created by an admin through the [client registry](./client-registry) admin API. See [Self-registering clients](./mcp#self-registering-clients-cimd-vs-dcr).
 
 ### LDAP / Active Directory Integration
 
@@ -353,7 +353,7 @@ Authorizer gives you a **self-hosted, single-binary SSO server** that speaks sta
 
 | What You Get Today | What's Coming |
 |---|---|
-| Full OIDC IdP with discovery | Dynamic client registration (RFC 7591) |
+| Full OIDC IdP with discovery | Dynamic client registration for *confidential* clients (RFC 7591 covers public clients only) |
 | 10+ social login providers | LDAP/AD integration |
 | MFA (TOTP, email OTP, SMS OTP) | Front-channel logout |
 | RBAC with JWT claims | Automated JWKS rotation |

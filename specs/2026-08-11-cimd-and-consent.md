@@ -99,7 +99,12 @@ makes a client select it and then fail.
 
 ## 6. Out of scope
 
-- RFC 7591 DCR — see §1.
+- ~~RFC 7591 DCR~~ — **no longer out of scope**: implemented in this same PR
+  behind `--enable-dynamic-client-registration`, off by default. CIMD stayed the
+  preferred mechanism, but Claude Code's released version predates CIMD and
+  refuses a server without a `registration_endpoint`, so CIMD alone left the
+  flagship client unable to connect — the exact problem §1 opens with. Both
+  mechanisms share the consent screen and the mandatory-S256-PKCE rule.
 - `private_key_jwt` for CIMD clients (spec MAY).
 - Persisted consent grants.
 - Delegated (RFC 8693) tokens at `/mcp` — still deferred, see the transport spec.

@@ -33,7 +33,9 @@ This page is the one-stop reference for every endpoint, parameter, and integrati
 | [RFC 8693](https://datatracker.ietf.org/doc/html/rfc8693) (Token Exchange)             | Implemented   | [Delegation-only profile](../enterprise/token-exchange) with nested `act` chain |
 | RFC 8707 (Resource Indicators)        | Implemented   | Optional `resource` on `/authorize` + `/oauth/token` (authorization code flow); exactly one required on the token-exchange grant |
 
-**Not yet implemented** (tracked for future releases): RFC 7591 dynamic client registration, RFC 9101 JAR / Request Object, OIDC Session Management iframe, front-channel logout, automated time-based key rotation.
+**Not yet implemented** (tracked for future releases): RFC 9101 JAR / Request Object, OIDC Session Management iframe, front-channel logout, automated time-based key rotation.
+
+RFC 7591 dynamic client registration IS implemented as of 2.4.0, but it is **off by default** — see [Self-registering clients](./mcp#self-registering-clients-cimd-vs-dcr).
 
 ---
 
@@ -858,7 +860,7 @@ You will need `curl`, `jq`, `openssl`, and a web browser.
 curl -s $AUTHORIZER_URL/.well-known/openid-configuration | jq
 ```
 
-**Check:** `issuer` matches `$AUTHORIZER_URL`; `response_types_supported` contains the hybrid combinations; `introspection_endpoint` is present; `registration_endpoint` is absent; `backchannel_logout_supported` is `true` iff the flag is set.
+**Check:** `issuer` matches `$AUTHORIZER_URL`; `response_types_supported` contains the hybrid combinations; `introspection_endpoint` is present; `registration_endpoint` is absent unless `--enable-dynamic-client-registration` is set; `backchannel_logout_supported` is `true` iff the flag is set.
 
 ### 2. JWKS
 
