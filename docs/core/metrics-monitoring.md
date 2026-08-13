@@ -170,7 +170,10 @@ The `outcome` label is what makes an intersection denial diagnosable:
   This is the Confused Deputy being stopped. Do **not** widen the agent; it
   cannot help, and the user genuinely lacks access.
 - **`not_enforced`** — a delegated caller arrived but the active model declares
-  no `agent` type, so the request was authorized as the **user alone**.
+  no `agent` type, so the agent half of the intersection could not be evaluated.
+  By default the check is **denied**; with `--fga-allow-unconstrained-agents`
+  set it is authorized as the **delegating user alone**, with the agent
+  unconstrained.
 
 Only `check_permissions` emits `allowed` / `denied_by_agent` / `denied_by_user`.
 `list_permissions` intersects object *sets* rather than folding a per-check
