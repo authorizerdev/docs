@@ -102,7 +102,7 @@ happens rather than what the specs allow.
 | Any client that needs to self-register | yes | Enable `--enable-client-id-metadata-document` (preferred) or `--enable-dynamic-client-registration` (RFC 7591, for clients that predate CIMD) |
 
 Both self-registration mechanisms ship in 2.4.0 and are **off by default**. Turn
-on the one your client can use — see [Self-registering clients](#self-registering-clients)
+on the one your client can use — see [Self-registering clients](#self-registering-clients-cimd-vs-dcr)
 below. The static-token path remains the simplest option when you control the
 client and do not want an interactive flow at all.
 

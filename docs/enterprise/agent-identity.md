@@ -222,9 +222,21 @@ Without this an agent's actions are indistinguishable from the user's own — sa
 | `allowed` | both halves permitted | — |
 | `denied_by_agent` | the agent has no grant; the user may well have access | grant the **agent** a tuple |
 | `denied_by_user` | the agent had its grant, the user does not have access | **do not** widen the agent — this is the Confused Deputy case working as intended |
-| `not_enforced` | a delegated caller arrived but the model declares no `agent` type, so it was authorized as the **user alone** | declare `type agent` and grant your agents |
+| `not_enforced` | a delegated caller arrived but the model declares no `agent` type, so the agent half could not be evaluated | declare `type agent` and grant your agents |
 
-`not_enforced` is the one to alert on: it is the only outcome that reports a security property *not* being enforced, and it is silent by construction — the request succeeds and nothing in the response says the agent was unconstrained.
+`not_enforced` is the one to alert on, and it means one of two things depending
+on [`--fga-allow-unconstrained-agents`](#turning-it-on):
+
+- **Default (flag unset):** the check was **denied**. Agents are failing against
+  a model that cannot express agent grants — a misconfiguration, not an attack.
+  Users will report it as a broken integration; this counter tells you why.
+- **Flag set:** the check was authorized as the **delegating user alone**, with
+  the agent unconstrained. That is silent by construction — the request
+  succeeds and nothing in the response says so. Treat a non-zero rate here as
+  exposure with a clock on it, not a steady state.
+
+Either way the remedy is the same: add `type agent` to the model and grant the
+agents.
 
 `allowed`, `denied_by_agent` and `denied_by_user` are emitted by
 **`check_permissions` only**. `list_permissions` intersects object *sets*
