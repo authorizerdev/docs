@@ -67,8 +67,13 @@ onboarding, and the `/authorize` consent screen that CIMD requires (§8.4); per-
 scope gating; MCP audit events; SSE / stateful sessions; MCP resources and prompts;
 delegated (RFC 8693) tokens at `/mcp` (§7).
 
-**Not planned**: RFC 7591 dynamic client registration — see §8.3 for why the vendor
-documentation argues against it.
+**Superseded**: this spec listed RFC 7591 dynamic client registration as "not
+planned" (§8.3 collects the vendor arguments against it, and they still stand as
+reasons to keep it OFF by default). It shipped anyway in 2.4.0 behind
+`--enable-dynamic-client-registration`, because the reasoning was about what
+*should* be preferred and not about what shipping clients *can do*: Claude Code
+reads `client_id_metadata_document_supported` and still refuses without a
+`registration_endpoint`. See `2026-08-11-cimd-and-consent.md` §1.
 
 ## 4. Architecture
 

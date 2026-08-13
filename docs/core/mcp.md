@@ -97,14 +97,14 @@ happens rather than what the specs allow.
 | Client | Works | How |
 | --- | --- | --- |
 | **Claude Code, VS Code** — static token | **yes, verified** | Mint a token bound to `<url>/mcp` and pass it as a fixed header (below) |
-| **Claude Code** — OAuth | **no** | Claude Code refuses: *"Incompatible auth server: does not support dynamic client registration"* |
+| **Claude Code** — OAuth | with `--enable-dynamic-client-registration` | Claude Code's released version predates CIMD: it reads `client_id_metadata_document_supported`, ignores it, and refuses unless a `registration_endpoint` is advertised. With DCR enabled it registers itself (verified: `POST /oauth/register` → 201, public client, loopback callback) and runs the flow |
 | **Claude.ai custom connector** — pasted client ID | unverified | Anthropic documents an OAuth Client ID field under *Advanced settings*; not confirmed here |
-| Any client that needs to self-register | no | Needs RFC 7591 DCR or a Client ID Metadata Document; Authorizer has neither yet |
+| Any client that needs to self-register | yes | Enable `--enable-client-id-metadata-document` (preferred) or `--enable-dynamic-client-registration` (RFC 7591, for clients that predate CIMD) |
 
-Authorizer does not implement RFC 7591 dynamic client registration, and Claude
-Code will not fall back to anything else — it refuses the server outright rather
-than prompting for a client ID. Until DCR or CIMD lands, **the static-token path
-is the supported way to connect Claude Code.**
+Both self-registration mechanisms ship in 2.4.0 and are **off by default**. Turn
+on the one your client can use — see [Self-registering clients](#self-registering-clients)
+below. The static-token path remains the simplest option when you control the
+client and do not want an interactive flow at all.
 
 ```sh
 # 1. Create a service account: dashboard → Identity → Clients (note the id + secret)
@@ -131,10 +131,40 @@ nothing useful and permission checks resolve to `service_account:<client_id>`. F
 per-user identity you need the OAuth flow, which is why DCR/CIMD support matters
 and is tracked for a future release.
 
-### Why there is no `/register` endpoint
+### Connecting a client that self-registers (CIMD)
 
-Authorizer deliberately does **not** implement RFC 7591 dynamic client
-registration, and this is unlikely to change.
+Set `--enable-client-id-metadata-document` alongside `--mcp-enabled` and a client
+can identify itself with an HTTPS URL pointing at a JSON document, instead of a
+`client_id` you registered in advance:
+
+```json
+{
+  "client_id": "https://app.example.com/oauth/client.json",
+  "client_name": "Example MCP Client",
+  "redirect_uris": ["http://127.0.0.1:0/callback"],
+  "token_endpoint_auth_method": "none"
+}
+```
+
+The `client_id` must equal the URL the document is served from — that equality is
+what stops any host claiming to be any client. Authorizer fetches it through an
+SSRF-hardened client (one-shot DNS, dial pinned to the validated IP, private and
+loopback addresses refused), validates the presented `redirect_uri` against the
+document's list, and caches it with a clamped TTL.
+
+Because such a client asserts its own identity, **a consent screen is shown
+before any code is issued**. It leads with the redirect host — the only fact
+about the client the server has verified — and warns when a client's redirect
+URIs are all loopback, since any local process can bind the same port and present
+the same document. Clients you registered yourself are unaffected.
+
+Restrict which hosts may serve a document with
+`--client-id-metadata-allowed-domains` if you want a closed deployment; leaving it
+empty accepts any HTTPS host, which is what a public MCP server wants.
+
+### Self-registering clients: CIMD vs DCR
+
+Authorizer implements **both**, off by default, and CIMD is the one to prefer.
 
 The [MCP authorization spec (2025-11-25)](https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization)
 demoted it. Authorization servers **SHOULD** support Client ID Metadata
@@ -156,11 +186,57 @@ probing, unvetted misconfigured clients, audit gaps — apply with more force to
 self-hosted product, where every operator would inherit an open, unauthenticated
 write endpoint and unbounded client-row growth.
 
-**CIMD is the planned path instead.** It makes the `client_id` an HTTPS URL that
-the authorization server fetches and validates — no write endpoint, no row
-growth, no schema change. It also requires a consent screen, because CIMD makes
-client identity self-asserted: the spec requires the authorization server to
+**CIMD is therefore the preferred path.** It makes the `client_id` an HTTPS URL
+that the authorization server fetches and validates — no write endpoint, no row
+growth, no schema change.
+
+**RFC 7591 DCR ships anyway, behind `--enable-dynamic-client-registration`,
+because the clients have not caught up.** Claude Code reads
+`client_id_metadata_document_supported: true` from our metadata and still
+refuses without a `registration_endpoint`. Without DCR those clients cannot
+connect at all. Enabling it does not downgrade anyone: the spec's priority order
+is pre-registered → CIMD → DCR, so a CIMD-capable client never reaches the DCR
+path.
+
+Auth0's objections are answered rather than ignored:
+
+| Risk | Mitigation |
+| --- | --- |
+| Mass registration / resource depletion | Per-IP rate limiting plus a hard ceiling on registry rows |
+| Unvetted, misconfigured clients | PUBLIC clients only — `token_endpoint_auth_method` must be `none`, `client_credentials` is refused, `redirect_uris` must be https or loopback http |
+| Impersonation of a known product | Consent screen on every authorization, naming the client and leading with the verified redirect host ([RFC 7591 §5](https://www.rfc-editor.org/rfc/rfc7591.html#section-5) asks for this warning) |
+| Weak client authentication | S256 PKCE required at `/authorize`; implicit response types refused |
+| Standing client management surface | RFC 7592 not implemented — a self-registered client cannot be read back, modified or deleted through this endpoint |
+
+Both mechanisms make client identity **self-asserted**, which is why both go
+through the same consent screen: the spec requires the authorization server to
 display the redirect URI hostname and to warn on `localhost`-only clients.
+
+```sh
+# Preferred: clients that support Client ID Metadata Documents
+authorizer --mcp-enabled --url=https://auth.example.com \
+  --enable-client-id-metadata-document
+
+# Add DCR only if your client cannot do CIMD (e.g. current Claude Code)
+authorizer --mcp-enabled --url=https://auth.example.com \
+  --enable-client-id-metadata-document \
+  --enable-dynamic-client-registration
+```
+
+Registration itself is one unauthenticated POST:
+
+```sh
+curl -X POST https://auth.example.com/oauth/register \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "client_name": "My MCP Client",
+    "redirect_uris": ["http://127.0.0.1:5599/callback"],
+    "grant_types": ["authorization_code", "refresh_token"],
+    "token_endpoint_auth_method": "none"
+  }'
+# 201 Created -> {"client_id": "...", "client_id_issued_at": ..., ...}
+# No client_secret is ever issued: these are public clients.
+```
 
 ## Exposed tools
 
