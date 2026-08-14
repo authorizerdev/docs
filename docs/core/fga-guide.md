@@ -27,6 +27,7 @@ by default — this is all you need to follow along:
 docker run -p 8080:8080 quay.io/authorizer/authorizer:latest \
   --database-type=sqlite \
   --database-url=test.db \
+  --url=http://localhost:8080 \
   --jwt-type=HS256 \
   --jwt-secret=test \
   --encryption-key=test-encryption-key \

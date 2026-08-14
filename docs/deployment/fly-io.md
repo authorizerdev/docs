@@ -70,6 +70,7 @@ cmd = [
   "./authorizer",
   "--database-type=postgres",
   "--database-url=postgres://user:pass@localhost:5432/authorizer",
+  "--url=https://authorizer.fly.dev",
   "--jwt-type=HS256",
   "--jwt-secret=test",
   "--encryption-key=$ENCRYPTION_KEY",

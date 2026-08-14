@@ -127,22 +127,58 @@ proxy you **must** set this flag, otherwise:
 ./authorizer --url=https://auth.example.com
 ```
 
-- **`--url`** (default empty): the operator-configured canonical base URL of
-  this Authorizer instance. When set, it is the **only** source used to
+:::warning Required as of 2.4.0
+The server **refuses to start** without `--url`. Deployments upgrading from
+2.3.x that never set it will fail to boot until they do — see
+[Upgrading to 2.4.0](../migration/v1-to-v2#upgrading-from-23x-to-240).
+:::
+
+- **`--url`** (**required**): the operator-configured canonical base URL of
+  this Authorizer instance. It is the **only** source used to
   derive the server's own host — verification/reset/magic-link email links,
   the JWT `iss` claim, and the OIDC discovery/JWKS document URLs — and every
   request header that could otherwise influence it (`X-Authorizer-URL`,
   `X-Forwarded-Host`, `Host`) is ignored. The value is normalized to
   scheme+host (path, query, fragment, userinfo, and trailing slash stripped)
-  and pinned once at startup, before any listener accepts a connection.
+  and pinned once at startup, before any listener accepts a connection. A
+  value that cannot be normalized — `auth.example.com` with no scheme, or a
+  URL carrying user info — is **rejected at startup** rather than silently
+  ignored, since either would otherwise start in the vulnerable configuration
+  while looking configured.
 
-When **empty** (the default), Authorizer falls back to header-based
-derivation (`X-Authorizer-URL`, then `X-Forwarded-Host`/`Host`), which
-preserves flexible reverse-proxy / multi-tenant setups but leaves a
-host-header-injection account-takeover surface (CWE-640): a request with a
-forged host header can cause a password-reset or verification email to
-contain a link pointing at an attacker-controlled domain. **Set `--url` in
-production**, particularly behind a reverse proxy, to close this off.
+Before 2.4.0 the flag was optional, and leaving it empty fell back to
+header-based derivation (`X-Authorizer-URL`, then `X-Forwarded-Host`/`Host`).
+That fallback is a host-header-injection account-takeover surface (CWE-640):
+a request with a forged host header causes a password-reset or verification
+email to carry a **genuine** single-use link pointing at an attacker-controlled
+domain — no prior access and no mailbox compromise required. Making the flag
+mandatory is the only fix that closes the class; validating the derived host
+against `--allowed-origins` would help only deployments that configured an
+explicit list, and would do nothing on the default `*` — which is the
+configuration the attack targets.
+
+This costs no supported capability. Setting `--url` already collapsed an
+instance to a single canonical host, so serving several hostnames from one
+instance only ever worked on the vulnerable path. Verified organization
+domains are email-domain-to-organization routing for home realm discovery,
+not HTTP virtual hosting, and are unaffected.
+
+### `--url` vs `--allowed-origins` vs the SDKs' `authorizerURL`
+
+Three similarly-named settings that mean different things. Confusing `--url`
+with `--allowed-origins` is the most common misconfiguration:
+
+| Setting | Lives in | Names | Example |
+|---|---|---|---|
+| `--url` | server flag | **This server's own address** — the single host Authorizer believes it is reachable at. | `https://auth.example.com` |
+| `--allowed-origins` | server flag | **The other apps** permitted to call this server cross-origin and be redirected to. | `https://app.example.com,https://admin.example.com` |
+| `authorizerURL` | SDK / client option | **The client's pointer back at the server** — what a browser or backend SDK dials. Normally the same value as `--url`. | `https://auth.example.com` |
+
+You need both flags and they are not interchangeable: `--url` is *where
+Authorizer is*, `--allowed-origins` is *who may talk to it*. There is no
+`--authorizer-url` server flag; `authorizerURL` is client-side only, and
+`X-Authorizer-URL` is the legacy request header `--url` replaces — ignored
+outright as of 2.4.0.
 
 ---
 

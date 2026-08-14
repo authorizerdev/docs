@@ -144,6 +144,7 @@ Example with Redis:
 ./authorizer \
   --database-type=sqlite \
   --database-url=test.db \
+  --url=http://localhost:8080 \
   --jwt-type=HS256 \
   --jwt-secret=test \
   --encryption-key=test-encryption-key \

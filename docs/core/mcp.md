@@ -272,6 +272,7 @@ authorizer mcp \
   --client-id=YOUR_CLIENT_ID \
   --database-type=sqlite \
   --database-url=auth.db \
+  --url=http://localhost:8080 \
   --encryption-key=your-encryption-key \
   --mcp-bearer="$USER_ACCESS_TOKEN" \
   --mcp-authorizer-url=https://auth.example.com

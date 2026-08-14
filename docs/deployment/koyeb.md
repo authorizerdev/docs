@@ -49,6 +49,7 @@ Add the following environment variables:
 | `ADMIN_SECRET` | `admin` |
 | `CLIENT_ID` | `123456` |
 | `CLIENT_SECRET` | `secret` |
+| `AUTHORIZER_URL` | `https://your-app.koyeb.app` *(your public Koyeb URL)* |
 
 Update the start command to pass CLI flags:
 
@@ -56,6 +57,7 @@ Update the start command to pass CLI flags:
 ./authorizer \
   --database-type=$DATABASE_TYPE \
   --database-url=$DATABASE_URL \
+  --url=$AUTHORIZER_URL \
   --jwt-type=$JWT_TYPE \
   --jwt-secret=$JWT_SECRET \
   --encryption-key=$ENCRYPTION_KEY \

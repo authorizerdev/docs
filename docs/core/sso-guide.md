@@ -55,6 +55,7 @@ Configure the essentials:
 authorizer \
   --database-type postgres \
   --database-url "postgres://user:pass@db:5432/authorizer" \
+  --url https://auth.yourcompany.com \
   --http-port 8080 \
   --allowed-origins "https://app1.yourcompany.com,https://app2.yourcompany.com,https://admin.yourcompany.com" \
   --organization-name "YourCompany" \

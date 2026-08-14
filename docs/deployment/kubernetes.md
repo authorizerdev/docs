@@ -79,6 +79,11 @@ spec:
                 secretKeyRef:
                   name: authorizer-secrets
                   key: admin-secret
+            - name: ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: authorizer-secrets
+                  key: encryption-key
           args:
             - "--env=production"
             - "--http-port=8080"
@@ -89,6 +94,7 @@ spec:
             - "--rate-limit-fail-closed=false"
             - "--database-type=postgres"
             - "--database-url=$(DATABASE_URL)"
+            - "--url=https://YOUR_DOMAIN"
             - "--client-id=$(CLIENT_ID)"
             - "--client-secret=$(CLIENT_SECRET)"
             - "--admin-secret=$(ADMIN_SECRET)"

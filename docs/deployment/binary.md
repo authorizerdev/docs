@@ -50,6 +50,7 @@ Example for SQLite:
   --http-port=8080 \
   --database-type=sqlite \
   --database-url=data.db \
+  --url=https://auth.example.com \
   --client-id=YOUR_CLIENT_ID \
   --client-secret=YOUR_CLIENT_SECRET \
   --admin-secret=your-admin-secret \
@@ -83,6 +84,7 @@ ExecStart=/path_to_authorizer_parent_folder/authorizer/build/authorizer \
   --http-port=8080 \
   --database-type=postgres \
   --database-url=${DATABASE_URL} \
+  --url=https://auth.example.com \
   --client-id=${CLIENT_ID} \
   --client-secret=${CLIENT_SECRET} \
   --admin-secret=${ADMIN_SECRET} \

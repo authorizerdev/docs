@@ -58,6 +58,7 @@ Authorizer v2 focuses on simpler, more secure configuration and a cleaner operat
 ./authorizer \
   --database-type=sqlite \
   --database-url=test.db \
+  --url=http://localhost:8080 \
   --jwt-type=HS256 \
   --jwt-secret=test \
   --encryption-key=test-encryption-key \
@@ -72,6 +73,7 @@ Or with Docker:
 docker run -p 8080:8080 quay.io/authorizer/authorizer:latest \
   --database-type=sqlite \
   --database-url=test.db \
+  --url=http://localhost:8080 \
   --jwt-type=HS256 \
   --jwt-secret=test \
   --encryption-key=test-encryption-key \

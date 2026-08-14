@@ -63,6 +63,7 @@ go build -o build/authorizer .
 ./authorizer \
   --database-type=sqlite \
   --database-url=test.db \
+  --url=http://localhost:8080 \
   --jwt-type=HS256 \
   --jwt-secret=test \
   --encryption-key=test-encryption-key \
@@ -79,6 +80,7 @@ make dev
 go run main.go \
   --database-type=sqlite \
   --database-url=test.db \
+  --url=http://localhost:8080 \
   --jwt-type=HS256 \
   --jwt-secret=test \
   --encryption-key=test-encryption-key \
@@ -95,6 +97,7 @@ go run main.go \
 docker run -p 8080:8080 quay.io/authorizer/authorizer:latest \
   --database-type=sqlite \
   --database-url=test.db \
+  --url=http://localhost:8080 \
   --jwt-type=HS256 \
   --jwt-secret=test \
   --encryption-key=test-encryption-key \
@@ -109,6 +112,7 @@ With PostgreSQL:
 docker run -p 8080:8080 quay.io/authorizer/authorizer:latest \
   --database-type=postgres \
   --database-url="postgres://user:pass@host:5432/authorizer" \
+  --url=http://localhost:8080 \
   --jwt-type=HS256 \
   --jwt-secret=test \
   --encryption-key=test-encryption-key \
@@ -134,6 +138,7 @@ cd authorizer
 ./authorizer \
   --database-type=sqlite \
   --database-url=test.db \
+  --url=http://localhost:8080 \
   --jwt-type=HS256 \
   --jwt-secret=test \
   --encryption-key=test-encryption-key \
@@ -190,6 +195,7 @@ For a quick local dev setup:
   --http-port=8080 \
   --database-type=sqlite \
   --database-url=test.db \
+  --url=http://localhost:8080 \
   --client-id=123456 \
   --client-secret=secret \
   --admin-secret=admin \

@@ -25,6 +25,7 @@ After deployment, update the start command to include the required v2 CLI flags:
 ./authorizer \
   --database-type=sqlite \
   --database-url=test.db \
+  --url=https://your-app.easypanel.host \
   --jwt-type=HS256 \
   --jwt-secret=test \
   --encryption-key=test-encryption-key \

@@ -142,6 +142,7 @@ services:
     command:
       - --database-type=postgres
       - --database-url=postgres://user:pass@db:5432/authorizer
+      - --url=https://auth.example.com
       - --encryption-key=your-encryption-key
       - --redis-url=redis://redis:6379
       - --rate-limit-rps=30

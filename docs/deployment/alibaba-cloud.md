@@ -29,6 +29,7 @@ After deployment, configure the required v2 variables in your instance:
 ./authorizer \
   --database-type=sqlite \
   --database-url=test.db \
+  --url=https://auth.example.com \
   --jwt-type=HS256 \
   --jwt-secret=test \
   --encryption-key=test-encryption-key \

@@ -92,13 +92,16 @@ These flags replace v1 env such as `CLIENT_ID`, `CLIENT_SECRET`, and app behavio
   April 2026**: defaults to none — operators behind a proxy must set this
   explicitly or rate limiting and audit logs will key on the proxy IP. See
   [Trusted proxies](./security#trusted-proxies).
-- **`--url`** (default empty): canonical/trusted base URL of this instance
-  (e.g. `https://auth.example.com`). When set, it is the **only** source used
-  to build verification/reset/magic-link email URLs, the JWT `iss` claim, and
-  OIDC discovery URLs — the `X-Authorizer-URL`, `X-Forwarded-Host`, and `Host`
-  request headers are ignored for that purpose. Leaving it empty keeps legacy
-  header-based derivation. **Recommended for production**, especially behind
-  a reverse proxy. See [Trusted base URL](./security#trusted-base-url).
+- **`--url`** (**required** as of 2.4.0): this server's own canonical base URL
+  (e.g. `https://auth.example.com`). It is the only source used to build
+  verification/reset/magic-link email URLs, the JWT `iss` claim, and OIDC
+  discovery URLs; the `X-Authorizer-URL`, `X-Forwarded-Host` and `Host`
+  request headers are ignored for that purpose. The server refuses to start
+  if it is missing or malformed. **This is not `--allowed-origins`** — that
+  lists the *apps* allowed to talk to this server, while `--url` is *where
+  this server is*; you need both. See
+  [Trusted base URL](./security#trusted-base-url) for the rationale and a
+  comparison with the SDKs' `authorizerURL` option.
 
 Organization / UI:
 
