@@ -144,6 +144,9 @@ services:
       - --database-url=postgres://user:pass@db:5432/authorizer
       - --url=https://auth.example.com
       - --encryption-key=your-encryption-key
+      - --jwt-type=HS256
+      - --jwt-secret=your-jwt-secret
+      - --admin-secret=your-admin-secret
       - --redis-url=redis://redis:6379
       - --rate-limit-rps=30
       - --rate-limit-burst=20

@@ -24,6 +24,32 @@ docker run -p 8080:8080 quay.io/authorizer/authorizer:latest \
   --client-secret=secret
 ```
 
+### Persisting data across restarts
+
+The command above writes `test.db` inside the container, so **every restart
+starts from an empty database**. Mount a named volume and put SQLite on it:
+
+```bash
+docker run -p 8080:8080 -u root \
+  -v authorizer_data:/authorizer/data \
+  quay.io/authorizer/authorizer \
+  --database-type=sqlite \
+  --database-url=/authorizer/data/data.db \
+  --url=http://localhost:8080 \
+  --client-id=123456 \
+  --client-secret=secret \
+  --admin-secret=admin \
+  --jwt-type=HS256 \
+  --jwt-secret=test \
+  --encryption-key=test-encryption-key
+```
+
+`-u root` is needed because the image runs as uid 1000 (`authorizer`), and a
+named volume mounted at a path the image does not already own is created
+root-owned — without it the process cannot create the database file. Drop it
+once you `chown` the volume, or use a managed database instead.
+
+
 Then open `http://localhost:8080/app` for the built-in login UI.
 
 ---
