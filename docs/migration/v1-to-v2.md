@@ -71,6 +71,7 @@ In **v2**:
 4. **Ensure required flags are set at startup.**
    The v2 server will fail to start if critical flags are missing. At minimum you must provide:
    - `--database-type` and `--database-url` (or individual `--database-host`, `--database-port`, `--database-name`, `--database-username`, `--database-password`) — the server cannot start without a database connection.
+   - `--url` — this server's own canonical base URL (e.g. `https://auth.example.com`). **Required as of 2.4.0**; the server exits if it is missing or malformed. Not the same as `--allowed-origins` — see [Trusted base URL](../core/security#trusted-base-url).
    - `--client-id` and `--client-secret` — **required**; the server will exit if they are missing.
    - `--admin-secret` — needed for admin dashboard access and admin API operations.
    - `--jwt-type` and `--jwt-secret` (for HMAC algorithms like HS256) or `--jwt-private-key` / `--jwt-public-key` (for RSA/ECDSA algorithms) — needed for token signing and verification.
@@ -101,6 +102,7 @@ Pass all config as **CLI arguments** when starting the server:
 ./authorizer \
   --database-type=sqlite \
   --database-url=data.db \
+  --url=http://localhost:8080 \
   --client-id=YOUR_CLIENT_ID \
   --client-secret=YOUR_CLIENT_SECRET \
   --admin-secret=your-admin-secret \
@@ -115,6 +117,7 @@ For local development (from repo root):
 make dev
 # or
 go run main.go --database-type=sqlite --database-url=test.db \
+  --url=http://localhost:8080 \
   --jwt-type=HS256 --jwt-secret=test --encryption-key=test-encryption-key --admin-secret=admin \
   --client-id=123456 --client-secret=secret
 ```
@@ -130,6 +133,7 @@ To keep using env vars in your deployment:
   ./authorizer \
     --database-type="$DATABASE_TYPE" \
     --database-url="$DATABASE_URL" \
+    --url="$AUTHORIZER_URL" \
     --client-id="$CLIENT_ID" \
     --client-secret="$CLIENT_SECRET" \
     --encryption-key="$ENCRYPTION_KEY" \
@@ -151,6 +155,7 @@ docker run -p 8080:8080 \
   ./authorizer \
     --database-type="$DATABASE_TYPE" \
     --database-url="$DATABASE_URL" \
+    --url="$AUTHORIZER_URL" \
     --client-id="$CLIENT_ID" \
     --client-secret="$CLIENT_SECRET" \
     --admin-secret="$ADMIN_SECRET" \
@@ -193,6 +198,7 @@ docker run -p 8080:8080 \
    ./build/authorizer \
      --database-type=sqlite \
      --database-url=data.db \
+     --url=http://localhost:8080 \
      --client-id=YOUR_CLIENT_ID \
      --client-secret=YOUR_CLIENT_SECRET \
      --admin-secret=your-admin-secret \
@@ -308,7 +314,7 @@ Use these v2 **CLI flags** instead of v1 env or dashboard config. Flag names use
 | `SMTP_USERNAME`, `SMTP_PASSWORD` | `--smtp-username`, `--smtp-password` |
 | `SENDER_EMAIL`, `SENDER_NAME` | `--smtp-sender-email`, `--smtp-sender-name` |
 | `SMTP_LOCAL_NAME`         | `--smtp-local-name` |
-| Skip TLS verify           | `--skip-tls-verification` |
+| Skip TLS verify           | `--smtp-skip-tls-verification` |
 
 ### Twilio (SMS)
 
@@ -352,6 +358,59 @@ To see all flags and defaults:
 ```bash
 ./authorizer --help
 ```
+
+### Upgrading from 2.3.x to 2.4.0
+
+Two flags became **mandatory** in 2.4.0. Unlike the changes below, these do
+not cause silent regressions — the server refuses to start, so you find out
+immediately. Set both before restarting.
+
+#### `--url` is now required
+
+Every deployment must declare its own canonical address:
+
+```bash
+./authorizer --url=https://auth.example.com ...
+```
+
+Previously optional; leaving it empty made the server derive its own host
+from request headers, which is a host-header-injection account-takeover
+surface (CWE-640) — a forged `Host` causes a genuine password-reset link to
+be emailed pointing at an attacker-controlled domain. See
+[Trusted base URL](../core/security#trusted-base-url) for the full rationale
+and for how `--url` differs from `--allowed-origins`.
+
+A malformed value is rejected too, not just an empty one: `--url` must be an
+absolute `http(s)` URL with a host and no user info. `auth.example.com`
+(no scheme) fails startup rather than being silently ignored.
+
+**If you serve several hostnames from one instance:** that only ever worked
+on the vulnerable header-derived path. Pick the canonical one. Verified
+organization domains are unaffected — they route email domains to
+organizations for home realm discovery and have nothing to do with HTTP
+virtual hosting.
+
+#### `--encryption-key` is required for RS*/ES* deployments
+
+A deployment using `--jwt-private-key`/`--jwt-public-key` without
+`--jwt-secret` refuses to start until `--encryption-key` is set. HMAC
+deployments (HS256/384/512) still resolve the key from the JWT secret and are
+unaffected, though setting a distinct key is strongly recommended.
+
+If you ran **2.2.1 through 2.4.0-rc.13** with asymmetric JWTs and no
+`--jwt-secret`, treat existing TOTP enrollments as compromised — they were
+encrypted under a public constant compiled into the source. Rotate the key
+and have affected users re-enroll; ciphertext written under the old key will
+not decrypt. Recovery codes are unaffected (unkeyed SHA-256 digests).
+
+#### Delegated agent checks now fail closed
+
+If you use [agent identity](../enterprise/agent-identity) and your
+authorization model does not declare `type agent`, delegated permission
+checks are now **denied** instead of authorizing as the delegating user
+alone. Add `type agent` to the model, or set
+`--fga-allow-unconstrained-agents` while you migrate. Deployments not using
+delegation are unaffected.
 
 ### Breaking changes — April 2026 security batch
 
@@ -553,6 +612,7 @@ Run with args:
 docker run -p 8080:8080 your-image \
   --database-type=postgres \
   --database-url="postgres://user:pass@host/db" \
+  --url=http://localhost:8080 \
   --client-id=... \
   --client-secret=... \
   --admin-secret=... \

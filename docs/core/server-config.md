@@ -92,13 +92,16 @@ These flags replace v1 env such as `CLIENT_ID`, `CLIENT_SECRET`, and app behavio
   April 2026**: defaults to none — operators behind a proxy must set this
   explicitly or rate limiting and audit logs will key on the proxy IP. See
   [Trusted proxies](./security#trusted-proxies).
-- **`--url`** (default empty): canonical/trusted base URL of this instance
-  (e.g. `https://auth.example.com`). When set, it is the **only** source used
-  to build verification/reset/magic-link email URLs, the JWT `iss` claim, and
-  OIDC discovery URLs — the `X-Authorizer-URL`, `X-Forwarded-Host`, and `Host`
-  request headers are ignored for that purpose. Leaving it empty keeps legacy
-  header-based derivation. **Recommended for production**, especially behind
-  a reverse proxy. See [Trusted base URL](./security#trusted-base-url).
+- **`--url`** (**required** as of 2.4.0): this server's own canonical base URL
+  (e.g. `https://auth.example.com`). It is the only source used to build
+  verification/reset/magic-link email URLs, the JWT `iss` claim, and OIDC
+  discovery URLs; the `X-Authorizer-URL`, `X-Forwarded-Host` and `Host`
+  request headers are ignored for that purpose. The server refuses to start
+  if it is missing or malformed. **This is not `--allowed-origins`** — that
+  lists the *apps* allowed to talk to this server, while `--url` is *where
+  this server is*; you need both. See
+  [Trusted base URL](./security#trusted-base-url) for the rationale and a
+  comparison with the SDKs' `authorizerURL` option.
 
 Organization / UI:
 
@@ -436,9 +439,7 @@ metric, labelled by limit kind. See
 ```bash
 ./authorizer \
   --fga-store=postgres \
-  --fga-store-url="postgres://user:pass@host/db" \
-  --include-permissions-in-token=false \
-  --authorization-log-all-checks=false
+  --fga-store-url="postgres://user:pass@host/db"
 ```
 
 - **`--fga-store`**: backing store for the embedded [OpenFGA](https://openfga.dev) engine — one of `sqlite`, `postgres`, `mysql`, or `memory`. Only needed when the main database is NoSQL (see paragraph below); for SQL main databases the engine reuses that database automatically.
@@ -470,8 +471,6 @@ The fix is to add `type agent` to your model — see
 [Agent identity](../enterprise/agent-identity). Grant your agents *before*
 deploying the model, or their calls start being denied.
 :::
-- **`--include-permissions-in-token`** (default `false`): when true, the access token's claims include the caller's flat `(resource, scope)` grant list. Useful for stateless downstream services that don't want to round-trip back to Authorizer per check.
-- **`--authorization-log-all-checks`** (default `false`): audit-log every `CheckPermission` call, not just denials. Diagnostic; expensive at scale.
 
 Authorizer ships an embedded **OpenFGA** (ReBAC) engine. It is enabled by default when the main database is SQL-compatible (SQLite/Postgres/MySQL) and reuses that database. For NoSQL main databases (MongoDB, DynamoDB, …) it is off unless you set `--fga-store` (one of `sqlite`/`postgres`/`mysql`/`memory`) and `--fga-store-url`. Checks fail closed. See [Authorization (FGA)](./authorization).
 

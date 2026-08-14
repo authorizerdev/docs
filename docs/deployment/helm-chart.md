@@ -155,6 +155,7 @@ containers:
     args:
       - "--database-type=$(DATABASE_TYPE)"
       - "--database-url=$(DATABASE_URL)"
+      - "--url=$(AUTHORIZER_URL)"
       - "--jwt-type=HS256"
       - "--jwt-secret=$(JWT_SECRET)"
       - "--encryption-key=$(ENCRYPTION_KEY)"
@@ -172,6 +173,11 @@ containers:
           secretKeyRef:
             name: authorizer-secrets
             key: database-url
+      - name: AUTHORIZER_URL
+        valueFrom:
+          secretKeyRef:
+            name: authorizer-secrets
+            key: authorizer-url
 ```
 
 Until the next Helm chart version is released, you can use the existing chart with the current values or deploy using raw Kubernetes manifests as shown in the [Kubernetes](./kubernetes) guide.

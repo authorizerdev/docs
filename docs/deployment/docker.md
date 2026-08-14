@@ -15,6 +15,7 @@ Run Authorizer using Docker with the v2 **CLI-only configuration model**.
 docker run -p 8080:8080 quay.io/authorizer/authorizer:latest \
   --database-type=sqlite \
   --database-url=test.db \
+  --url=http://localhost:8080 \
   --jwt-type=HS256 \
   --jwt-secret=test \
   --encryption-key=test-encryption-key \
@@ -54,6 +55,7 @@ The image **`EXPOSE`s `8080`, `8081`, and `9091`**. That only **documents** whic
 docker run -p 8080:8080 quay.io/authorizer/authorizer:latest \
   --database-type=postgres \
   --database-url="postgres://user:pass@host:5432/authorizer" \
+  --url=http://localhost:8080 \
   --jwt-type=HS256 \
   --jwt-secret=your-jwt-secret \
   --encryption-key=test-encryption-key \
@@ -78,6 +80,7 @@ services:
     command:
       - "--database-type=sqlite"
       - "--database-url=/data/test.db"
+      - "--url=http://localhost:8080"
       - "--jwt-type=HS256"
       - "--jwt-secret=test"
       - "--encryption-key=test-encryption-key"
@@ -128,6 +131,7 @@ services:
     command:
       - "--database-type=postgres"
       - "--database-url=postgres://authorizer:secret@postgres:5432/authorizer"
+      - "--url=http://localhost:8080"
       - "--redis-url=redis://redis:6379"
       - "--jwt-type=HS256"
       - "--jwt-secret=test"
@@ -159,6 +163,7 @@ docker run -p 8080:8080 \
   quay.io/authorizer/authorizer:latest \
     --database-type="$DATABASE_TYPE" \
     --database-url="$DATABASE_URL" \
+    --url=http://localhost:8080 \
     --jwt-type=HS256 \
     --jwt-secret="$JWT_SECRET" \
     --encryption-key="$ENCRYPTION_KEY" \
@@ -175,6 +180,7 @@ docker run -p 8080:8080 \
 | ---- | ----------- | ------- |
 | `--database-type` | Database type | `sqlite`, `postgres`, `mysql` |
 | `--database-url` | Database connection string | `test.db` |
+| `--url` | This server's own public base URL **(required)** | `https://auth.example.com` |
 | `--jwt-type` | JWT signing algorithm | `HS256`, `RS256` |
 | `--jwt-secret` | JWT signing secret (for HS256) | `test` |
 | `--admin-secret` | Admin secret for admin operations | `admin` |

@@ -52,17 +52,18 @@ Deploy a single Authorizer instance as your organization's IdP. See the [Deploym
 Configure the essentials:
 
 ```bash
-authorizer serve \
+authorizer \
   --database-type postgres \
   --database-url "postgres://user:pass@db:5432/authorizer" \
-  --port 8080 \
+  --url https://auth.yourcompany.com \
+  --http-port 8080 \
   --allowed-origins "https://app1.yourcompany.com,https://app2.yourcompany.com,https://admin.yourcompany.com" \
   --organization-name "YourCompany" \
   --smtp-host "smtp.yourcompany.com" \
   --smtp-port 587 \
   --smtp-username "auth@yourcompany.com" \
   --smtp-password "..." \
-  --sender-email "auth@yourcompany.com" \
+  --smtp-sender-email "auth@yourcompany.com" \
   --encryption-key your-encryption-key
 ```
 

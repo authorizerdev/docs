@@ -272,9 +272,9 @@ authorizer mcp \
   --client-id=YOUR_CLIENT_ID \
   --database-type=sqlite \
   --database-url=auth.db \
+  --url=http://localhost:8080 \
   --encryption-key=your-encryption-key \
-  --mcp-bearer="$USER_ACCESS_TOKEN" \
-  --mcp-authorizer-url=https://auth.example.com
+  --mcp-bearer="$USER_ACCESS_TOKEN"
 ```
 
 With a SQLite/Postgres/MySQL `--database-type`, FGA reuses the main database
@@ -284,6 +284,19 @@ automatically — no `--fga-store` flag needed (see
 you want FGA on a separate store; `--fga-store` takes one of `sqlite`,
 `postgres`, `mysql`, or `memory` — not a URI.
 
+:::warning `--mcp-authorizer-url` has no effect as of 2.4.0
+Pass `--url` with the same value instead — it is inherited from the root flag
+set and is what the token's `iss` claim is validated against.
+
+The old flag is still accepted so existing setups keep starting, but it is
+**ignored**: it only ever stamped an `x-authorizer-url` header, and `--url`
+is consulted before any header. It warns when used and goes away in 2.5.0
+with the subcommand.
+
+`--mcp-bearer` without `--url` is now refused at startup, rather than failing
+later as `Unauthenticated` on every tool call.
+:::
+
 The `mcp` command inherits the root server flags (database, JWT, client-id, `--fga-store`,
 etc.) so it can resolve identity and run the FGA engine in-process.
 
@@ -292,7 +305,7 @@ etc.) so it can resolve identity and run the FGA engine in-process.
 | Flag                    | Description                                                                                                        | Required        |
 | ----------------------- | ---------------------------------------------------------------------------------------------------------------- | --------------- |
 | `--mcp-bearer`          | Access token attached as `Authorization: Bearer <token>` on every tool call. Needed for `profile`/`*_permissions`. | for auth tools  |
-| `--mcp-authorizer-url`  | Public URL of your Authorizer instance, used for JWT issuer validation (e.g. `https://auth.example.com`).          | with `--mcp-bearer` |
+| `--url` | This server's own base URL — the value the token's `iss` claim is validated against. Inherited from the root flag set. | with `--mcp-bearer` |
 
 > Logging goes to **stderr** only — `stdout` is reserved for the MCP JSON-RPC stream, so
 > never print to it.
@@ -314,8 +327,8 @@ Most MCP hosts read a JSON config that declares the command to spawn. For
         "--database-type", "sqlite",
         "--database-url", "auth.db",
         "--encryption-key", "your-encryption-key",
-        "--mcp-bearer", "USER_ACCESS_TOKEN",
-        "--mcp-authorizer-url", "https://auth.example.com"
+        "--url", "https://auth.example.com",
+        "--mcp-bearer", "USER_ACCESS_TOKEN"
       ]
     }
   }

@@ -42,6 +42,7 @@ Configure your Authorizer instance using CLI flags at startup. In v2, all config
 ./authorizer \
   --database-type=postgres \
   --database-url="postgres://user:pass@host:5432/authorizer" \
+  --url=http://localhost:8080 \
   --jwt-type=HS256 \
   --jwt-secret=test \
   --encryption-key=test-encryption-key \
