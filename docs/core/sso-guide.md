@@ -64,7 +64,13 @@ authorizer \
   --smtp-username "auth@yourcompany.com" \
   --smtp-password "..." \
   --smtp-sender-email "auth@yourcompany.com" \
-  --encryption-key your-encryption-key
+  --jwt-type RS256 \
+  --jwt-private-key "$(cat jwt-private.pem)" \
+  --jwt-public-key "$(cat jwt-public.pem)" \
+  --encryption-key your-encryption-key \
+  --client-id YOUR_CLIENT_ID \
+  --client-secret YOUR_CLIENT_SECRET \
+  --admin-secret YOUR_ADMIN_SECRET
 ```
 
 Key flags for SSO:

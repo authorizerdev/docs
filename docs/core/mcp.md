@@ -273,6 +273,8 @@ authorizer mcp \
   --database-type=sqlite \
   --database-url=auth.db \
   --url=http://localhost:8080 \
+  --jwt-type=HS256 \
+  --jwt-secret=your-jwt-secret \
   --encryption-key=your-encryption-key \
   --mcp-bearer="$USER_ACCESS_TOKEN"
 ```
@@ -326,6 +328,8 @@ Most MCP hosts read a JSON config that declares the command to spawn. For
         "--client-id", "YOUR_CLIENT_ID",
         "--database-type", "sqlite",
         "--database-url", "auth.db",
+        "--jwt-type", "HS256",
+        "--jwt-secret", "your-jwt-secret",
         "--encryption-key", "your-encryption-key",
         "--url", "https://auth.example.com",
         "--mcp-bearer", "USER_ACCESS_TOKEN"
