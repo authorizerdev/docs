@@ -436,9 +436,7 @@ metric, labelled by limit kind. See
 ```bash
 ./authorizer \
   --fga-store=postgres \
-  --fga-store-url="postgres://user:pass@host/db" \
-  --include-permissions-in-token=false \
-  --authorization-log-all-checks=false
+  --fga-store-url="postgres://user:pass@host/db"
 ```
 
 - **`--fga-store`**: backing store for the embedded [OpenFGA](https://openfga.dev) engine — one of `sqlite`, `postgres`, `mysql`, or `memory`. Only needed when the main database is NoSQL (see paragraph below); for SQL main databases the engine reuses that database automatically.
@@ -470,8 +468,6 @@ The fix is to add `type agent` to your model — see
 [Agent identity](../enterprise/agent-identity). Grant your agents *before*
 deploying the model, or their calls start being denied.
 :::
-- **`--include-permissions-in-token`** (default `false`): when true, the access token's claims include the caller's flat `(resource, scope)` grant list. Useful for stateless downstream services that don't want to round-trip back to Authorizer per check.
-- **`--authorization-log-all-checks`** (default `false`): audit-log every `CheckPermission` call, not just denials. Diagnostic; expensive at scale.
 
 Authorizer ships an embedded **OpenFGA** (ReBAC) engine. It is enabled by default when the main database is SQL-compatible (SQLite/Postgres/MySQL) and reuses that database. For NoSQL main databases (MongoDB, DynamoDB, …) it is off unless you set `--fga-store` (one of `sqlite`/`postgres`/`mysql`/`memory`) and `--fga-store-url`. Checks fail closed. See [Authorization (FGA)](./authorization).
 

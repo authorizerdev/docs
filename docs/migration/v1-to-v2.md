@@ -308,7 +308,7 @@ Use these v2 **CLI flags** instead of v1 env or dashboard config. Flag names use
 | `SMTP_USERNAME`, `SMTP_PASSWORD` | `--smtp-username`, `--smtp-password` |
 | `SENDER_EMAIL`, `SENDER_NAME` | `--smtp-sender-email`, `--smtp-sender-name` |
 | `SMTP_LOCAL_NAME`         | `--smtp-local-name` |
-| Skip TLS verify           | `--skip-tls-verification` |
+| Skip TLS verify           | `--smtp-skip-tls-verification` |
 
 ### Twilio (SMS)
 

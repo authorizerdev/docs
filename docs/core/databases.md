@@ -115,7 +115,7 @@ Authorizer v2 configures the database via CLI flags. The required flags are `--d
   --database-username="admin" \
   --database-password="*********" \
   --couchbase-bucket="authorizer" \
-  --couchbase-bucket-ram-quota=1000 \
+  --couchbase-ram-quota=1000 \
   --couchbase-scope="_default"
   ```
 
