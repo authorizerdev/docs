@@ -274,8 +274,7 @@ authorizer mcp \
   --database-url=auth.db \
   --url=http://localhost:8080 \
   --encryption-key=your-encryption-key \
-  --mcp-bearer="$USER_ACCESS_TOKEN" \
-  --mcp-authorizer-url=https://auth.example.com
+  --mcp-bearer="$USER_ACCESS_TOKEN"
 ```
 
 With a SQLite/Postgres/MySQL `--database-type`, FGA reuses the main database
@@ -293,7 +292,7 @@ etc.) so it can resolve identity and run the FGA engine in-process.
 | Flag                    | Description                                                                                                        | Required        |
 | ----------------------- | ---------------------------------------------------------------------------------------------------------------- | --------------- |
 | `--mcp-bearer`          | Access token attached as `Authorization: Bearer <token>` on every tool call. Needed for `profile`/`*_permissions`. | for auth tools  |
-| `--mcp-authorizer-url`  | Public URL of your Authorizer instance, used for JWT issuer validation (e.g. `https://auth.example.com`).          | with `--mcp-bearer` |
+| `--mcp-authorizer-url`  | **Deprecated — use `--url`.** Stamped an `x-authorizer-url` header for JWT issuer validation. `--url` is required as of 2.4.0 and is consulted before any header, so this flag is ignored whenever `--url` is set. Removed in 2.5.0 with the subcommand. | no |
 
 > Logging goes to **stderr** only — `stdout` is reserved for the MCP JSON-RPC stream, so
 > never print to it.
@@ -315,8 +314,8 @@ Most MCP hosts read a JSON config that declares the command to spawn. For
         "--database-type", "sqlite",
         "--database-url", "auth.db",
         "--encryption-key", "your-encryption-key",
-        "--mcp-bearer", "USER_ACCESS_TOKEN",
-        "--mcp-authorizer-url", "https://auth.example.com"
+        "--url", "https://auth.example.com",
+        "--mcp-bearer", "USER_ACCESS_TOKEN"
       ]
     }
   }
