@@ -102,6 +102,7 @@ happens rather than what the specs allow.
 | Client | Works | How |
 | --- | --- | --- |
 | **Claude Code, VS Code** — static token | **yes, verified** | Mint a token bound to `<url>/mcp` and pass it as a fixed header (below) |
+| **Claude Code** — [delegated token](#agent-delegation-rfc-8693) | **yes, verified** | Same fixed-header setup, with an RFC 8693 token bound to `<url>/mcp`. Verified on Claude Code 2.1.233: `✔ Connected`, and a `check_permissions` tool call returned the agent's own intersected answer |
 | **Claude Code** — OAuth | with `--enable-dynamic-client-registration` | Claude Code's released version predates CIMD: it reads `client_id_metadata_document_supported`, ignores it, and refuses unless a `registration_endpoint` is advertised. With DCR enabled it registers itself (verified: `POST /oauth/register` → 201, public client, loopback callback) and runs the flow |
 | **Claude.ai custom connector** — pasted client ID | unverified | Anthropic documents an OAuth Client ID field under *Advanced settings*; not confirmed here |
 | Any client that needs to self-register | yes | Enable `--enable-client-id-metadata-document` (preferred) or `--enable-dynamic-client-registration` (RFC 7591, for clients that predate CIMD) |
@@ -286,6 +287,12 @@ Two limits worth planning around:
 - **Revocation still flows through the user's session.** Logout, password reset and
   admin revoke all take the agent's access down with them, because the token names the
   originating session and that session is checked on every call.
+
+Verified against a real Claude Code client (2.1.233): a delegated token bound to
+`<url>/mcp` reports `✔ Connected` and its `check_permissions` calls come back with the
+agent's intersected answer — `allowed: false` for a document the delegating user *can*
+read but the agent was never granted. The same token bound to the bare `<url>` fails the
+connection with `invalid_token`, which is the audience boundary doing its job.
 
 The [`with-agent-permissions`](https://github.com/authorizerdev/examples/tree/main/with-agent-permissions)
 example runs this end to end and asserts the intersection through the real tool surface.
