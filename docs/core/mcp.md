@@ -39,9 +39,11 @@ Enable it on the server you already run:
 authorizer --url https://auth.example.com --mcp-enabled  # ...your other flags
 ```
 
-`--url` is **required** with `--mcp-enabled`, and the server refuses to start without it.
-Every token presented at `/mcp` is checked against this deployment's canonical resource
-identifier, `<url>/mcp`. Without `--url` that identifier would be derived from request
+`--url` is already required to start the server at all; with `--mcp-enabled` it must also
+be a usable `http(s)` origin, and startup refuses anything else (no scheme, userinfo, a
+non-http scheme). Every token presented at `/mcp` is checked against this deployment's
+canonical resource identifier, `<url>/mcp` — scheme + host only, with any path, query or
+trailing slash stripped. Without `--url` that identifier would be derived from request
 headers, which would let a caller name the audience their own token has to match — no
 check at all.
 
@@ -52,7 +54,8 @@ check at all.
   exactly `<url>/mcp`. An ordinary login token — the kind that works at `/graphql`,
   `/v1/*` and gRPC — is rejected here, and an MCP token is rejected there. Neither rule
   has an "or" in it: a token you hand to a semi-trusted agent cannot become a full API
-  credential.
+  credential. The mapping from audience to surface is a bijection, and that holds for
+  [delegated tokens](#agent-delegation-rfc-8693) too.
 - **Bearer only.** No cookie, no admin secret, and no admin operation reaches this
   surface, so it is safe to expose to the public internet and exempt from CSRF.
 - **Shared middleware.** Because it is mounted on the main listener, it inherits CORS,
@@ -73,7 +76,9 @@ needs nothing configured beyond the URL:
      "resource": "https://auth.example.com/mcp",
      "authorization_servers": ["https://auth.example.com"],
      "bearer_methods_supported": ["header"],
-     "scopes_supported": ["openid", "email", "profile", "phone", "offline_access"]
+     "scopes_supported": ["openid", "email", "profile", "phone", "offline_access"],
+     "jwks_uri": "https://auth.example.com/.well-known/jwks.json",
+     "resource_documentation": "https://docs.authorizer.dev/core/mcp"
    }
    ```
 
@@ -146,8 +151,10 @@ can identify itself with an HTTPS URL pointing at a JSON document, instead of a
 }
 ```
 
-The `client_id` must equal the URL the document is served from — that equality is
-what stops any host claiming to be any client. Authorizer fetches it through an
+The `client_id` must be an **https URL with a path** (a bare origin like
+`https://app.example.com` is not treated as a document URL and falls through to a
+registry lookup), and it must equal the URL the document is served from — that equality
+is what stops any host claiming to be any client. Authorizer fetches it through an
 SSRF-hardened client (one-shot DNS, dial pinned to the validated IP, private and
 loopback addresses refused), validates the presented `redirect_uri` against the
 document's list, and caches it with a clamped TTL.
@@ -238,6 +245,51 @@ curl -X POST https://auth.example.com/oauth/register \
 # No client_secret is ever issued: these are public clients.
 ```
 
+### Agent delegation (RFC 8693)
+
+`/mcp` accepts **delegated** access tokens — the "agent X acting for user Y" kind minted
+by [token exchange](../enterprise/token-exchange) — as well as ordinary first-party ones.
+This is what lets an agent ask Authorizer about *its own* authority through the tools it
+was granted, rather than needing a credential that speaks for the whole user.
+
+Mint one by naming the MCP server as the `resource`:
+
+```sh
+curl -s -X POST https://auth.example.com/oauth/token \
+  -d grant_type=urn:ietf:params:oauth:grant-type:token-exchange \
+  -d client_id=$AGENT_ID -d client_secret=$AGENT_SECRET \
+  -d subject_token=$USER_ACCESS_TOKEN \
+  -d subject_token_type=urn:ietf:params:oauth:token-type:access_token \
+  -d actor_token=$AGENT_ACCESS_TOKEN \
+  -d actor_token_type=urn:ietf:params:oauth:token-type:access_token \
+  -d resource=https://auth.example.com/mcp
+```
+
+`resource=<url>/mcp`, not `<url>`. The two are different audiences and therefore
+different surfaces: a delegated token bound to the bare URL authenticates GraphQL, REST
+and gRPC and is **refused** at `/mcp`; this one is the exact mirror. A 401 from `/mcp`
+is far more often this than a permissions problem — check the `aud` claim first.
+
+**The answers are the agent's, not the user's.** `check_permissions` and
+`list_permissions` evaluate `perms(agent) ∩ perms(user)`, so an agent that was never
+granted a document is denied it even when the delegating user can read it, and
+enumeration omits it rather than leaking the name. Supplying an explicit `user` cannot
+shed the agent half, and a delegated caller naming any *other* subject is refused
+outright.
+
+Two limits worth planning around:
+
+- **A delegated token lives 5 minutes and has no refresh token.** The `401` an expired
+  one gets carries the same discovery challenge as any other, but an MCP client cannot
+  refresh its way out — the agent has to redo the exchange. Non-interactive agents that
+  re-exchange on demand fit this well; a long-lived chat session does not.
+- **Revocation still flows through the user's session.** Logout, password reset and
+  admin revoke all take the agent's access down with them, because the token names the
+  originating session and that session is checked on every call.
+
+The [`with-agent-permissions`](https://github.com/authorizerdev/examples/tree/main/with-agent-permissions)
+example runs this end to end and asserts the intersection through the real tool surface.
+
 ## Exposed tools
 
 | Tool                | Auth required | Description                                                          |
@@ -279,10 +331,12 @@ authorizer mcp \
   --mcp-bearer="$USER_ACCESS_TOKEN"
 ```
 
-With a SQLite/Postgres/MySQL `--database-type`, FGA reuses the main database
+With a SQLite/Postgres/MySQL/MariaDB `--database-type`, FGA reuses the main database
 automatically — no `--fga-store` flag needed (see
-[Enabling FGA](./authorization#1-enabling-fga)). Only pass `--fga-store` /
-`--fga-store-url` when the main database is NoSQL (MongoDB, DynamoDB, …) or
+[Enabling FGA](./authorization#1-enabling-fga)). Postgres- and MySQL-compatible
+variants beyond those (CockroachDB, YugabyteDB, libSQL, PlanetScale) are *not*
+auto-mapped and need an explicit `--fga-store`. Only pass `--fga-store` /
+`--fga-store-url` when the main database is NoSQL (MongoDB, DynamoDB, …), SQL Server, or
 you want FGA on a separate store; `--fga-store` takes one of `sqlite`,
 `postgres`, `mysql`, or `memory` — not a URI.
 
@@ -348,7 +402,7 @@ When a tool call fails — bad arguments, an unauthenticated call, or a permissi
 the server returns an MCP tool result with `isError: true` and the error message as text,
 so the host surfaces it to the model as a recoverable failure (not a protocol abort).
 Typical messages mirror the gRPC status: `Unauthenticated`, `PermissionDenied`,
-`FailedPrecondition` (e.g. *fga is not enabled*).
+`FailedPrecondition` (e.g. *fine-grained authorization is not enabled*).
 
 ## Authorizer as the authorization server protecting *your own* MCP server
 
