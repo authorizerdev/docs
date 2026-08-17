@@ -73,7 +73,7 @@ Every check is fail-closed, and every rejection returns the same generic `invali
 | Audience | `aud` must contain the row's `expected_aud` exactly |
 | Lifetime | `exp` and `iat` required; declared lifetime (`exp − iat`) must be ≤ 1 hour; `exp`/`nbf`/`iat` checked with 60 s clock skew |
 | Subject | `subject_claim` value must exactly match an `allowed_subjects` entry (never prefix/substring); empty list is deny-all |
-| Replay | Assertions are **single-use** — keyed by `jti`, or by `(iss, sub, iat, exp)` when `jti` is absent (K8s SA tokens carry none), held until the token's `exp` |
+| Replay | Assertions are **single-use** — keyed by `jti`, or by `(iss, sub, iat, exp)` when the issuer omits one ([RFC 7523](https://www.rfc-editor.org/rfc/rfc7523) permits it), held until the token's `exp`. Kubernetes projected ServiceAccount tokens **do** carry a `jti` and key on it |
 | Type match | `jwt-bearer` assertions only match non-SPIFFE rows; `jwt-spiffe` only matches `spiffe_jwt` rows |
 | Bound client | Must exist, be active, and be a `service_account` |
 
