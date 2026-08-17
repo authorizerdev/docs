@@ -485,11 +485,57 @@ In every withheld case the response carries no `access_token` — only a
 message and a set of `should_show_*` / `should_offer_*` flags on
 `AuthResponse` (`should_show_totp_screen`, `should_offer_webauthn_mfa_setup`,
 `should_offer_email_otp_mfa_setup`, `should_offer_sms_otp_mfa_setup`,
-`should_offer_webauthn_mfa_verify`). The frontend authenticates the
-follow-up call (`verify_otp`, `totp_mfa_setup`, `webauthn_registration_verify`,
-`webauthn_login_verify`, or `skip_mfa_setup`) via a short-lived MFA session
-cookie set alongside that response, not a bearer token — none has been
-issued yet. `should_offer_mfa_setup` is deprecated and never set; ignore it.
+`should_offer_webauthn_mfa_verify`). The follow-up call (`verify_otp`,
+`totp_mfa_setup`, `webauthn_registration_verify`, `webauthn_login_verify`, or
+`skip_mfa_setup`) is authenticated by a short-lived **MFA session** set alongside
+that response, not by a bearer token — none has been issued yet.
+`should_offer_mfa_setup` is deprecated and never set; ignore it.
+
+#### Completing the flow from a non-browser client
+
+The MFA session travels as a cookie, but it is **not browser-only**. It is an
+ordinary `Set-Cookie` response header carrying an opaque handle, and the server
+accepts it back in an ordinary `Cookie` request header — so any HTTP client can
+complete the flow. A browser does it automatically; everything else reads one
+value and sends it back.
+
+```bash
+# 1. Sign up. The token is withheld; the handle arrives in Set-Cookie.
+curl -i -X POST "$AUTHORIZER_URL/graphql" \
+  -H 'Content-Type: application/json' -H "Origin: $AUTHORIZER_URL" \
+  -d '{"query":"mutation { signup(params: {email: \"a@b.com\", password: \"Password@123\", confirm_password: \"Password@123\"}) { access_token message } }"}'
+
+# HTTP/1.1 200 OK
+# Set-Cookie: mfa_session=e415fa93-f51e-4ee1-8568-bd7cf2e0fa67; ...
+# {"data":{"signup":{"access_token":null,"message":"Proceed to mfa setup"}}}
+
+# 2. Echo it back. No cookie jar involved.
+curl -X POST "$AUTHORIZER_URL/graphql" \
+  -H 'Content-Type: application/json' -H "Origin: $AUTHORIZER_URL" \
+  -H 'Cookie: mfa_session=e415fa93-f51e-4ee1-8568-bd7cf2e0fa67' \
+  -d '{"query":"mutation { skip_mfa_setup(params: {email: \"a@b.com\"}) { access_token } }"}'
+# -> access_token issued
+```
+
+Over **gRPC** the same handle is carried as metadata: read it from the
+`set-cookie` response metadata, send it back as a `cookie` entry.
+
+:::caution Send it only to your own Authorizer
+A browser's cookie jar scopes cookies to the origin that set them. If you carry
+the handle by hand you take on that job: **attach it only to requests to your
+configured Authorizer base URL, and never follow a redirect while it is
+attached.** The handle authenticates a half-completed login — `skip_mfa_setup`
+exchanges it for a full access token — so treat it exactly like a credential:
+hold it in memory for the duration of the flow, never log it, never persist it.
+:::
+
+You do not need a general-purpose cookie jar for this, and reaching for one has
+been a reliable source of bugs: `Secure` cookies are dropped over
+`http://localhost` by some HTTP stacks, and domain-matching rules vary between
+languages. Reading `mfa_session` by name and echoing it back to one known origin
+has none of those failure modes. The official
+[Go](https://github.com/authorizerdev/authorizer-go) and
+[Python](https://github.com/authorizerdev/authorizer-py) SDKs do this for you.
 
 A registered passkey satisfies MFA on its own — no OTP/TOTP re-challenge —
 because every WebAuthn assertion already requires user verification
