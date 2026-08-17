@@ -49,7 +49,7 @@ Fields:
 | Field | Notes |
 |-------|-------|
 | `service_account_id` | Internal `id` of the `service_account` client this issuer authenticates |
-| `issuer_url` | Must equal the assertion's `iss` claim exactly. Globally unique across all trusted issuers (including per-org SSO connections) |
+| `issuer_url` | Must equal the assertion's `iss` claim exactly. Globally unique across all trusted issuers (including per-org SSO connections). **Under `static_jwks_url` this is a matching key, not an address — Authorizer never fetches it.** Only `oidc_discovery` dials it (for `{issuer_url}/.well-known/openid-configuration`). That is what lets a private cluster issuer like `https://kubernetes.default.svc` work with a [mirrored JWKS](#clusters-on-the-default-issuer) |
 | `key_source_type` | `oidc_discovery` (fetch `jwks_uri` from `{issuer_url}/.well-known/openid-configuration`) or `static_jwks_url` (fetch `jwks_url` directly — required when the issuer's discovery document is not reachable) |
 | `jwks_url` | Required for `static_jwks_url` |
 | `expected_aud` | The `aud` the assertion **must** contain exactly — set it to your Authorizer URL and mint tokens with that audience, so a token minted for another service can never be replayed here |
@@ -57,7 +57,9 @@ Fields:
 | `allowed_subjects` | Comma-separated **exact-match** subject allow-list. **Empty = deny-all** — a row with no subjects authenticates nobody |
 | `issuer_type` | `kubernetes_sa` \| `spiffe_jwt` \| `oidc` \| `cloud_oidc` |
 
-> JWKS/discovery fetches use an SSRF-hardened HTTP client — host-pinned, redirects refused, response size capped, and private/loopback addresses rejected. The issuer's key endpoint must therefore be reachable at a publicly-routable address. The `spiffe_bundle_endpoint` key source (and its `spiffe_refresh_hint_seconds`) is accepted in the API but its fetcher is not active yet — use `oidc_discovery` or `static_jwks_url` for SPIFFE issuers today.
+> JWKS/discovery fetches use an SSRF-hardened HTTP client — host-pinned, redirects refused, response size capped, and private/loopback/link-local addresses rejected. **Whatever Authorizer fetches must therefore be publicly routable**, which for Kubernetes depends entirely on the cluster's issuer — see [Kubernetes ServiceAccount tokens](#kubernetes-serviceaccount-tokens).
+>
+> `spiffe_bundle_endpoint` has no implementation and is **rejected at write time** with `key_source_type "spiffe_bundle_endpoint" is not implemented yet` — use `oidc_discovery` or `static_jwks_url` for SPIFFE issuers. `spiffe_refresh_hint_seconds` is stored but not yet honoured at runtime.
 
 ## Validation rules
 
@@ -81,9 +83,64 @@ Because assertions are single-use, **mint a fresh platform token per token-endpo
 
 Kubernetes clusters are OIDC issuers: projected ServiceAccount tokens are JWTs signed by the cluster, with `iss` = the cluster's issuer URL and `sub` = `system:serviceaccount:<namespace>:<name>`.
 
+### Does my cluster work out of the box?
+
+Everything depends on one thing: **what your cluster publishes as its issuer**. Check it first —
+
+```bash
+kubectl get --raw /.well-known/openid-configuration | jq -r '.issuer, .jwks_uri'
+```
+
+| Your cluster | Key fetch | TokenReview | What you need |
+|---|---|---|---|
+| **EKS / GKE / AKS** (default) — issuer like `https://oidc.eks.<region>.amazonaws.com/id/…` or `https://container.googleapis.com/v1/projects/…` | ✅ works | ✅ with a public API endpoint | Nothing — use `oidc_discovery` |
+| Managed cluster, **private API endpoint only** | ✅ works (the issuer is still public) | ❌ apiserver unreachable | Leave `enable_token_review` off |
+| Self-managed with a **custom public issuer** (`--service-account-issuer=https://…`) | ✅ works | depends on the endpoint | Nothing — use `oidc_discovery` |
+| **Default issuer** — `https://kubernetes.default.svc.cluster.local` (kubeadm, kind, k3d) | ❌ private address | ❌ private address | [Mirror the JWKS](#clusters-on-the-default-issuer) |
+
+If your issuer is an `https://` URL on a public domain, you are in the first or third row and the rest of this section is a two-field registration.
+
+### Clusters on the default issuer
+
+A cluster left on the upstream default publishes `https://kubernetes.default.svc.cluster.local` as its issuer and an internal apiserver address as its `jwks_uri`. Both are private, and Authorizer's SSRF guard refuses them — so it cannot fetch the signing keys.
+
+The fix needs no code and no exception: **publish the cluster's public keys somewhere reachable and point `jwks_url` at that.** It works because `issuer_url` is only matched against the token's `iss` and is never dialed, so it can stay as the cluster's own unroutable issuer. This is the same shape AWS IRSA uses — the JWKS in public object storage, the apiserver never exposed.
+
+```bash
+# 1. Export the cluster's PUBLIC keys. Nothing secret is in this document.
+kubectl get --raw /openid/v1/jwks > jwks.json
+
+# 2. Host it anywhere publicly reachable — object storage, your CDN, a static host.
+aws s3 cp jwks.json s3://my-bucket/clusters/prod/jwks.json --acl public-read
+```
+
+```graphql
+mutation {
+  _add_trusted_issuer(
+    params: {
+      service_account_id: "CLIENT_UUID"
+      name: "prod-cluster payments-worker"
+      # The cluster's own issuer — matched against `iss`, never fetched.
+      issuer_url: "https://kubernetes.default.svc.cluster.local"
+      key_source_type: "static_jwks_url"
+      jwks_url: "https://my-bucket.s3.amazonaws.com/clusters/prod/jwks.json"
+      expected_aud: "https://your-authorizer.example"
+      allowed_subjects: "system:serviceaccount:payments:worker"
+      issuer_type: "kubernetes_sa"
+    }
+  ) { id }
+}
+```
+
+:::warning Refresh the mirror when the cluster rotates its keys
+A mirror is only as current as whatever refreshes it. Kubernetes rotates ServiceAccount signing keys, and a stale mirror fails in both directions: **tokens signed with a new key stop validating** (an outage), and **a retired key that is still published keeps validating tokens it should not** (a security gap).
+
+Authorizer caches a fetched JWKS for 10 minutes, so its own staleness is bounded — the mirror's is not. Refresh it as part of whatever rotates the cluster keys, or on a schedule shorter than your rotation period. If you cannot commit to that, prefer a cluster with a public issuer.
+:::
+
 ### 1. Register the trusted issuer
 
-Find the cluster issuer with `kubectl get --raw /.well-known/openid-configuration | jq -r .issuer` (on managed clusters — EKS/GKE/AKS — this is a public URL and `oidc_discovery` works; for a private cluster expose the JWKS and use `static_jwks_url`):
+For a cluster with a public issuer (the common case), `oidc_discovery` needs no JWKS handling at all:
 
 ```graphql
 mutation {
@@ -153,7 +210,8 @@ mutation {
 ```
 
 - Authorizer authenticates the TokenReview call with its **own** in-cluster ServiceAccount token, which needs the `system:auth-delegator` ClusterRole.
-- The apiserver URL goes through the same SSRF-hardened client, so only a **publicly-routable apiserver endpoint** (e.g. a managed cluster's public API endpoint) works today — `https://kubernetes.default.svc` (a private ClusterIP) is rejected by design.
+- The apiserver URL goes through the same SSRF-hardened client, so only a **publicly-routable apiserver endpoint** works — `https://kubernetes.default.svc` (a private ClusterIP) is rejected by design. Unlike key fetch, there is no mirror equivalent here: TokenReview is a live call to your apiserver. A cluster without a reachable API endpoint cannot use it, and should leave `enable_token_review` off — offline JWKS validation still authenticates the workload.
+- `kubernetes_api_server_url` is **security-sensitive**: Authorizer authenticates that call with its own in-cluster ServiceAccount token, so whatever host you configure receives that credential. Treat it as a trusted-host field, and keep Authorizer's ClusterRole to `system:auth-delegator` (TokenReview only) so the credential grants nothing else.
 
 ## SPIFFE JWT-SVIDs (preview)
 
