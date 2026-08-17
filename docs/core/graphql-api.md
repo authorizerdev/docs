@@ -819,6 +819,8 @@ Completes an in-progress, token-withheld MFA first-time-setup offer by recording
 
 Either `email` or `phone_number` is required. Returns `AuthResponse` (same shape as [`verify_otp`](#verify_otp)). Fails with an error when MFA is org-enforced (`--enforce-mfa`) — enforcement is never skippable.
 
+This call is authenticated by the MFA session, not a bearer token — none has been issued yet. The session arrives in a `Set-Cookie` header on the `signup`/`login` response and goes back in a `Cookie` header here, so **any HTTP client can complete the flow**, not only a browser. See [Completing the flow from a non-browser client](../core/security#completing-the-flow-from-a-non-browser-client).
+
 ```graphql
 mutation {
   skip_mfa_setup(params: { email: "foo@bar.com" }) {
