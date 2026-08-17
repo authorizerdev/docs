@@ -111,7 +111,14 @@ If your issuer is an `https://` URL on a public domain, the first two rows apply
 
 ### Clusters on the default issuer
 
-A cluster left on the upstream default publishes `https://kubernetes.default.svc.cluster.local` as its issuer, which is unresolvable outside the cluster — so `oidc_discovery` is out, because the discovery document lives under that URL.
+A cluster left on the upstream default publishes `https://kubernetes.default.svc.cluster.local` as its issuer. That name is a **cluster-internal DNS record**, served by CoreDNS to pods only — `.cluster.local` is not a public zone, and nothing outside the cluster resolves it. So `oidc_discovery` is out, because the discovery document lives under that URL.
+
+It fails for a different reason depending on where Authorizer runs, which is worth knowing because the error text differs:
+
+| Authorizer runs | What happens | Error you see |
+|---|---|---|
+| Outside the cluster | The name does not resolve at all (`NXDOMAIN`) | `failed to resolve host` |
+| Inside the cluster | CoreDNS resolves it to the `kubernetes` Service ClusterIP — `10.96.0.1` on a default `--service-cluster-ip-range` — which is RFC 1918 | `requests to private/internal networks are not allowed` |
 
 That leaves `static_jwks_url`, and the only question is whether Authorizer can reach a copy of the cluster's keys. **Check the apiserver first: if your control-plane endpoint is publicly reachable, point `jwks_url` straight at `https://<apiserver>/openid/v1/jwks` and skip the rest of this section.** A mirror is only needed when it is not — a kind or k3d cluster, or any control plane on a private network.
 
