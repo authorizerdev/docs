@@ -85,24 +85,35 @@ Kubernetes clusters are OIDC issuers: projected ServiceAccount tokens are JWTs s
 
 ### Does my cluster work out of the box?
 
-Everything depends on one thing: **what your cluster publishes as its issuer**. Check it first —
+Three independent questions decide it, and they have **different answers on the same cluster** — the issuer being private does not make the apiserver private, or vice versa. Check both addresses first:
 
 ```bash
 kubectl get --raw /.well-known/openid-configuration | jq -r '.issuer, .jwks_uri'
+kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}'; echo
 ```
 
-| Your cluster | Key fetch | TokenReview | What you need |
-|---|---|---|---|
-| **EKS / GKE / AKS** (default) — issuer like `https://oidc.eks.<region>.amazonaws.com/id/…` or `https://container.googleapis.com/v1/projects/…` | ✅ works | ✅ with a public API endpoint | Nothing — use `oidc_discovery` |
-| Managed cluster, **private API endpoint only** | ✅ works (the issuer is still public) | ❌ apiserver unreachable | Leave `enable_token_review` off |
-| Self-managed with a **custom public issuer** (`--service-account-issuer=https://…`) | ✅ works | depends on the endpoint | Nothing — use `oidc_discovery` |
-| **Default issuer** — `https://kubernetes.default.svc.cluster.local` (kubeadm, kind, k3d) | ❌ private address | ❌ private address | [Mirror the JWKS](#clusters-on-the-default-issuer) |
+Then read off each column independently. Authorizer's SSRF guard refuses private, loopback and link-local addresses, so "reachable" throughout means *publicly routable from Authorizer*.
 
-If your issuer is an `https://` URL on a public domain, you are in the first or third row and the rest of this section is a two-field registration.
+| | `oidc_discovery` | `static_jwks_url` | TokenReview |
+|---|---|---|---|
+| **Decided by** | is the **issuer URL** reachable? | is **any copy of the JWKS** reachable? | is the **apiserver** reachable? |
+| **EKS / GKE / AKS** (public issuer, e.g. `https://oidc.eks.<region>.amazonaws.com/id/…`) | ✅ | ✅ not needed | ✅ with a public API endpoint |
+| **Self-managed, custom public issuer** (`--service-account-issuer=https://…`) | ✅ | ✅ not needed | depends on the endpoint |
+| **Default issuer** — `https://kubernetes.default.svc.cluster.local` (kubeadm, kind, k3d) | ❌ discovery lives at a private URL | ✅ point it at a reachable copy — the apiserver itself if that is public, otherwise a [mirror](#clusters-on-the-default-issuer) | depends on the endpoint |
+| **Any cluster, private API endpoint only** | per the issuer, above | per the JWKS, above | ❌ and there is no workaround — leave `enable_token_review` off |
+
+Two things worth reading off that table, because they are easy to get backwards:
+
+- **A private issuer does not mean the feature is unavailable.** It rules out `oidc_discovery` only. `issuer_url` is matched against the token's `iss` and never fetched under `static_jwks_url`, so it can stay as the cluster's own unroutable value while the keys come from anywhere reachable.
+- **A private issuer does not imply a private apiserver.** A kubeadm cluster on the default issuer can still have a publicly-reachable control-plane endpoint, in which case TokenReview works and `static_jwks_url` can point straight at `<apiserver>/openid/v1/jwks` with no mirror at all.
+
+If your issuer is an `https://` URL on a public domain, the first two rows apply and registration is a two-field job.
 
 ### Clusters on the default issuer
 
-A cluster left on the upstream default publishes `https://kubernetes.default.svc.cluster.local` as its issuer and an internal apiserver address as its `jwks_uri`. Both are private, and Authorizer's SSRF guard refuses them — so it cannot fetch the signing keys.
+A cluster left on the upstream default publishes `https://kubernetes.default.svc.cluster.local` as its issuer, which is unresolvable outside the cluster — so `oidc_discovery` is out, because the discovery document lives under that URL.
+
+That leaves `static_jwks_url`, and the only question is whether Authorizer can reach a copy of the cluster's keys. **Check the apiserver first: if your control-plane endpoint is publicly reachable, point `jwks_url` straight at `https://<apiserver>/openid/v1/jwks` and skip the rest of this section.** A mirror is only needed when it is not — a kind or k3d cluster, or any control plane on a private network.
 
 The fix needs no code and no exception: **publish the cluster's public keys somewhere reachable and point `jwks_url` at that.** It works because `issuer_url` is only matched against the token's `iss` and is never dialed, so it can stay as the cluster's own unroutable issuer. This is the same shape AWS IRSA uses — the JWKS in public object storage, the apiserver never exposed.
 
