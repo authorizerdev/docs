@@ -116,8 +116,8 @@ See [Databases](./core/databases) for connection string formats.
 
 ### Backend SDKs
 
-- [Go](https://github.com/authorizerdev/authorizer-go) — user + admin client; protocol selection (gRPC / REST / GraphQL); FGA helpers
-- [Python](https://github.com/authorizerdev/authorizer-py) — v0.3.0 pre-release; sync + async; admin API (`pip install --pre authorizer-py`)
+- [Go](https://github.com/authorizerdev/authorizer-go) — v2.2.0; user + admin client; protocol selection (gRPC / REST / GraphQL); FGA helpers
+- [Python](https://github.com/authorizerdev/authorizer-py) — v0.3.0; sync + async; admin API (`pip install authorizer-py`)
 - [Node.js](https://github.com/authorizerdev/authorizer-js) — same package as the frontend SDK, works server-side
 
 See the [SDK reference](./sdks/authorizer-js) for usage docs.

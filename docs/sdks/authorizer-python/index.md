@@ -51,7 +51,7 @@ Note the `--client-id` value — you will need it in the SDK configuration below
 ## Step 3: Install the package
 
 ```bash
-pip install --pre authorizer-py
+pip install authorizer-py
 ```
 
 :::warning Use the 0.3.0 pre-release with server 2.4.0
