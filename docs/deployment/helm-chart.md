@@ -40,6 +40,7 @@ helm install \
     --create-namespace \
     --set authorizer.database_type=sqlite \
     --set authorizer.database_url="/tmp/test.db" \
+    --set authorizer.authorizer_url=https://auth.example.com \
     --set authorizer.jwt_type=HS256 \
     --set authorizer.jwt_secret=test \
     --set authorizer.encryption_key=test-encryption-key \
@@ -58,6 +59,7 @@ helm install \
     --create-namespace \
     --set authorizer.database_type=postgres \
     --set authorizer.database_url="postgres://user:pass@host:5432/authorizer" \
+    --set authorizer.authorizer_url=https://auth.example.com \
     --set authorizer.jwt_type=HS256 \
     --set authorizer.jwt_secret=your-jwt-secret \
     --set authorizer.encryption_key=your-encryption-key \
@@ -77,6 +79,7 @@ helm install \
 | ---- | ----------- | ------- |
 | `authorizer.database_type` | Database type: `postgres`, `mysql`, `sqlite`, `sqlserver`, `mongodb`, `arangodb`, `yugabyte`, `mariadb`, `cassandradb`, `scylladb`, `couchbase`, `dynamodb`, `planetscale` | - |
 | `authorizer.database_url` | Database connection string. See [Databases](../core/databases) | - |
+| `authorizer.authorizer_url` | This deployment's own public base URL, with the scheme (`--url`). **Required as of 2.4.0** — the chart refuses to render without it, because the server exits at boot. This is *not* `allowed_origins`: `authorizer_url` is where Authorizer itself is reachable, `allowed_origins` lists the apps it may redirect to | - |
 | `authorizer.client_id` | Client identifier **(required in v2)** | - |
 | `authorizer.client_secret` | Client secret **(required in v2)** | - |
 | `authorizer.admin_secret` | Admin secret for admin operations | - |
@@ -117,6 +120,19 @@ helm install \
 | `authorizer.rate_limit_burst` | Per-IP burst size (`--rate-limit-burst`) | `20` |
 | `authorizer.rate_limit_fail_closed` | On Redis/rate-limit errors, return 503 (`--rate-limit-fail-closed`) | `false` |
 
+### Redirect URIs and origins
+
+| Name | Description | Default |
+| ---- | ----------- | ------- |
+| `authorizer.allowed_origins` | Comma-separated origins allowed to call this server (`--allowed-origins`) | `*` |
+| `authorizer.redirect_uris` | Comma-separated list of **exact** redirect URIs for this deployment's own client (`--redirect-uris`, new in 2.4.0). When unset, `redirect_uri` falls back to matching `allowed_origins`, which compares *origins* — any path under an allowed host is accepted. See [server config](../core/server-config) | - |
+
+:::warning `redirect_uris` applies to every flow carrying this `client_id`
+It is not a per-app setting. List every callback your apps use, including
+local development ones, or those logins are refused with
+`invalid redirect_uri`.
+:::
+
 ### Couchbase
 
 | Name | Description | Default |
@@ -138,46 +154,19 @@ helm upgrade authorizer authorizer/authorizer --namespace authorizer
 
 ---
 
-## Next Version (v2 Helm Chart)
+## How the chart configures the container
 
-The next version of the Helm chart will pass all configuration as **CLI flags** to the Authorizer v2 container using the `args` field, aligning with the v2 CLI-only configuration model. This means:
+Chart `2.x` passes every `authorizer.*` value to the container as a
+`--kebab-case` CLI flag, matching the v2 CLI-only configuration model. There
+is no `.env` file to mount and no `_update_env` dashboard call.
 
-- All `authorizer.*` values will be mapped to `--kebab-case` CLI flags automatically
-- No `.env` file mounting or `_update_env` dashboard calls
-- Secrets managed via Kubernetes `Secret` resources referenced through `env` and expanded in `args`
+- Secrets (`client_secret`, `jwt_secret`, `admin_secret`, database credentials,
+  every social-provider secret) are written to Kubernetes `Secret` resources
+  and injected as environment variables, which the container's entrypoint
+  expands into the flags. They never appear in the pod spec's `args`.
+- Non-secret values are rendered into the args directly.
+- A value left `null` is omitted, so the server's own default applies.
 
-Example of how the next version will configure the deployment:
-
-```yaml
-containers:
-  - name: authorizer
-    image: quay.io/authorizer/authorizer:latest
-    args:
-      - "--database-type=$(DATABASE_TYPE)"
-      - "--database-url=$(DATABASE_URL)"
-      - "--url=$(AUTHORIZER_URL)"
-      - "--jwt-type=HS256"
-      - "--jwt-secret=$(JWT_SECRET)"
-      - "--encryption-key=$(ENCRYPTION_KEY)"
-      - "--admin-secret=$(ADMIN_SECRET)"
-      - "--client-id=$(CLIENT_ID)"
-      - "--client-secret=$(CLIENT_SECRET)"
-    env:
-      - name: DATABASE_TYPE
-        valueFrom:
-          secretKeyRef:
-            name: authorizer-secrets
-            key: database-type
-      - name: DATABASE_URL
-        valueFrom:
-          secretKeyRef:
-            name: authorizer-secrets
-            key: database-url
-      - name: AUTHORIZER_URL
-        valueFrom:
-          secretKeyRef:
-            name: authorizer-secrets
-            key: authorizer-url
-```
-
-Until the next Helm chart version is released, you can use the existing chart with the current values or deploy using raw Kubernetes manifests as shown in the [Kubernetes](./kubernetes) guide.
+Run `helm show values authorizer/authorizer` for the full list — each key is
+documented in place, and maps to the flag of the same name in
+[Server configuration](../core/server-config).
