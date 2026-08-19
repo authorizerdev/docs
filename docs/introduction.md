@@ -108,10 +108,10 @@ See [Databases](./core/databases) for connection string formats.
 
 ### Frontend SDKs
 
-- [JavaScript / TypeScript](https://github.com/authorizerdev/authorizer-js) — v3.3.0; user + admin client; GraphQL + REST protocols
-- [React](https://github.com/authorizerdev/authorizer-react) — v2.x; `protocol` prop; pre-built login/signup/MFA components
-- [Vue](https://github.com/authorizerdev/authorizer-vue) — beta; no admin client or protocol selection yet
-- [Svelte](https://github.com/authorizerdev/authorizer-svelte) — beta; no admin client or protocol selection yet
+- [JavaScript / TypeScript](https://github.com/authorizerdev/authorizer-js) — v4.0.0; user + admin client; GraphQL + REST protocols
+- [React](https://github.com/authorizerdev/authorizer-react) — v2.2.0; `protocol` prop; pre-built login/signup/MFA components
+- [Vue](https://github.com/authorizerdev/authorizer-vue) — v2.1.0; no admin client or protocol selection yet
+- [Svelte](https://github.com/authorizerdev/authorizer-svelte) — v1.1.0; no admin client or protocol selection yet
 - [Flutter](https://github.com/authorizerdev/authorizer-flutter-sdk) — not released yet; no package on pub.dev
 
 ### Backend SDKs
