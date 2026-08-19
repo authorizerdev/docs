@@ -87,6 +87,28 @@ These flags replace v1 env such as `CLIENT_ID`, `CLIENT_SECRET`, and app behavio
 - **`--allowed-origins`**: comma-separated list of allowed origins (default
   `*`). A startup warning is logged when the value contains `*` — set an
   explicit allowlist for production. See [CORS, CSRF and origin enforcement](./security#cors-csrf-and-origin-enforcement).
+- **`--redirect-uris`** (default empty, new in 2.4.0): comma-separated list of
+  **exact** redirect URIs for this deployment's own client — the one named by
+  `--client-id`. When set, `redirect_uri` on `/authorize` is matched exactly
+  against this list, which is what [OIDC Core §3.1.2.1](https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest)
+  and [RFC 6749 §3.1.2.3](https://www.rfc-editor.org/rfc/rfc6749#section-3.1.2.3)
+  require. When empty, matching falls back to `--allowed-origins`, which
+  compares **origins** — so `https://app.example.com/anything` is accepted for a
+  deployment that only meant `https://app.example.com/callback`.
+
+  :::warning It applies to every flow carrying this `client_id`
+  This is not a per-app setting. List **every** redirect URI your apps use —
+  each app's callback, and any local development callback — or those logins
+  start being refused with `invalid redirect_uri`. Entries that could never
+  match (no scheme, a fragment, embedded user info) are rejected at startup
+  rather than at login time.
+  :::
+
+  Loopback redirects keep the [RFC 8252 §7.3](https://datatracker.ietf.org/doc/html/rfc8252#section-7.3)
+  carve-out: a registered `http://127.0.0.1/callback` matches any port, because
+  a native app binds an ephemeral one. Scheme, host, path and query must still
+  match exactly.
+
 - **`--trusted-proxies`** (default empty): comma-separated CIDRs of reverse
   proxies whose `X-Forwarded-For` should be honoured. **Breaking change as of
   April 2026**: defaults to none — operators behind a proxy must set this
