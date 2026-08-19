@@ -314,6 +314,10 @@ Authorizer acts as a [SAML 2.0](https://www.oasis-open.org/standard/saml/) Servi
 
 The architectural inverse of the SP role above: per organization, Authorizer can also act as a **SAML 2.0 Identity Provider**, issuing signed assertions to downstream Service Providers (Zendesk, Salesforce, Notion, …) so their SAML-based SSO logs users in with their existing Authorizer session. Each org gets its own SAML signing keypair with `current` / `active` / `retired` rotation states, and both SP-initiated and opt-in IdP-initiated flows are supported. See [SAML Identity Provider](../enterprise/saml-idp).
 
+### SAML 2.0 Identity Provider (IdP)
+
+The architectural inverse of the SP role above: per organization, Authorizer can also act as a **SAML 2.0 Identity Provider**, issuing signed assertions to downstream Service Providers (Zendesk, Salesforce, Notion, …) so their SAML-based SSO logs users in with their existing Authorizer session. Each org gets its own SAML signing keypair with `current` / `active` / `retired` rotation states, and both SP-initiated and opt-in IdP-initiated flows are supported. See [SAML Identity Provider](../enterprise/saml-idp).
+
 ### Per-Organization OIDC SSO (Broker)
 
 The OIDC sibling of the SAML SP: Authorizer brokers a per-org upstream OIDC IdP (Okta, Entra ID, Google Workspace) as a Relying Party. See [OIDC SSO](../enterprise/org-sso-oidc).

@@ -262,6 +262,49 @@ only.
 | `delete_scim_endpoint` | **Delete a SCIM endpoint** — provisioning stops working. | ✓ | ✓ | ✓ |
 | `get_scim_endpoint` | Get a single SCIM endpoint. | ✓ | ✓ | ✓ |
 
+#### Clients (service accounts / machine identities)
+
+Clients created here authenticate over `/oauth/token` with the `client_credentials` and
+token-exchange grants — see [Machine-to-machine & agent delegation](./functions#oauth-rest).
+
+| Method                 | Description                                     | grpc | rest | gql |
+| ---------------------- | ------------------------------------------------ | :--: | :--: | :-: |
+| `create_client`        | Create a client. `client_secret` is shown **once**. | ✓ | ✓ | ✓ |
+| `update_client`        | Update a client.                                | ✓ | ✓ | ✓ |
+| `delete_client`        | **Delete a client** — its tokens stop resolving. | ✓ | ✓ | ✓ |
+| `rotate_client_secret` | **Rotate a client's secret** (old one invalidated, new one shown once). | ✓ | ✓ | ✓ |
+| `get_client`           | Get a single client.                            | ✓ | ✓ | ✓ |
+| `clients`              | List clients (paginated).                       | ✓ | ✓ | ✓ |
+
+#### Trusted issuers
+
+External OIDC/JWT issuers Authorizer accepts tokens from (e.g. for federated
+machine/agent identities).
+
+| Method                   | Description                              | grpc | rest | gql |
+| ------------------------ | ----------------------------------------- | :--: | :--: | :-: |
+| `add_trusted_issuer`     | Add a trusted issuer.                    | ✓ | ✓ | ✓ |
+| `update_trusted_issuer`  | Update a trusted issuer.                 | ✓ | ✓ | ✓ |
+| `delete_trusted_issuer`  | **Delete a trusted issuer** — its tokens stop authenticating. | ✓ | ✓ | ✓ |
+| `get_trusted_issuer`     | Get a single trusted issuer.             | ✓ | ✓ | ✓ |
+| `trusted_issuers`        | List trusted issuers (paginated).        | ✓ | ✓ | ✓ |
+
+#### SAML Identity Provider
+
+Authorizer acting as a SAML IdP for downstream service providers.
+
+| Method                          | Description                                                        | grpc | rest | gql |
+| -------------------------------- | -------------------------------------------------------------------- | :--: | :--: | :-: |
+| `create_saml_service_provider`   | Register a downstream SP.                                          | ✓ | ✓ | ✓ |
+| `update_saml_service_provider`   | Update a registered SP.                                             | ✓ | ✓ | ✓ |
+| `delete_saml_service_provider`   | **Delete a registered SP** — it can no longer be issued assertions. | ✓ | ✓ | ✓ |
+| `get_saml_service_provider`      | Get a single registered SP.                                         | ✓ | ✓ | ✓ |
+| `list_saml_service_providers`    | List registered SPs (paginated).                                    | ✓ | ✓ | ✓ |
+| `rotate_saml_idp_cert`           | Generate a new signing keypair; the previous key stays active.      | ✓ | ✓ | ✓ |
+| `retire_saml_idp_key`            | **Retire a signing key** — drops out of IdP metadata; cannot retire the current key. | ✓ | ✓ | ✓ |
+| `list_saml_idp_keys`             | List signing keys (`-> list[SAMLIDPKey]`).                          | ✓ | ✓ | ✓ |
+| `import_saml_sp_metadata`        | Parse pasted SP metadata XML (no record is created, no URL fetched). | ✓ | ✓ | ✓ |
+
 #### GraphQL-only extras
 
 These are the only admin operations with no proto RPC, so they work **over GraphQL only**:
