@@ -166,8 +166,13 @@ A **machine caller** (a `client_credentials` token from a `service_account` clie
 has its own subject too: it resolves to `service_account:<client_id>`, not
 `user:<sub>`, so a machine credential presenting its own token can self-check
 `service_account` tuples the same way a human token self-checks `user` ones. An
-[RFC 8693](https://datatracker.ietf.org/doc/html/rfc8693) delegated/token-exchange token stays a `user:<sub>` subject regardless —
-only an autonomous machine token classifies as `service_account:`. Model machine
+[RFC 8693](https://datatracker.ietf.org/doc/html/rfc8693) delegated/token-exchange token follows **its own subject**: delegating a
+user yields a `user:<sub>` subject, while delegating a service account — the
+agent-to-agent chain — yields `service_account:<client_id>`. In both cases the
+decision is additionally intersected with the acting agent, so a delegated
+caller never exceeds perms(agent) ∩ perms(subject). (Before 2.4.1 a
+machine-subject delegation resolved to `user:<sub>`; see
+[GHSA-vq29-8q3c-3hrm](https://github.com/authorizerdev/authorizer/security/advisories/GHSA-vq29-8q3c-3hrm).) Model machine
 identities with `type service_account` and admit it in relevant type restrictions
 (`viewer: [user, service_account]`) to put them in the same graph as humans; see
 the [DSL construct reference](./fga-guide#direct-assignment--type-restrictions).

@@ -9,7 +9,7 @@ Authorizer implements [RFC 8693 OAuth 2.0 Token Exchange](https://www.rfc-editor
 
 Three guarantees on every downstream call:
 
-1. **Both identities travel together** — the resource server sees *agent X acting for user Y* (`sub` = user, `act.sub` = agent).
+1. **Both identities travel together** — the resource server sees *agent X acting for subject Y* (`sub` = the delegated subject, `act.sub` = agent). The subject is usually a user; in an agent-to-agent chain it is the delegated service account.
 2. **Least privilege** — the token is attenuated to the intersection of what the user has, what the agent may ever have, and what was asked for.
 3. **The chain is auditable** — `app → agent → user` is recorded in the audit log.
 
@@ -30,7 +30,7 @@ Three guarantees on every downstream call:
 }
 ```
 
-`sub` stays the **user**; `act.sub` is the **immediate actor** — always the *authenticated* agent's registered `client_id`, never a token-supplied claim; nested `act` encodes multi-hop delegation. The JWT header carries `typ: at+jwt` (RFC 9068). `act` and `client_id` are reserved claims — the custom access token script cannot forge them (it is not run for delegated tokens at all).
+`sub` stays the **delegated subject** — the user in the common app-acting-for-user case, or the delegated service account in an agent-to-agent chain, in which case the token also carries `login_method: service_account` so downstream authorization classifies it as a machine rather than a human (see [Multi-hop delegation](#multi-hop-delegation)); `act.sub` is the **immediate actor** — always the *authenticated* agent's registered `client_id`, never a token-supplied claim; nested `act` encodes multi-hop delegation. The JWT header carries `typ: at+jwt` (RFC 9068). `act` and `client_id` are reserved claims — the custom access token script cannot forge them (it is not run for delegated tokens at all).
 
 ## Request
 
@@ -92,6 +92,12 @@ effective = subject_token.scope ∩ agent.allowed_scopes ( ∩ requested scope, 
 ## Multi-hop delegation
 
 A delegated token can itself be the `subject_token` of a further exchange (app → agent → sub-agent). The prior `act` chain nests under the new actor. The chain depth is capped at **4**; deeper chains are rejected with `invalid_request`.
+
+The subject is carried unchanged through every hop, and so is its identity type. When the subject is a **service account** (agent → agent), each minted token carries `login_method: service_account` and resolves to `service_account:<client_id>` for authorization — never to `user:<sub>`.
+
+:::note Changed in 2.4.1
+Before 2.4.1 a machine-subject delegated token dropped `login_method`, so authorization misclassified the service account as a human user ([GHSA-vq29-8q3c-3hrm](https://github.com/authorizerdev/authorizer/security/advisories/GHSA-vq29-8q3c-3hrm)) — and, because the second hop then looked the service account up as a user and found nothing, an agent-to-agent chain never worked past its first hop. Both are fixed. Subject liveness is still re-checked at every hop, scope still attenuates monotonically, and the depth cap is unchanged.
+:::
 
 A runnable 4-hop example (`orchestrator → research-agent → crm-reader → export-agent`, plus live rejections for a 5th hop, scope re-widening, and actor-token substitution) is in [`with-agent-delegation`](https://github.com/authorizerdev/examples/tree/main/with-agent-delegation).
 

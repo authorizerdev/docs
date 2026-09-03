@@ -91,12 +91,40 @@ kept access after it.
 ./authorizer --trusted-proxies=10.0.0.0/8,127.0.0.1/32
 ```
 
-- **`--trusted-proxies`** (default empty, comma-separated CIDRs): list of
-  reverse-proxy networks whose `X-Forwarded-For` and similar forwarded
-  headers Gin will honour when computing the client IP.
+- **`--trusted-proxies`** (default empty, comma-separated CIDRs or bare IPs):
+  list of reverse-proxy networks whose `X-Forwarded-For` / `X-Real-Ip`
+  headers are honoured when computing the client IP.
 
-When the list is **empty** (the default), Gin falls back to `RemoteAddr`
-and the application is immune to spoofed `X-Forwarded-For` headers.
+When the list is **empty** (the default), the connection's peer address is
+used and forwarded headers are ignored entirely, so the client IP cannot be
+spoofed.
+
+When the list contains networks, the `X-Forwarded-For` chain is walked
+**right-to-left**, past each hop that is itself a trusted proxy, and the
+first untrusted entry is taken as the client. That is correct whether your
+proxy *replaces* the header or *appends* to it — the widely-repeated advice
+to "take the leftmost entry" is spoofable against a proxy that appends,
+because the leftmost entry is then attacker-supplied.
+
+:::caution List every hop
+With a CDN in front of a load balancer, **both** must appear in the list.
+The walk stops at the outermost hop you did not list and returns *that*
+address — a real proxy address rather than a forged one, which is the safe
+failure, but not the client you wanted. On Railway, use
+`--trusted-proxies=100.64.0.0/10`.
+:::
+
+:::note Changed in 2.4.1
+This flag has existed since 2.2.1, but until 2.4.1 it only governed Gin's own
+client-IP resolution — rate limiting and the request log. Audit-log
+attribution and the admin-secret lockout used a separate resolver that read
+`X-Forwarded-For` unconditionally, so the "immune to spoofing" property below
+did **not** hold for them ([GHSA-93hc-xq3w-xw87](https://github.com/authorizerdev/authorizer/security/advisories/GHSA-93hc-xq3w-xw87)).
+All surfaces — HTTP, REST and gRPC — now share one resolver governed by this
+flag. If you run behind a proxy and never set it, upgrading to 2.4.1 changes
+the recorded client IP to the proxy's address; the server logs a warning at
+startup when the flag is empty.
+:::
 
 When the list contains CIDRs, Gin trusts forwarded headers from connections
 originating in those networks. If you run Authorizer behind a reverse
@@ -106,6 +134,7 @@ proxy you **must** set this flag, otherwise:
 |---|---|
 | Per-IP rate limiting | All requests appear to come from the proxy → one rate-limit bucket for the entire fleet → trivial to exhaust. |
 | Audit logs | Every event is recorded with the proxy IP, not the user's. |
+| Admin-secret lockout | The brute-force counter buckets on the proxy IP, so one attacker's failed guesses lock out **every** operator for the window. |
 | CSRF same-origin enforcement | Uses the request `Host` header (unaffected); but combined with the wrong client IP makes investigations harder. |
 | [Prometheus](https://prometheus.io) metrics | `authorizer_http_requests_total` labelled by proxy IP only. |
 
