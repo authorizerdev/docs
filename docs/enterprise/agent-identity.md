@@ -251,7 +251,7 @@ Delegation is additive. If your model has no `agent` type, every one of these be
 
 - OIDC, SAML, SCIM, OAuth 2.1 flows and `client_credentials` (M2M).
 - `check_permissions` / `list_permissions` for user and service-account callers.
-- A machine token still resolves to `service_account:<client_id>`; a delegated token always resolves to `user:<sub>` and never to a service account, regardless of what it carries.
+- A machine token still resolves to `service_account:<client_id>`. A delegated token resolves according to **its subject**: a token delegating a *user* resolves to `user:<sub>` (the common app-acting-for-user case), and a token delegating a *service account* — the agent-to-agent chain — resolves to `service_account:<client_id>`. Before 2.4.1 the second case incorrectly resolved to `user:<sub>`, which is [GHSA-vq29-8q3c-3hrm](https://github.com/authorizerdev/authorizer/security/advisories/GHSA-vq29-8q3c-3hrm); if you wrote tuples against `user:<service-account-id>` to work around it, move them to `service_account:<client_id>`.
 
 ## Failure modes
 
