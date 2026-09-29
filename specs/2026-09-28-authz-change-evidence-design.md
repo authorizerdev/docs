@@ -2,7 +2,8 @@
 
 **Date:** 2026-09-28
 **Status:** Design, awaiting review
-**Scope:** FGA authorization changes (tuples, model, reset)
+**Scope:** Two defensible claims — every FGA tuple change, and every change to a user's
+roles or org membership (see Locked decisions 1)
 **Repo:** `authorizerdev/authorizer` (server)
 
 ## Problem
@@ -39,8 +40,27 @@ Supporting detail:
 
 Agreed with the maintainer before this spec was written:
 
-1. **Scope: FGA only** — tuples, model, reset. User roles, org membership, and other
-   authz-adjacent admin surfaces are explicitly out of scope for this spec.
+1. **Scope is defined by the claim it makes true, not by a file.**
+
+   An earlier revision scoped this to "FGA only", meaning `internal/service/admin_fga.go`.
+   That is not a coherent boundary: **half the FGA tuple mutations in the codebase happen
+   elsewhere** (see Phase 2.0). A spec limited to that file would ship, pass its tests, and
+   still let an auditor read the log across a window in which SCIM rewrote group
+   membership and conclude no authorization change occurred — replacing a known gap with
+   false confidence, which is worse.
+
+   Two claims are in scope. Each is stated so a reader can falsify it:
+
+   - **Claim 1 — every FGA tuple change is evidenced.** All 8 engine-mutation call sites,
+     plus a static guard test so a ninth cannot be added silently.
+   - **Claim 2 — every change to a user's roles or org membership is evidenced.**
+     `UpdateUser` roles, `RevokeAccess`/`EnableAccess`, `Add`/`RemoveOrgMember`, SCIM
+     org-membership creation, SCIM deactivate/reactivate.
+
+   Deliberately outside both: clients, trusted issuers, org OIDC/SAML connections, SCIM
+   endpoints, org domains, SAML IdP keys and service providers (~22 sites). The line is
+   *"who can do what" is evidenced; "how the system is configured" is not yet* — and those
+   surfaces hold nearly all the credential material that makes redaction risky.
 2. **Explicit before/after snapshots**, not replay-derivable deltas. Literal evidence,
    accepting the extra engine reads and the payload-bounding work.
 3. **Actor identity: record what exists.** No new auth model. Named admin accounts remain
@@ -52,9 +72,14 @@ Agreed with the maintainer before this spec was written:
 
 ## Non-goals
 
-- Named per-admin identities (would need its own auth-model spec and migration).
-- Making non-FGA authz changes (roles, org membership) evidential — same mechanism will
-  apply later, but not here.
+- Infrastructure-configuration surfaces: clients, trusted issuers, org OIDC/SAML
+  connections, SCIM endpoints, org domains, SAML IdP keys/SPs. Same mechanism applies
+  later. They are deferred because they change rarely and because their rows carry an RSA
+  private key (`schemas/saml_idp_key.go:3`), a SCIM `TokenHash` (`scim_endpoint.go:33`)
+  and a bcrypt client secret (`client.go:20`) — the redaction allow-list guarding those is
+  the one part of this design that can cause a *new* incident, and it should be sized
+  against three simple resource types before it has to cover private keys.
+- A named-admin identity model (see decision 3).
 - Exposing OpenFGA's `ReadChanges` as an admin API. It exists on the embedded server
   (`openfga@v1.18.1/pkg/server/read_changes.go:19`) and Authorizer inherits
   `ChangelogHorizonOffset = 0` so it would return changes immediately — noted as a future
@@ -146,7 +171,19 @@ duplicate tuples. Rejected alternatives and why:
 - *Succeed and flag* — reintroduces exactly the silent evidence gap this spec exists to
   close.
 
-### 1.3 Actor identity
+### 1.3 SCIM audit wiring (prerequisite)
+
+`scim.Dependencies` (`internal/service/scim/scim.go:88-100`) holds `Log`,
+`StorageProvider`, `MemoryStoreProvider`, `AuthzEngine` and `EventsProvider` — and **no
+`AuditProvider`**. The SCIM package therefore cannot audit anything today; the absence is
+structural, not an oversight at individual call sites. Add the field and wire it in
+`cmd/root.go` alongside the other SCIM dependencies.
+
+Nil-safe: leave SCIM's audit calls no-ops when the provider is nil, matching the existing
+convention for `EventsProvider` ("Nil when webhooks are not wired — event firing is then a
+no-op").
+
+### 1.4 Actor identity
 
 Record what the system already knows; invent no new identity model.
 
@@ -171,7 +208,50 @@ that it was not. Stated as a known limitation in the docs.
 
 ---
 
-## Phase 2 — FGA snapshots
+## Phase 2 — Claim 1: every FGA tuple change is evidenced
+
+### 2.0 The eight call sites
+
+`AuthzEngine` mutation calls, enumerated from the tree (excluding `_test.go`):
+
+| Site | Operation | Audited today |
+|---|---|---|
+| `internal/service/admin_fga.go:72` | `WriteModel` | yes (id only) |
+| `internal/service/admin_fga.go:106` | `WriteTuples` | yes (`count=N`) |
+| `internal/service/admin_fga.go:139` | `DeleteTuples` | yes (`count=N`) |
+| `internal/service/admin_fga.go:286` | `Reset` | yes (nothing) |
+| `internal/service/scim/groups.go:303` | `DeleteTuples` (group delete) | **no** |
+| `internal/service/scim/groups.go:376` | `WriteTuples` (group members added) | **no** |
+| `internal/service/scim/groups.go:382` | `DeleteTuples` (group members removed) | **no** |
+| `internal/service/fga.go:446` | `DeleteTuples` (`purgeFgaTuplesForUser`) | **no** |
+
+SCIM Group membership *is* FGA tuples — not a DB column (`scim.go:92-95`) — so an external
+IdP rewriting a group is an authorization change that currently leaves no audit row at
+all. `purgeFgaTuplesForUser` is called from `DeleteUser` (`admin_users.go:417`): the
+deletion is audited, the grants it destroys are not enumerated, so "which access did this
+removal actually revoke?" is unanswerable.
+
+The four unaudited sites differ from the admin ones in a way that shapes their treatment:
+
+- **SCIM sites are not super-admin actions.** Actor is the SCIM endpoint —
+  `ActorType: service_account`, `ActorID` = the endpoint id, no `auth_mode`.
+- **`groups.go:303` is deliberately non-fatal** — a tuple-delete failure there is logged
+  and the group row is still removed. Its audit write must preserve that: log at `Error`
+  and continue, **not** the return-an-error contract of §1.2. Applying the synchronous
+  contract here would turn an accepted partial failure into a failed deprovision.
+- **`purgeFgaTuplesForUser` has no natural per-object grain** — it deletes every tuple
+  naming one user, so it emits **one** row keyed on `ResourceID` = `user:<id>`, with the
+  deleted tuples as the delta. The §2.1 per-object grain does not apply.
+
+### 2.0.1 Static guard test
+
+The gap above exists because nothing enforced it. Mirroring `admin_gate_test.go:108`
+(which statically asserts every admin function calls `requireSuperAdmin` at top level),
+add a test that parses the tree for `AuthzEngine.WriteTuples` / `DeleteTuples` /
+`WriteModel` / `Reset` call sites and fails when one appears without an audit emission in
+the enclosing function, against an explicit allow-list of known sites.
+
+This is the cheapest item in the spec and the only one that stops the gap reopening.
 
 ### 2.1 Grain: one audit row per distinct object touched
 
@@ -285,6 +365,45 @@ that shape.
 
 ---
 
+## Phase 2b — Claim 2: roles and org membership
+
+Row-shaped lanes. `before` is the loaded row, `after` is what the storage call returned —
+**no extra reads, no paging, no fan-out cap, and no `expected_after` comparison**; none of
+§2.1-2.4 applies.
+
+| Site | Note |
+|---|---|
+| `UpdateUser` (`admin_users.go:110`) | old roles already in memory at `:315`, discarded today |
+| `RevokeAccess` / `EnableAccess` (`admin_access.go`) | |
+| `AddOrgMember` (`admin_organizations.go:255`) | |
+| `RemoveOrgMember` (`:317`) | a `before` of `{org_id, user_id, roles}` fixes today's dangling `membership.ID` |
+| SCIM `AddOrgMembership` (`scim/scim.go:356`) | unaudited today |
+| SCIM `deactivate` (`scim/scim.go:458-473`) | sets `RevokedTimestamp`, kills every session; unaudited today |
+| SCIM reactivate (`scim/scim.go:412`) | clears `RevokedTimestamp`; unaudited today |
+
+Two hard rules:
+
+1. **Serialize before mutating.** Capture `beforeJSON` *before* any field assignment — not
+   by cloning the struct. These handlers mutate the loaded row in place, several fields
+   are `*string`, and a shallow copy shares slice backing arrays, so a clone helper would
+   silently produce `before == after` and pass a naive test. It is also already the stored
+   format.
+2. **Snapshot the `schemas.*` row, never the `model.*` response.** Response objects carry
+   plaintext secrets exactly once (`CreateClient`, `RotateClientSecret`,
+   `RotateScimToken`); the DB row only ever holds the hash. This rule matters most for the
+   deferred lanes, but the helper is written now and must enforce it from the start.
+
+**Redaction allow-list**, opt-in per resource type — a deny-list would admit any newly
+added secret field by default. In this phase it covers exactly three types: `user`
+(excludes the password hash), `organization`, `org_membership`. A guard test enumerates
+each schema's fields and fails when an unlisted one appears.
+
+**Lost-update race:** two admins updating one row concurrently means the loser's `before`
+is stale. This is the same last-writer-wins semantics the API already has; the snapshot
+records what this call saw and wrote. No machinery.
+
+---
+
 ## Phase 3 — Tests
 
 Per `AGENTS.md`, integration tests use SQLite via `getTestConfig()`.
@@ -303,9 +422,23 @@ Per `AGENTS.md`, integration tests use SQLite via `getTestConfig()`.
 8. Audit-write failure (injected): mutation returns an error **and** the tuples are still
    present via `_fga_read_tuples` — the documented no-compensation contract.
 9. `auth_mode` recorded correctly for both header-secret and admin-session auth.
+10. **SCIM group member add/remove** emits rows with `ActorType: service_account` and the
+    endpoint id as `ActorID`.
+11. **SCIM group delete** with a failing audit write still deletes the group — the
+    non-fatal contract of §2.0, not §1.2.
+12. **`DeleteUser`** emits a `purgeFgaTuplesForUser` row keyed `user:<id>` listing the
+    destroyed tuples.
+13. **Claim 2 lanes:** role change records old and new roles; `RemoveOrgMember` records
+    `{org_id, user_id, roles}`; SCIM deactivate records the `RevokedTimestamp` transition.
+14. **Redaction:** a user snapshot contains no password hash; the allow-list guard test
+    fails when a new schema field is added without a decision.
+15. **Serialize-before-mutate:** a role change produces `before != after` — the regression
+    test for the in-place-mutation trap.
 
 **Storage** (`internal/storage/`): `resource_id`, `resource_type` and timestamp-range
 filters return correct results on every backend — the Phase 0 regression test.
+
+**Static:** the §2.0.1 guard test over `AuthzEngine` mutation call sites.
 
 **Concurrency:** a unit-level test of the `expected_after` comparison with a synthetic
 divergent after-set; a genuine race is not reliably reproducible in CI.
@@ -318,16 +451,21 @@ and `make lint`.
 
 ## Rollout
 
-Four PRs, each on its own feature branch, never to `main`:
+Six PRs, each on its own feature branch, never to `main`:
 
-1. `fix/audit-log-filter-parity` — Phase 0.
-2. `feat/audit-sync-and-actor-mode` — Phase 1.
-3. `feat/fga-change-snapshots` — Phase 2 + Phase 3.
-4. Docs: the `_audit_logs` metadata shape, the no-compensation error contract, and the
+1. `fix/audit-log-filter-parity` — Phase 0. **Independent of everything else** — it is a
+   standalone bug (the API advertises filters two backends ignore) and ships first rather
+   than waiting on this design.
+2. `feat/audit-sync-and-actor-mode` — Phase 1, including the SCIM `AuditProvider` wiring.
+3. `feat/fga-change-evidence` — Phase 2, all 8 sites + the static guard test.
+4. `feat/roles-membership-evidence` — Phase 2b.
+5. Tests land with their phase; Phase 3 enumerates them in one place, it is not a
+   separate PR.
+6. Docs: the `_audit_logs` metadata shape, the no-compensation error contract, and the
    stated limitation that super-admin actions are not attributable to a person.
 
-`security-engineer` reviews PRs 2 and 3 — both touch admin auth context and audit
-integrity.
+`security-engineer` reviews PRs 2, 3 and 4 — admin auth context, audit integrity, and the
+redaction allow-list.
 
 Per the established rollout order, after the server ships: dashboard (render the
 before/after diff on the audit log page), SDKs, then the docs site.
@@ -339,5 +477,13 @@ before/after diff on the audit log page), SDKs, then the docs site.
 - **Write amplification.** Up to 20 synchronous inserts for one multi-object mutation.
   Bounded by the fan-out cap, but it makes admin FGA writes measurably slower. Acceptable
   for an admin-only path.
+- **The audit table becomes a hard dependency of admin authorization changes.**
+  Synchronous writes mean an audit-table outage fails those mutations. In every default
+  deployment it is the same database the mutation already wrote to, so the added exposure
+  is small — but it is real, and it is the direct cost of decision 4.
+- **Deferred surfaces stay unevidenced.** Clients, trusted issuers, org connections, SCIM
+  endpoints, domains and SAML IdP keys (~22 sites) keep today's partial records. The
+  two-claim framing must be stated plainly in the docs so nobody reads "authorization
+  changes are audited" more broadly than it is true.
 - **Super-admin remains unattributable.** This spec records *that* it was a shared secret,
   not *who* held it. Genuinely closing this needs named admin accounts.
