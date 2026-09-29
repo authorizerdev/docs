@@ -1,7 +1,7 @@
 # Authorization Change Evidence — Design
 
 **Date:** 2026-09-28
-**Status:** Design, awaiting review
+**Status:** Design approved; Phase 0 implemented
 **Scope:** Two defensible claims — every FGA tuple change, and every change to a user's
 roles or org membership (see Locked decisions 1)
 **Repo:** `authorizerdev/authorizer` (server)
@@ -98,8 +98,14 @@ filters the GraphQL API advertises and silently ignore them:
 | Backend | `action` | `actor_id` | `resource_type` | `resource_id` | `from`/`to_timestamp` |
 |---|---|---|---|---|---|
 | SQL, MongoDB, ArangoDB, DynamoDB | yes | yes | yes | yes | yes |
-| Couchbase | yes | yes | yes | yes | **ignored** |
+| Couchbase | yes | yes | **ignored** | **ignored** | **ignored** |
 | Cassandra/ScyllaDB | yes | yes | **ignored** | **ignored** | **ignored** |
+
+Both broken backends drop the same four filters. (An earlier revision of this table
+credited Couchbase with `resource_type`/`resource_id` — that was a misreading of its
+SELECT column list; its `WHERE` builder only ever handled `action` and `actor_id`.
+Confirmed by running the Phase 0 tests against Couchbase before the fix: all three new
+subtests failed.)
 
 Cassandra: `internal/storage/db/cassandradb/audit_log.go:39-61`.
 
@@ -113,7 +119,7 @@ Cassandra: `internal/storage/db/cassandradb/audit_log.go:39-61`.
   for the range predicate only, with a `ponytail:` comment naming the materialized-view
   upgrade path. This is an admin-only, rare query; a full scan is acceptable until it is
   measurably not.
-- Couchbase: apply `from_timestamp` / `to_timestamp` in the N1QL predicate.
+- Couchbase: apply all four missing filters in the N1QL predicate as named parameters.
 
 **Verification.** Storage-layer change, so per `AGENTS.md` step 4 SQLite alone is
 insufficient: `make test-scylladb` and `make test-couchbase` must both pass.
