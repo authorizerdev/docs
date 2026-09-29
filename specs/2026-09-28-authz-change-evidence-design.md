@@ -1,7 +1,7 @@
 # Authorization Change Evidence — Design
 
 **Date:** 2026-09-28
-**Status:** Design approved; Phase 0 implemented
+**Status:** Design approved; Phase 0 shipped (authorizerdev/authorizer#802). Phases 1-3 pending review of this spec.
 **Scope:** Two defensible claims — every FGA tuple change, and every change to a user's
 roles or org membership (see Locked decisions 1)
 **Repo:** `authorizerdev/authorizer` (server)
@@ -105,7 +105,16 @@ Both broken backends drop the same four filters. (An earlier revision of this ta
 credited Couchbase with `resource_type`/`resource_id` — that was a misreading of its
 SELECT column list; its `WHERE` builder only ever handled `action` and `actor_id`.
 Confirmed by running the Phase 0 tests against Couchbase before the fix: all three new
-subtests failed.)
+subtests failed. The four "yes" rows are likewise verified by running the tests against
+MongoDB, ArangoDB and DynamoDB, not by reading the code.)
+
+A **second bug** surfaced while fixing this: on Scylla, two indexed equalities with no
+`ALLOW FILTERING` are rejected outright, which is the query the pre-fix builder emitted.
+So `_audit_logs(action:, actor_id:)` — the one combination Cassandra was believed to
+support — already errored. No test combined two filters, and the audit integration tests
+(`admin_audit_rest_test.go`, `admin_audit_grpc_test.go`) only ever pass `action`. That
+absence is the root cause of both bugs, and is why Phase 3 asserts filter behaviour at the
+storage layer across every backend rather than once over SQLite.
 
 Cassandra: `internal/storage/db/cassandradb/audit_log.go:39-61`.
 
