@@ -205,9 +205,23 @@ Record what the system already knows; invent no new identity model.
 - Add `AuthMode string` to `authctx.Principal` (`internal/authctx/principal.go:42`),
   values `"admin_session"` or `"shared_secret"`. Set it at
   `internal/grpcsrv/interceptors/auth.go:138-139`, which today constructs
-  `Principal{IsSuperAdmin: true}` and nothing else. Derive the same value through the gin
-  shim on the GraphQL/REST path.
+  `Principal{IsSuperAdmin: true}` and nothing else. **Done in Phase 1** (`c1ab4c3a`).
 - Emit it as `auth_mode` in the event metadata.
+
+  > **Phase 2 precondition — do NOT read `Principal.AuthMode` directly.**
+  >
+  > The gRPC interceptor is the *only* writer of `Principal`
+  > (`grpcsrv/interceptors/auth.go:182`). GraphQL and `http_handlers/playground.go`
+  > construct no `Principal` at all — which is precisely why `requireSuperAdmin`
+  > (`service/admin_provider.go:146-155`) and `service/fga.go:122-125` fall back to
+  > `TokenProvider.IsSuperAdmin(gc)`.
+  >
+  > So a Phase 2 that reads `Principal.AuthMode` records `auth_mode: ""` for a
+  > super-admin acting from the **dashboard** — the most common admin path, and the
+  > one most worth evidencing. Derive the mode at the service gate via
+  > `TokenProvider.AdminAuthMode(gc)`, treating `Principal.AuthMode` as the gRPC
+  > fast path only. Found by the Phase 1 whole-branch review; recorded here because
+  > Phase 1 itself has no consumer and so could not fail a test on it.
 - **Never record the admin session id.** `GetAdminAuthToken` returns a live bearer
   credential and the dashboard renders this table. If per-session correlation is ever
   needed, store a non-reversible hash — not in this spec.
