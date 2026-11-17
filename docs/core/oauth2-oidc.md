@@ -527,6 +527,42 @@ Error responses (e.g. `login_required` from `prompt=none`) are delivered via the
 
 For `form_post`, Authorizer serves the auto-submitting form with a dedicated `Content-Security-Policy` (nonce-based `script-src`, relaxed `form-action`) so the browser allows the form to POST to the RP's `redirect_uri`. If a reverse proxy in front of Authorizer injects its own CSP header, it can break `form_post` — see [Common Issues](#common-issues).
 
+#### Social login inside an authorization request
+
+_Authorizer 2.4.6 and later._
+
+When `/authorize` needs the user to sign in, it sends the browser to the login page at `/app`. If the user picks a social provider (Google, GitHub, …), that login **resumes the original authorization request** instead of finishing on its own:
+
+```
+client ──► /authorize ──► /app ──► /oauth_login/github ──► GitHub
+                                                              │
+client ◄── /authorize ◄── /app ◄── /oauth_callback/github ◄───┘
+  (code)   (checks redirect_uri,     (session cookie only —
+            consent, PKCE)            no code, nothing appended)
+```
+
+1. The login page calls `/oauth_login/<provider>` with `redirect_uri` set to **its own `/app` URL**, carrying the original `/authorize` parameters in the query string.
+2. The provider returns to `/oauth_callback/<provider>`, which signs the user in (sets the session cookie) and redirects to that `/app` URL **unchanged**. It does not issue an authorization code and does not append `state`, `nonce` or `code`.
+3. `/app` sees the session and replays the request to `/authorize`. `/authorize` then checks `redirect_uri` against the **client's registered redirect URIs**, shows the consent screen if the client requires it, binds PKCE, and redirects to the client with the code.
+
+This is the same path password, passkey and OTP login already take, and it is how Auth0 and other providers treat social connections: the provider always returns to the authorization server, and only `/authorize` redirects to the application. It means:
+
+- **A client's callback does not have to be in `--allowed-origins`.** A client registered with `https://app.example.org/callback` completes social login with `--allowed-origins` listing only your own console. Do not add client origins to `--allowed-origins` to make social login work: that list also drives CORS, the CSRF origin check and the email-link redirects, for every client.
+- **Self-registered and CIMD clients always get the consent screen**, including through social login.
+- **The client's `nonce` reaches the ID token**, because the callback appends nothing for `/app` to forward.
+
+**What `/oauth_login` accepts as `redirect_uri`:** this server's own `/app` or `/app/signup` (same scheme and host:port as `--url`, exact path, no fragment), or any URI allowed by `--allowed-origins`. Nothing else, and in particular not a client's registered callback.
+
+##### Compatibility
+
+| You use | What to do |
+|---|---|
+| The hosted login page (`/app`) | Nothing. From 2.4.6 the bundled login page sends its own `/app` URL, so social login resumes through `/authorize`. The page is built into the same image as the server, so the two always match |
+| A custom login UI that serves the `/authorize` flow | Send `redirect_uri` = your login page's own `/app` URL with the `/authorize` parameters in the **query string**, then replay to `/authorize` once the session exists. Parameters in the URL fragment are refused, because a server redirect cannot carry them |
+| `/oauth_login` directly, outside `/authorize` (mobile apps, a "Sign in with GitHub" link on your own site) | Nothing. Validation against `--allowed-origins` is unchanged, and the callback still appends `state` (and `code` when one exists) to your `redirect_uri` |
+
+**Deprecated:** completing an `/authorize` request by sending `redirect_uri` = the client's callback straight to `/oauth_login`. This was the only option before 2.4.6. It still works when that callback's origin is in `--allowed-origins`, but it skips the consent screen, and the server logs a warning (`social login completed an /authorize request without resuming through /authorize`) each time it is used. A future release will refuse it, with a note in the changelog. If you see that warning, move the login UI to the `/app` URL as described above.
+
 ### Token Endpoint
 
 **Endpoint:** `POST /oauth/token`
@@ -1046,6 +1082,8 @@ For pre-production validation, run a full OIDC conformance suite:
 | Back-channel logout never fires                   | `--backchannel-logout-uri` not set, or receiver unreachable within 5 seconds                       |
 | Auth0 Enterprise OIDC connection can't discover   | Wrong Issuer URL — must be exactly `https://your-authorizer.example` (no trailing slash, no path)  |
 | `redirect_uri` rejected                           | Not in `--allowed-origins`. The debug-level log message names the exact URI that was rejected      |
+| Social login returns `{"error":"invalid redirect uri"}` for a client whose callback is on another origin, while password login works | Before 2.4.6, `/oauth_login` checked the client's callback against `--allowed-origins`. Upgrade to 2.4.6 or later, where social login returns to `/app` and `/authorize` checks the client's registered redirect URIs — see [Social login inside an authorization request](#social-login-inside-an-authorization-request). Don't add the client's origin to `--allowed-origins` as a workaround |
+| Server logs `social login completed an /authorize request without resuming through /authorize` | A login UI is sending the client's callback straight to `/oauth_login` — a deprecated path that skips consent. Point it at its own `/app` URL instead (see the same section) |
 | RP reports "unexpected ID Token nonce claim value" | The `nonce` sent to `/authorize` didn't round-trip into the ID token. A custom login UI must forward `nonce` (and the PKCE params) back to `/authorize` after authentication |
 | `form_post` blocked: "sending form data violates Content Security Policy" | A reverse proxy in front of Authorizer is injecting its own CSP header, overriding the `form_post` CSP Authorizer sets |
 
