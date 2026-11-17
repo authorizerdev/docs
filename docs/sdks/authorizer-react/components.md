@@ -214,6 +214,71 @@ const LoginPage = () => {
 }
 ```
 
+### Where the user lands after social login
+
+The button sends a `redirect_uri` to `/oauth_login`, and the user comes back there after the provider. Which one it sends depends on where the component is rendered:
+
+| Rendered on | `redirect_uri` sent | Then |
+|---|---|---|
+| Your own site (`https://myapp.example.com/login`) | `urlProps.redirect_uri` (or `redirectURL`), else `redirectURL` from `AuthorizerProvider` | The user returns to that URL. Its origin must be in the server's `--allowed-origins` |
+| Authorizer's login page (`/app/` or `/app/signup`), opened by `/authorize`. _2.2.1 and later, needs Authorizer 2.4.6+_ | The page's own URL, with the `/authorize` parameters in the query string. `urlProps.redirect_uri` is ignored here, because it's the client's callback | `/app` resumes the request through `/authorize`, which checks the client's registered callback, shows consent if needed, and sends the code |
+| Authorizer's login page with no `/authorize` request | `redirectURL` from `AuthorizerProvider` (`/app`) | The user is signed in on `/app` |
+
+The second row needs no code: the hosted login page gets it by upgrading Authorizer, since the page and the server ship in the same image. It only switches on when the page is served from the same origin as `authorizerURL` and its URL carries both `client_id` and `response_type`, so a login page on your own site never changes behaviour. See [Social login inside an authorization request](../../core/oauth2-oidc#social-login-inside-an-authorization-request) for the full flow.
+
+#### Example: social login on your own site
+
+```jsx
+import {
+  AuthorizerProvider,
+  AuthorizerSocialLogin,
+} from '@authorizerdev/authorizer-react'
+
+// Server: --allowed-origins=https://myapp.example.com
+const App = () => (
+  <AuthorizerProvider
+    config={{
+      authorizerURL: 'https://auth.example.com',
+      redirectURL: 'https://myapp.example.com/dashboard',
+      clientID: 'YOUR_CLIENT_ID',
+    }}
+  >
+    {/* Returns to https://myapp.example.com/dashboard after GitHub/Google/… */}
+    <AuthorizerSocialLogin />
+  </AuthorizerProvider>
+)
+```
+
+#### Example: a different landing page per screen
+
+```jsx
+// Send users who sign in from the pricing page back to checkout.
+<AuthorizerSocialLogin
+  urlProps={{
+    state: crypto.randomUUID(),
+    scope: ['openid', 'profile', 'email'],
+    redirect_uri: 'https://myapp.example.com/checkout',
+  }}
+/>
+```
+
+#### Example: Authorizer's own login page during an authorization request
+
+Nothing to configure. When `/authorize` opens the login page as
+
+```
+https://auth.example.com/app/?client_id=c1&response_type=code&redirect_uri=https://app.example.org/callback&state=st-123&nonce=n-456&…
+```
+
+the GitHub button navigates to
+
+```
+https://auth.example.com/oauth_login/github?state=st-123&scope=openid%20profile%20email
+  &redirect_uri=https%3A%2F%2Fauth.example.com%2Fapp%2F%3Fclient_id%3Dc1%26response_type%3Dcode%26…
+```
+
+and the code reaches `https://app.example.org/callback` through `/authorize`, even though that origin isn't in `--allowed-origins`. With `response_mode=fragment` (`/app/#client_id=…`), the parameters move into the query string, because a server redirect can't carry a fragment.
+
 ## `AuthorizerPasskeyLogin`
 
 Renders a "Sign in with a passkey" button that performs a passwordless, usernameless (discoverable-credential) WebAuthn login. Unlike social login, there is no backend config flag for this — it renders purely based on browser support (`isWebauthnSupported()`), and renders nothing when the browser can't do WebAuthn or when the org enforces MFA (`config.is_mfa_enforced`), since passkey-as-sole-factor would let a user skip a required second factor. Make sure this is used as Child of `AuthorizerProvider`.
