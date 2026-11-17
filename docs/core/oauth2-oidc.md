@@ -551,14 +551,115 @@ This is the same path password, passkey and OTP login already take, and it is ho
 - **Self-registered and CIMD clients always get the consent screen**, including through social login.
 - **The client's `nonce` reaches the ID token**, because the callback appends nothing for `/app` to forward.
 
-**What `/oauth_login` accepts as `redirect_uri`:** this server's own `/app` or `/app/signup` (same scheme and host:port as `--url`, exact path, no fragment), or any URI allowed by `--allowed-origins`. Nothing else, and in particular not a client's registered callback.
+**What `/oauth_login` accepts as `redirect_uri`:** this server's own `/app`, `/app/` or `/app/signup` (same scheme and host:port as `--url`, exact path, no fragment), or any URI allowed by `--allowed-origins`. Nothing else, and in particular not a client's registered callback.
+
+| `redirect_uri` sent to `/oauth_login` (server `--url=https://auth.example.com`, `--allowed-origins=https://console.example.com`) | Result |
+|---|---|
+| `https://auth.example.com/app/?client_id=…&response_type=code&…` | Accepted: resumes through `/authorize`. This is the URL the login page is on: `/app` 301-redirects to `/app/` |
+| `https://auth.example.com/app?client_id=…&response_type=code&…` | Accepted: same |
+| `https://auth.example.com/app/signup?client_id=…&…` | Accepted: same, from the signup screen |
+| `https://console.example.com/dashboard` | Accepted: allowed origin, direct redirect |
+| `https://app.example.org/callback` (a client's registered callback) | `400 invalid redirect uri`. Go through `/authorize` instead |
+| `https://auth.example.com/app#client_id=…` | `400`: fragment |
+| `https://auth.example.com/graphql`, `/app/settings` | `400`: only `/app`, `/app/` and `/app/signup` |
+| `http://auth.example.com/app?…` | `400`: scheme differs from `--url` |
+
+##### Example: the full round trip
+
+A client `c1` is registered with the callback `https://app.example.org/callback`, and the server runs with `--url=https://auth.example.com --allowed-origins=https://console.example.com`. The client's callback is not in `--allowed-origins`, and doesn't need to be. These are the requests the browser makes (line breaks added; values URL-encoded in practice):
+
+```http
+# 1. The client starts an authorization request. No session yet, so the user is sent to the login page.
+GET https://auth.example.com/authorize?client_id=c1&response_type=code&response_mode=query
+      &redirect_uri=https://app.example.org/callback&scope=openid profile email
+      &state=st-123&nonce=n-456&code_challenge=E9Mel…&code_challenge_method=S256
+→ 302 Location: /app?state=st-123&scope=openid profile email&redirect_uri=https://app.example.org/callback
+      &response_mode=query&response_type=code&client_id=c1&nonce=n-456&code_challenge=E9Mel…&code_challenge_method=S256&…
+
+GET https://auth.example.com/app?state=st-123&…
+→ 301 Location: /app/?state=st-123&…      # the login page renders at /app/
+
+# 2. The user clicks "Continue with GitHub". redirect_uri is the login page's own URL, not the client's callback.
+GET https://auth.example.com/oauth_login/github?state=st-123&scope=openid profile email
+      &redirect_uri=https://auth.example.com/app/?state=st-123&…&client_id=c1&nonce=n-456&…
+→ 307 Location: https://github.com/login/oauth/authorize?client_id=…&state=<opaque handle>
+
+# 3. GitHub returns. The callback signs the user in and goes back to the login page URL, byte for byte.
+GET https://auth.example.com/oauth_callback/github?code=<github code>&state=<opaque handle>
+→ 302 Location: https://auth.example.com/app/?state=st-123&…&client_id=c1&nonce=n-456&…
+      Set-Cookie: cookie_session=…
+
+# 4. /app has a session now, so it replays the original request to /authorize.
+GET https://auth.example.com/authorize?client_id=c1&response_type=code&…&state=st-123&nonce=n-456&…
+→ 302 Location: https://app.example.org/callback?code=<authorization code>&state=st-123
+      (or the consent screen first, for a self-registered or CIMD client)
+
+# 5. The client redeems the code as usual.
+POST https://auth.example.com/oauth/token
+     grant_type=authorization_code&code=<authorization code>&client_id=c1
+     &redirect_uri=https://app.example.org/callback&code_verifier=<verifier>
+→ 200 {"access_token": "…", "id_token": "…", …}   # id_token "nonce" is n-456
+```
+
+Note that steps 3 and 4 never put a code in a URL that `/authorize` didn't produce, and the client only ever sees step 4's redirect.
+
+##### Example: a customised login page
+
+The hosted login page does all of this already. If you ship your own build of the login page (served by Authorizer at `/app`), its social buttons need two things. Here they are in plain JavaScript:
+
+```js
+// The /authorize parameters this page was opened with. /authorize puts them in
+// the fragment when response_mode=fragment, so read both; the query wins.
+function authorizeParams() {
+  const params = new URLSearchParams(window.location.hash.slice(1));
+  new URLSearchParams(window.location.search).forEach((v, k) => params.set(k, v));
+  return params;
+}
+
+// 1. Social buttons: come back to this page, with the parameters in the QUERY
+//    string (a fragment is refused, because a server redirect can't carry it).
+function socialLoginURL(provider) {
+  const params = authorizeParams();
+  const back = `${window.location.origin}${window.location.pathname}?${params}`;
+  const query = new URLSearchParams({
+    redirect_uri: back, // never the client's callback
+    state: params.get('state') ?? '',
+    scope: params.get('scope') ?? 'openid profile email',
+  });
+  return `/oauth_login/${provider}?${query}`;
+}
+
+// 2. Once a session exists (after any login method), replay to /authorize.
+//    It checks the client's redirect_uri, runs consent and PKCE, and issues the code.
+function resumeAuthorize() {
+  const params = authorizeParams();
+  if (params.get('client_id') && params.get('response_type')) {
+    window.location.replace(`/authorize?${params}`);
+  }
+}
+
+document.querySelector('#github').onclick = () => {
+  window.location.href = socialLoginURL('github');
+};
+```
+
+##### Example: updating an older login page
+
+If the server logs `social login completed an /authorize request without resuming through /authorize`, the login page is still sending the client's callback. The change is one parameter:
+
+```diff
+- /oauth_login/github?state=st-123&redirect_uri=https://app.example.org/callback
++ /oauth_login/github?state=st-123&redirect_uri=https://auth.example.com/app/?client_id=c1&response_type=code&redirect_uri=https://app.example.org/callback&state=st-123&nonce=n-456&…
+```
+
+The login page also needs to replay the request to `/authorize` once the session exists (`resumeAuthorize()` above). Password login on such a page usually does this already.
 
 ##### Compatibility
 
 | You use | What to do |
 |---|---|
 | The hosted login page (`/app`) | Nothing. From 2.4.6 the bundled login page sends its own `/app` URL, so social login resumes through `/authorize`. The page is built into the same image as the server, so the two always match |
-| A custom login UI that serves the `/authorize` flow | Send `redirect_uri` = your login page's own `/app` URL with the `/authorize` parameters in the **query string**, then replay to `/authorize` once the session exists. Parameters in the URL fragment are refused, because a server redirect cannot carry them |
+| Your own build of the login page, served by Authorizer at `/app` | Send `redirect_uri` = the page's own `/app` URL with the `/authorize` parameters in the **query string**, then replay to `/authorize` once the session exists ([example](#example-a-customised-login-page)). If it's built on `@authorizerdev/authorizer-react`, `AuthorizerSocialLogin` does this from 2.2.1 |
 | `/oauth_login` directly, outside `/authorize` (mobile apps, a "Sign in with GitHub" link on your own site) | Nothing. Validation against `--allowed-origins` is unchanged, and the callback still appends `state` (and `code` when one exists) to your `redirect_uri` |
 
 **Deprecated:** completing an `/authorize` request by sending `redirect_uri` = the client's callback straight to `/oauth_login`. This was the only option before 2.4.6. It still works when that callback's origin is in `--allowed-origins`, but it skips the consent screen, and the server logs a warning (`social login completed an /authorize request without resuming through /authorize`) each time it is used. A future release will refuse it, with a note in the changelog. If you see that warning, move the login UI to the `/app` URL as described above.
@@ -1056,8 +1157,14 @@ HTTPServer(('127.0.0.1', 9999), H).serve_forever()
 1. Register the provider on its console (Google, GitHub, etc.), using `$AUTHORIZER_URL/oauth_callback/<provider>` as the callback
 2. Configure the provider in Authorizer: `--google-client-id`, `--google-client-secret`, etc.
 3. Restart Authorizer — the login page auto-shows the new button
-4. Test: visit `$AUTHORIZER_URL/oauth_login/google?redirectURL=http://localhost:3000/callback&state=$STATE`
+4. Test: visit `$AUTHORIZER_URL/oauth_login/google?redirect_uri=http://localhost:3000/callback&state=$STATE`
 5. Verify the resulting ID token has `amr: ["fed"]` (federated authentication)
+6. Test social login inside an authorization request (2.4.6+): open the authorization-code URL from [step 3](#3-authorization-code--pkce-end-to-end) in a browser, choose the provider on the login page, and check that:
+   - the `/oauth_login` request's `redirect_uri` is `$AUTHORIZER_URL/app?…`, not your callback (browser dev tools, Network tab);
+   - you land on your callback with `?code=…&state=…`, after the consent screen for a self-registered client;
+   - the ID token from `/oauth/token` carries the `nonce` you sent.
+
+   See [the full round trip](#example-the-full-round-trip) for the expected requests.
 
 ### 10. Automated conformance testing
 
