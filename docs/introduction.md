@@ -98,7 +98,7 @@ Authorizer supports a wide range of databases:
 - PostgreSQL, MySQL, MariaDB, SQLite, libSQL / Turso, SQL Server
 - MongoDB, ArangoDB, Couchbase
 - CassandraDB, ScyllaDB, DynamoDB
-- Yugabyte, PlanetScale, CockroachDB
+- Yugabyte, PlanetScale, CockroachDB, SereneDB
 
 See [Databases](./core/databases) for connection string formats.
 
