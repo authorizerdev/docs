@@ -24,8 +24,18 @@ Authorizer v2 configures the database via CLI flags. The required flags are `--d
 - [CockroachDB](https://www.cockroachlabs.com)
 
   ```bash
-  --database-type=postgres --database-url="postgres://username:password@localhost:5432/postgres"
+  --database-type=cockroachdb --database-url="postgres://username:password@localhost:26257/defaultdb"
   ```
+
+  > Use `--database-type=cockroachdb`, not `postgres`: CockroachDB speaks the PostgreSQL wire protocol, but Authorizer needs to know it is CockroachDB to migrate its schema correctly.
+
+- [SereneDB](https://www.serenedb.com/) (since v2.4.7)
+
+  ```bash
+  --database-type=serenedb --database-url="postgres://postgres:password@localhost:7890/postgres"
+  ```
+
+  > SereneDB speaks the PostgreSQL wire protocol (default port `7890`). Use SereneDB **26.11 or later**; Authorizer is tested against 26.11.2. Authorizer creates and upgrades its tables with its own versioned migrations, recorded in the `authorizer_schema_migrations` table, instead of the automatic migration it uses on other SQL databases. SereneDB is not an OpenFGA datastore, so to use [fine-grained authorization](./authorization) pass an explicit `--fga-store`.
 
 - [MySQL](https://www.mysql.com/)
 
