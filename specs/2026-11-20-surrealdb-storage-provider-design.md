@@ -1,6 +1,6 @@
 # SurrealDB storage provider — design
 
-**Status:** proposed, for review · **Target:** Authorizer 2.5.0, alongside the `kid` header fix (authorizerdev/authorizer#904) and the SurrealDB integration guide (authorizerdev/docs#99)
+**Status:** accepted · **Target:** Authorizer 2.5.0, alongside the `kid` header fix (authorizerdev/authorizer#904) and the SurrealDB integration guide (authorizerdev/docs#99)
 
 ## Goal
 
@@ -42,7 +42,7 @@ The last four rows drive most of the design.
 --surrealdb-namespace=authorizer                 # new flag, default "authorizer"
 ```
 
-- **Namespace:** SurrealDB has namespace *and* database; Authorizer has one `--database-name`. A dedicated `--surrealdb-namespace` flag follows the existing per-backend precedent (`--couchbase-bucket`, `--couchbase-scope`). *Decision for review.*
+- **Namespace:** SurrealDB has namespace *and* database; Authorizer has one `--database-name`. A dedicated `--surrealdb-namespace` flag follows the existing per-backend precedent (`--couchbase-bucket`, `--couchbase-scope`).
 - **Engine:** the SDK picks HTTP or WebSocket from the URL. Both passed the probes. **HTTP is recommended**: it is stateless, so there is no session to restore after a dropped connection; WebSocket reconnection with session restore lives in the SDK's `contrib/rews`, which is outside its compatibility guarantee. Both are accepted.
 - **Credentials:** a root, namespace or database user. The provider signs in once and lets the SDK renew the token.
 - **Minimum version:** SurrealDB 4.0 (tested on 4.0.1). The SDK supports 3.3+, but nothing below 4.0 is tested.
@@ -120,8 +120,8 @@ Each step lands with its tests passing on SurrealDB before the next.
 - **Message-based error classification** (duplicate key, conflict): pinned by tests, but brittle across SurrealDB versions — another reason to pin the tested server version in docs.
 - **`count()` over large tables** for pagination totals is a full scan; same as several existing backends, but worth noting for very large audit-log tables.
 
-## Decisions for review
+## Decisions (resolved 2026-11-20)
 
-1. `--surrealdb-namespace` flag (default `authorizer`) vs. reusing `--database-name` for both namespace and database.
-2. Recommend HTTP over WebSocket.
-3. Minimum supported SurrealDB: 4.0.
+1. **Namespace:** new `--surrealdb-namespace` flag, default `authorizer`; `--database-name` is the SurrealDB database.
+2. **Engine:** docs recommend HTTP(S); WebSocket URLs are still accepted.
+3. **Minimum SurrealDB:** 4.0, tested on 4.0.1.
