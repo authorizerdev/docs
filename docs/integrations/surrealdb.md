@@ -11,6 +11,10 @@ title: SurrealDB
 SurrealDB selects the verification key by the token's `kid` header. Authorizer adds a `kid` to every RS256/ES256 token from v2.5.0. With an earlier version every request to SurrealDB fails with `Missing token header 'kid'`.
 :::
 
+## Using SurrealDB as Authorizer's database too
+
+Authorizer can also keep its own data — users, sessions, clients, organizations — in SurrealDB with `--database-type=surrealdb` (see [Databases](../core/databases)). Point both at the same SurrealDB and your identities, auth data and application data live in one database, backed up together. Authorizer's tables use the `authorizer_` prefix, so they sit alongside yours.
+
 ## How it works
 
 1. The user signs in with Authorizer and receives an access token.

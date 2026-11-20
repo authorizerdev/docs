@@ -37,6 +37,19 @@ Authorizer v2 configures the database via CLI flags. The required flags are `--d
 
   > SereneDB speaks the PostgreSQL wire protocol (default port `7890`). Use SereneDB **26.11 or later**; Authorizer is tested against 26.11.2. Authorizer creates and upgrades its tables with its own versioned migrations, recorded in the `authorizer_schema_migrations` table, instead of the automatic migration it uses on other SQL databases. SereneDB is not an OpenFGA datastore, so to use [fine-grained authorization](./authorization) pass an explicit `--fga-store`.
 
+- [SurrealDB](https://surrealdb.com/) (since v2.5.0)
+
+  ```bash
+  --database-type=surrealdb \
+  --database-url="https://surreal.example.com" \
+  --database-username="authorizer" \
+  --database-password="*********" \
+  --database-name=authorizer \
+  --surrealdb-namespace=authorizer
+  ```
+
+  > Use SurrealDB **4.0 or later**; Authorizer is tested against 4.0.1. Prefer an `http(s)://` URL: it is stateless, so there is nothing to restore after a dropped connection (`ws(s)://` is also accepted). `--database-name` is the SurrealDB database and `--surrealdb-namespace` (default `authorizer`) its namespace; both are created on first start when the credentials allow it. The credentials can be a root, namespace or database user. Authorizer creates its tables and indexes with its own versioned migrations, recorded in the `authorizer_schema_migrations` table. SurrealDB is not an OpenFGA datastore, so to use [fine-grained authorization](./authorization) pass an explicit `--fga-store`. To let SurrealDB verify Authorizer's tokens for your own tables, see [SurrealDB integration](../integrations/surrealdb).
+
 - [MySQL](https://www.mysql.com/)
 
   ```bash

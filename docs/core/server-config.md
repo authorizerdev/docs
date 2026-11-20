@@ -48,8 +48,9 @@ If you are migrating from v1, first skim the high-level [Migration v1 to v2](../
 
 Key flags:
 
-- **`--database-type`**: `postgres`, `yugabyte`, `cockroachdb`, `serenedb`, `mysql`, `mariadb`, `planetscale`, `sqlite`, `libsql`, `sqlserver`, `mongodb`, `arangodb`, `cassandradb`, `scylladb`, `couchbase`, `dynamodb`
+- **`--database-type`**: `postgres`, `yugabyte`, `cockroachdb`, `serenedb`, `surrealdb`, `mysql`, `mariadb`, `planetscale`, `sqlite`, `libsql`, `sqlserver`, `mongodb`, `arangodb`, `cassandradb`, `scylladb`, `couchbase`, `dynamodb`
 - **`--database-url`**: connection string.
+- **`--surrealdb-namespace`**: SurrealDB namespace that holds `--database-name` (default `authorizer`). SurrealDB only.
 - Optional per-driver flags (name, host, port, TLS certs, etc.) -- see the mapping table in [Migration v1 to v2](../migration/v1-to-v2#database).
 
 ### Session / cache
