@@ -48,7 +48,7 @@ If you are migrating from v1, first skim the high-level [Migration v1 to v2](../
 
 Key flags:
 
-- **`--database-type`**: `postgres`, `mysql`, `planetscale`, `sqlite`, `sqlserver`, `mongodb`, `arangodb`, `yugabyte`, `mariadb`, `cassandradb`, `scylladb`, `couchbase`, `dynamodb`, etc.
+- **`--database-type`**: `postgres`, `yugabyte`, `cockroachdb`, `serenedb`, `mysql`, `mariadb`, `planetscale`, `sqlite`, `libsql`, `sqlserver`, `mongodb`, `arangodb`, `cassandradb`, `scylladb`, `couchbase`, `dynamodb`
 - **`--database-url`**: connection string.
 - Optional per-driver flags (name, host, port, TLS certs, etc.) -- see the mapping table in [Migration v1 to v2](../migration/v1-to-v2#database).
 
