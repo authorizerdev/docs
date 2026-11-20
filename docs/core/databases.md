@@ -28,6 +28,8 @@ Authorizer v2 configures the database via CLI flags. The required flags are `--d
   ```
 
   > Use `--database-type=cockroachdb`, not `postgres`: CockroachDB speaks the PostgreSQL wire protocol, but Authorizer needs to know it is CockroachDB to migrate its schema correctly.
+  >
+  > **Already running with `--database-type=postgres`?** Before v2.4.7 these docs showed `postgres` for CockroachDB. That configuration starts once, but every restart fails with `constraint "uni_authorizer_oauth_states_state_key" ... does not exist (SQLSTATE 42704)` and `failed to create storage provider`. Change the flag to `--database-type=cockroachdb` and start again: the existing schema and data are kept, and later restarts work.
 
 - [SereneDB](https://www.serenedb.com/) (since v2.4.7)
 
