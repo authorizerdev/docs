@@ -12,7 +12,7 @@ Setup: `make dev` (SQLite, embedded dev keys) unless a phase says otherwise. Not
 - [ ] Existing login (email+password, authorization_code+PKCE) completes; access token issued.
 - [ ] Decode the access token: `aud` == the deployment's `Config.ClientID` (BC1). **Edge:** a token issued *before* the upgrade still validates after it (no forced re-login).
 - [ ] Existing browser session cookie still decrypts after upgrade (BC2). **Edge:** rotate the *client's* stored secret via the new admin API → existing sessions still decrypt (cookie key not coupled).
-- [ ] `GET /.well-known/openid-configuration` — same issuer/endpoints; `grant_types_supported` now additionally lists `client_credentials`. JWKS shape unchanged; `kid` == `Config.ClientID`.
+- [ ] `GET /.well-known/openid-configuration` — same issuer/endpoints; `grant_types_supported` now additionally lists `client_credentials`. JWKS shape unchanged; each `kid` is the key's RFC 7638 thumbprint (since v2.5.0; it was `Config.ClientID` before) and matches the `kid` header of issued tokens.
 - [ ] `POST /oauth/introspect` for a live token → `active: true`, `client_id` == `Config.ClientID`, same fields as before.
 - [ ] `POST /oauth/revoke` with a valid refresh token → `200 {}`; token no longer works. **Edge:** revoke with a garbage token → still `200 {}` (no oracle).
 - [ ] `/graphql` with **no** `X-Authorizer-Client-ID` header still works (back-compat allowance).

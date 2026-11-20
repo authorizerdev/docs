@@ -862,7 +862,7 @@ Public signing keys for JWT verification. Supports RSA (`RS256/384/512`), ECDSA 
     {
       "kty": "RSA",
       "use": "sig",
-      "kid": "your-client-id",
+      "kid": "Hkyj-Z0Ft7MFEvVmFpFrQIZ8pbRDw0WShlpPURJ5xEc",
       "alg": "RS256",
       "n": "...",
       "e": "AQAB"
@@ -870,6 +870,14 @@ Public signing keys for JWT verification. Supports RSA (`RS256/384/512`), ECDSA 
   ]
 }
 ```
+
+Each key's `kid` is its [RFC 7638](https://www.rfc-editor.org/rfc/rfc7638) JWK thumbprint (SHA-256, base64url), and every RSA/ECDSA token Authorizer signs carries the same value in its `kid` header. Verifiers that select the key by `kid` — API gateways, SurrealDB's `DEFINE ACCESS ... WITH JWT URL`, most JWT libraries — therefore find it directly. HMAC tokens carry no `kid`, because their key is never published.
+
+Verify tokens against this endpoint rather than a copy of it: the `kid` is derived from the key, so it changes whenever the key does.
+
+:::caution Changed in v2.5.0
+Before v2.5.0 tokens had no `kid` header, and the JWKS used your client ID as the `kid` (`your-client-id`, plus `your-client-id-secondary` for a secondary key). Verifiers that fetch `/.well-known/jwks.json` need no change. If you **pinned a copy** of the JWKS in a gateway or service config, or **hard-coded the client ID as the `kid`**, switch to fetching this endpoint before upgrading — otherwise tokens issued after the upgrade are rejected by that verifier.
+:::
 
 #### Manual key rotation
 
@@ -880,7 +888,7 @@ Authorizer supports a zero-downtime manual key-rotation workflow via four option
 - `--jwt-secondary-private-key`
 - `--jwt-secondary-public-key`
 
-When a secondary key is configured, JWKS publishes **both** public keys with distinct `kid`s (the secondary gets a `-secondary` suffix). The signing path always uses the primary key; verification tries the primary first and falls back to the secondary.
+When a secondary key is configured, JWKS publishes **both** public keys, each under its own thumbprint `kid`. The signing path always uses the primary key; verification tries the primary first and falls back to the secondary. Because a key's `kid` comes from the key itself, it stays the same when the key moves from primary to secondary, so verifiers that select keys by `kid` keep accepting outstanding tokens through the swap in step 3.
 
 **Rotation workflow:**
 
