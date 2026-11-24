@@ -17,7 +17,7 @@ This page is the one-stop reference for every endpoint, parameter, and integrati
 
 | Standard                              | Status        | Notes                                                              |
 | ------------------------------------- | ------------- | ------------------------------------------------------------------ |
-| OIDC Core 1.0                         | Implemented   | ID tokens, UserInfo, nonce, `auth_time`, `amr`, `acr`, `at_hash`, `c_hash` |
+| OIDC Core 1.0                         | Implemented   | ID tokens, UserInfo, nonce, `auth_time`, `amr`, `acr`, `at_hash`, `c_hash`, `azp` |
 | OIDC Discovery 1.0                    | Implemented   | All required + recommended fields                                  |
 | OIDC Hybrid Flow (§3.3)               | Implemented   | `code id_token`, `code token`, `code id_token token`, `id_token token` |
 | OIDC RP-Initiated Logout 1.0          | Implemented   | `post_logout_redirect_uri`, `state` echo, `id_token_hint`          |
@@ -31,6 +31,7 @@ This page is the one-stop reference for every endpoint, parameter, and integrati
 | RFC 7662 (Token Introspection)        | Implemented   | Non-disclosure for inactive tokens                                 |
 | RFC 8414 (Authorization Server Metadata) | Implemented | `/.well-known/oauth-authorization-server` — alias of the OIDC discovery document |
 | [RFC 8693](https://datatracker.ietf.org/doc/html/rfc8693) (Token Exchange)             | Implemented   | [Delegation-only profile](../enterprise/token-exchange) with nested `act` chain |
+| [RFC 9068](https://datatracker.ietf.org/doc/html/rfc9068) (JWT Access Tokens)          | Partial       | `client_id` claim on every access token; delegated tokens also carry `typ: at+jwt`. See [Token claims](#token-claims) |
 | RFC 8707 (Resource Indicators)        | Implemented   | Optional `resource` on `/authorize` + `/oauth/token` (authorization code flow); exactly one required on the token-exchange grant |
 
 **Not yet implemented** (tracked for future releases): RFC 9101 JAR / Request Object, OIDC Session Management iframe, front-channel logout, automated time-based key rotation.
@@ -422,7 +423,7 @@ Returns metadata so clients can auto-configure themselves.
 | `token_endpoint_auth_methods_supported`               | `["client_secret_basic", "client_secret_post", "none", "private_key_jwt"]` (`none` = public client with PKCE) |
 | `introspection_endpoint_auth_methods_supported`       | `["client_secret_basic", "client_secret_post"]`                                      |
 | `revocation_endpoint_auth_methods_supported`          | `["client_secret_basic", "client_secret_post"]`                                      |
-| `claims_supported`                                    | Includes `sub`, `iss`, `aud`, `exp`, `iat`, `auth_time`, `amr`, `acr`, `at_hash`, `c_hash`, `nonce`, `email`, `email_verified`, `given_name`, `family_name`, profile claims |
+| `claims_supported`                                    | Includes `sub`, `iss`, `aud`, `azp`, `exp`, `iat`, `auth_time`, `amr`, `acr`, `at_hash`, `c_hash`, `nonce`, `email`, `email_verified`, `given_name`, `family_name`, profile claims |
 | `backchannel_logout_supported`                        | `true` iff `--backchannel-logout-uri` is configured                                  |
 | `backchannel_logout_session_supported`                | Same as above                                                                        |
 
@@ -738,7 +739,7 @@ curl -s -X POST $AUTHORIZER_URL/oauth/token \
 { "access_token": "eyJhbG...", "token_type": "Bearer", "expires_in": 1800, "scope": "read:reports" }
 ```
 
-No `id_token` and no `refresh_token` are issued — machines re-authenticate on expiry (RFC 6749 §4.4.3). See the [Client Registry guide](./client-registry) for the full flow.
+No `id_token` and no `refresh_token` are issued — machines re-authenticate on expiry (RFC 6749 §4.4.3). The token's `client_id` claim is the service account's `client_id`; its `aud` is the `resource` when one is sent, otherwise the instance's `--client-id`. See the [Client Registry guide](./client-registry) for the full flow.
 
 **Token Exchange grant** (RFC 8693 — delegation only):
 
@@ -761,6 +762,23 @@ The calling client must authenticate as a `service_account` (secret or `client_a
 ```
 
 Standard codes: `invalid_request`, `invalid_client`, `invalid_grant`, `unsupported_grant_type`, `unauthorized_client`, `invalid_scope`.
+
+#### Token claims
+
+Two claims name the client a token was issued to:
+
+| Claim | Token | Value | Spec |
+| ----- | ----- | ----- | ---- |
+| `client_id` | Access token | The client the token was issued to: the requesting client on the authorization code, refresh and implicit flows; the service account on `client_credentials`; the instance's `--client-id` for logins through Authorizer's own login page and GraphQL/REST/gRPC APIs | [RFC 9068 §2.2](https://datatracker.ietf.org/doc/html/rfc9068#section-2.2) |
+| `azp` | ID token | The client the ID token was issued to. Always equal to the ID token's `aud` | [OIDC Core §2](https://openid.net/specs/openid-connect-core-1_0.html#IDToken) |
+
+Read `client_id` rather than `aud` to find out which client requested an access token: when a `resource` indicator is sent (RFC 8707), `aud` is that resource, not the client.
+
+Neither claim can be changed by the [custom access token script](./server-config). `client_id` is reserved, so a script that sets it is ignored. `azp` is written into the ID token after the script runs. A script may still set `azp` in the **access token**; Authorizer does not put one there itself.
+
+:::note Added in v2.5.0
+Before v2.5.0 access tokens from logins and from `client_credentials` had no `client_id` claim (delegated [token-exchange](../enterprise/token-exchange) tokens already had one), and ID tokens had no `azp`. Both are additive: `aud` and every other claim are unchanged, so existing verifiers keep working.
+:::
 
 ### UserInfo Endpoint
 
@@ -1045,7 +1063,8 @@ curl -s -X POST $AUTHORIZER_URL/oauth/token \
 
 - HTTP 200 with `Cache-Control: no-store` header
 - Response contains `access_token`, `id_token`, `refresh_token`, `token_type: "Bearer"`, `expires_in`, `scope`
-- ID token payload (decode via [jwt.io](https://jwt.io)) contains: `iss`, `aud`, `sub`, `exp`, `iat`, `auth_time`, `amr`, `acr="0"`, `at_hash`, and `nonce` if supplied
+- ID token payload (decode via [jwt.io](https://jwt.io)) contains: `iss`, `aud`, `azp` (equal to `aud`), `sub`, `exp`, `iat`, `auth_time`, `amr`, `acr="0"`, `at_hash`, and `nonce` if supplied
+- Access token payload contains `client_id` equal to `$CLIENT_ID`
 
 **Verify `at_hash` manually:**
 
