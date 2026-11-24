@@ -1,6 +1,6 @@
 # SurrealDB storage provider — design
 
-**Status:** accepted · **Target:** Authorizer 2.5.0, alongside the `kid` header fix (authorizerdev/authorizer#904) and the SurrealDB integration guide (authorizerdev/docs#99)
+**Status:** implemented in authorizerdev/authorizer#906 (merged) · **Target:** Authorizer 2.5.0, alongside the `kid` header fix (authorizerdev/authorizer#904, merged) and the SurrealDB integration guide (authorizerdev/docs#99)
 
 ## Goal
 
@@ -44,7 +44,7 @@ The last four rows drive most of the design.
 
 - **Namespace:** SurrealDB has namespace *and* database; Authorizer has one `--database-name`. A dedicated `--surrealdb-namespace` flag follows the existing per-backend precedent (`--couchbase-bucket`, `--couchbase-scope`).
 - **Engine:** the SDK picks HTTP or WebSocket from the URL. Both passed the probes. **HTTP is recommended**: it is stateless, so there is no session to restore after a dropped connection; WebSocket reconnection with session restore lives in the SDK's `contrib/rews`, which is outside its compatibility guarantee. Both are accepted.
-- **Credentials:** a root, namespace or database user. The provider signs in once and lets the SDK renew the token.
+- **Credentials:** a root, namespace or database user. The provider signs in at startup and signs in again when SurrealDB refuses a request because the sign-in token expired (1h by default), then retries that request once. *Changed during implementation:* the SDK's token renewal only covers `SignInWithRefresh` pairs, which system users do not get, so relying on it left the server refusing every query after an hour over HTTP. `TestReauthenticatesAfterTokenExpiry` covers HTTP and WebSocket.
 - **Minimum version:** SurrealDB 4.0 (tested on 4.0.1). The SDK supports 3.3+, but nothing below 4.0 is tested.
 
 ## Data model
