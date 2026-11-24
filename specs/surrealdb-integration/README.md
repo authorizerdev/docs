@@ -12,8 +12,8 @@ Before submitting:
   that stamps a `kid` header on tokens (authorizerdev/authorizer#904).
 - Re-run the guide end to end against the published 2.4.8 image.
 
-Verified (2026-11-19) against SurrealDB 4.0.1 and Authorizer with #904
-applied: every SurrealQL block, the HTTP example, and the JavaScript snippet
+Verified (2026-11-24) against SurrealDB 4.0.1 and Authorizer `main` at
+c83107c8 (the 2.4.8 release commit): every SurrealQL block, the HTTP example, and the JavaScript snippet
 (`@authorizerdev/authorizer-js` 4.0.0 + `surrealdb` 2.2.2). Users were
 isolated, role permissions applied, and tampered, `alg=none` and forged HS256
 tokens were rejected.

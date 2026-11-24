@@ -1,5 +1,5 @@
 ---
-position: 11
+position: 14
 title: Integrate Authorizer with SurrealDB
 description: "Use Authorizer, an open-source and self-hosted authentication server, as the authentication provider for a client-side application backed only by SurrealDB."
 ---
@@ -51,7 +51,7 @@ Authorizer is configured entirely with command-line flags. Its tokens are signed
 
 ### Adding the claims required by SurrealDB
 
-SurrealDB expects tokens to carry the namespace, database and access method they are meant for. Authorizer lets you add claims to every access token with a [custom access token script](https://docs.authorizer.dev): a JavaScript function that receives the user and the default token payload, and returns the claims to add.
+SurrealDB expects tokens to carry the namespace, database and access method they are meant for. Authorizer lets you add claims to every access token with a [custom access token script](https://docs.authorizer.dev/core/server-config): a JavaScript function that receives the user and the default token payload, and returns the claims to add.
 
 Start Authorizer with the following flag, in addition to your usual configuration:
 
@@ -67,7 +67,9 @@ Start Authorizer with the following flag, in addition to your usual configuratio
 }'
 ```
 
-Authorizer already includes `iss` (your Authorizer URL), `aud` (your client ID), `sub` (the user ID), `exp` and `roles` in every access token, so no further claims are needed.
+Authorizer already includes `iss` (your Authorizer URL), `aud` and `client_id` (your client ID), `sub` (the user ID), `exp` and `roles` in every access token, so no further claims are needed.
+
+If you restrict `--allowed-origins` (the default is `*`), include the origin your application is served from, for example `http://localhost:5173`. Authorizer refuses sign-in requests from other origins.
 
 Take note of the following values:
 
@@ -76,7 +78,7 @@ Take note of the following values:
 
 ### Creating a test user
 
-To ensure this guide can be followed easily, create a test user by signing up through the Authorizer login page at `https://<YOUR_AUTHORIZER_URL>/app`, or through the dashboard at `https://<YOUR_AUTHORIZER_URL>/dashboard`. If you enabled email verification (`--enable-email-verification`), verify the address before continuing.
+To ensure this guide can be followed easily, create a test user by signing up through the Authorizer login page at `https://<YOUR_AUTHORIZER_URL>/app`, or through the dashboard at `https://<YOUR_AUTHORIZER_URL>/dashboard`. If you enabled email verification (`--enable-email-verification`), verify the address before continuing. If Authorizer offers to set up multi-factor authentication, skip it for this test user, so that the application below can sign in with just an email and password.
 
 ## Configuring SurrealDB
 

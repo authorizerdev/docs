@@ -41,7 +41,9 @@ SurrealDB needs the namespace, database and access method in the token. Add them
 }'
 ```
 
-Every access token already carries `iss` (your `--url`), `aud` (your `--client-id`), `sub` (the user ID), `exp` and `roles`.
+Every access token already carries `iss` (your `--url`), `aud` and `client_id` (your `--client-id`), `sub` (the user ID), `exp` and `roles`.
+
+If you restrict `--allowed-origins` (the default is `*`), include your application's origin. Authorizer refuses sign-in requests from other origins with `403`.
 
 ## Step 2: Configure SurrealDB
 
@@ -123,6 +125,8 @@ await db.authenticate(data.access_token);
 // Only the signed-in user's own record is returned.
 const [me] = await db.query('SELECT * FROM user');
 ```
+
+`login()` returns a token only once sign-in is complete. If the user has set up multi-factor authentication, or Authorizer is offering to set it up, the response asks for that step first; the [hosted login page](../core/oauth2-oidc) handles it for you.
 
 Or over HTTP:
 
