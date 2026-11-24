@@ -1,6 +1,6 @@
 # SurrealDB storage provider — design
 
-**Status:** implemented in authorizerdev/authorizer#906 (merged) · **Target:** Authorizer 2.5.0, alongside the `kid` header fix (authorizerdev/authorizer#904, merged) and the SurrealDB integration guide (authorizerdev/docs#99)
+**Status:** implemented in authorizerdev/authorizer#906 (merged) · **Target:** Authorizer 2.4.8, alongside the `kid` header fix (authorizerdev/authorizer#904, merged) and the SurrealDB integration guide (authorizerdev/docs#99)
 
 ## Goal
 
@@ -102,7 +102,7 @@ All values are bound as query variables; table and field names come from constan
 
 ## Docs and release
 
-Databases page entry (flags, minimum version, HTTP recommendation, `--fga-store`), README/site/Helm lists (17 databases), changelog, and the 2.5.0 release notes together with the `kid` change.
+Databases page entry (flags, minimum version, HTTP recommendation, `--fga-store`), README/site/Helm lists (17 databases), changelog, and the 2.4.8 release notes together with the `kid` change.
 
 ## Plan
 
