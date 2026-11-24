@@ -776,8 +776,8 @@ Read `client_id` rather than `aud` to find out which client requested an access 
 
 Neither claim can be changed by the [custom access token script](./server-config). `client_id` is reserved, so a script that sets it is ignored. `azp` is written into the ID token after the script runs. A script may still set `azp` in the **access token**; Authorizer does not put one there itself.
 
-:::note Added in v2.5.0
-Before v2.5.0 access tokens from logins and from `client_credentials` had no `client_id` claim (delegated [token-exchange](../enterprise/token-exchange) tokens already had one), and ID tokens had no `azp`. Both are additive: `aud` and every other claim are unchanged, so existing verifiers keep working.
+:::note Added in v2.4.8
+Before v2.4.8 access tokens from logins and from `client_credentials` had no `client_id` claim (delegated [token-exchange](../enterprise/token-exchange) tokens already had one), and ID tokens had no `azp`. Both are additive: `aud` and every other claim are unchanged, so existing verifiers keep working.
 :::
 
 ### UserInfo Endpoint
@@ -893,8 +893,8 @@ Each key's `kid` is its [RFC 7638](https://www.rfc-editor.org/rfc/rfc7638) JWK t
 
 Verify tokens against this endpoint rather than a copy of it: the `kid` is derived from the key, so it changes whenever the key does.
 
-:::caution Changed in v2.5.0
-Before v2.5.0 tokens had no `kid` header, and the JWKS used your client ID as the `kid` (`your-client-id`, plus `your-client-id-secondary` for a secondary key). Verifiers that fetch `/.well-known/jwks.json` need no change. If you **pinned a copy** of the JWKS in a gateway or service config, or **hard-coded the client ID as the `kid`**, switch to fetching this endpoint before upgrading — otherwise tokens issued after the upgrade are rejected by that verifier.
+:::caution Changed in v2.4.8
+Before v2.4.8 tokens had no `kid` header, and the JWKS used your client ID as the `kid` (`your-client-id`, plus `your-client-id-secondary` for a secondary key). Verifiers that fetch `/.well-known/jwks.json` need no change. If you **pinned a copy** of the JWKS in a gateway or service config, or **hard-coded the client ID as the `kid`**, switch to fetching this endpoint before upgrading — otherwise tokens issued after the upgrade are rejected by that verifier.
 :::
 
 #### Manual key rotation

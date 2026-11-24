@@ -21,7 +21,7 @@ Every client has two identifiers:
 - **`id`** — the internal surrogate primary key (UUID). Used to address the client in admin operations (`_update_client`, `_rotate_client_secret`, …).
 - **`client_id`** — the public OAuth identifier presented at `/authorize` and `/oauth/token`. Unique across the registry and **immutable**.
 
-For admin-created clients, `client_id` defaults to the internal `id` — the UUID returned by `_create_client` is the value you pass as `client_id` at the token endpoint. For the reserved boot client, `client_id` is the literal `--client-id` value, so every existing token `aud` and introspection `client_id` keeps keying on that exact string. (JWKS `kid`s are key thumbprints since v2.5.0, not the client ID; see [JWKS](./oauth2-oidc.md#jwks).)
+For admin-created clients, `client_id` defaults to the internal `id` — the UUID returned by `_create_client` is the value you pass as `client_id` at the token endpoint. For the reserved boot client, `client_id` is the literal `--client-id` value, so every existing token `aud` and introspection `client_id` keeps keying on that exact string. (JWKS `kid`s are key thumbprints since v2.4.8, not the client ID; see [JWKS](./oauth2-oidc.md#jwks).)
 
 ## Client secrets
 

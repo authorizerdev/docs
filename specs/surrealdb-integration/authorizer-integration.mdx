@@ -43,7 +43,7 @@ To run the SurrealQL statements mentioned in this guide, you will also need an i
 surreal db sql -u root -p secret --pretty
 ```
 
-You will also need a running Authorizer instance, version `<AUTHORIZER_MIN_VERSION>` or later, reachable at a URL such as `https://auth.example.com`. Earlier versions did not include the `kid` header in their tokens, which SurrealDB needs to select the signing key from the JWKS. See the [Authorizer documentation](https://docs.authorizer.dev) for deployment options.
+You will also need a running Authorizer instance, version `2.4.8` or later, reachable at a URL such as `https://auth.example.com`. Earlier versions did not include the `kid` header in their tokens, which SurrealDB needs to select the signing key from the JWKS. See the [Authorizer documentation](https://docs.authorizer.dev) for deployment options.
 
 ## Configuring Authorizer
 

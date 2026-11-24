@@ -7,8 +7,8 @@ title: SurrealDB
 
 [SurrealDB](https://surrealdb.com) can verify tokens issued by an external identity provider and use their claims in table permissions. This guide sets up Authorizer as that provider, so a client-side application can use SurrealDB as its only backend: users sign in with Authorizer, and SurrealDB only lets each user read and write their own records.
 
-:::info Requires Authorizer v2.5.0 or later
-SurrealDB selects the verification key by the token's `kid` header. Authorizer adds a `kid` to every RS256/ES256 token from v2.5.0. With an earlier version every request to SurrealDB fails with `Missing token header 'kid'`.
+:::info Requires Authorizer v2.4.8 or later
+SurrealDB selects the verification key by the token's `kid` header. Authorizer adds a `kid` to every RS256/ES256 token from v2.4.8. With an earlier version every request to SurrealDB fails with `Missing token header 'kid'`.
 :::
 
 ## Using SurrealDB as Authorizer's database too

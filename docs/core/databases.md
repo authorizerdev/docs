@@ -37,7 +37,7 @@ Authorizer v2 configures the database via CLI flags. The required flags are `--d
 
   > SereneDB speaks the PostgreSQL wire protocol (default port `7890`). Use SereneDB **26.11 or later**; Authorizer is tested against 26.11.2. Authorizer creates and upgrades its tables with its own versioned migrations, recorded in the `authorizer_schema_migrations` table, instead of the automatic migration it uses on other SQL databases. SereneDB is not an OpenFGA datastore, so to use [fine-grained authorization](./authorization) pass an explicit `--fga-store`.
 
-- [SurrealDB](https://surrealdb.com/) (since v2.5.0)
+- [SurrealDB](https://surrealdb.com/) (since v2.4.8)
 
   ```bash
   --database-type=surrealdb \

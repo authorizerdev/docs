@@ -8,9 +8,9 @@ directory's `overview.mdx` under "Authentication".
 
 Before submitting:
 
-- Replace `<AUTHORIZER_MIN_VERSION>` with the first release that stamps a
-  `kid` header on tokens (planned: 2.5.0, authorizerdev/authorizer#904).
-- Re-run the guide end to end against that release.
+- The minimum Authorizer version in the guide is 2.4.8, the first release
+  that stamps a `kid` header on tokens (authorizerdev/authorizer#904).
+- Re-run the guide end to end against the published 2.4.8 image.
 
 Verified (2026-11-19) against SurrealDB 4.0.1 and Authorizer with #904
 applied: every SurrealQL block, the HTTP example, and the JavaScript snippet
