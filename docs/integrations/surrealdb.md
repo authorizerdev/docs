@@ -25,7 +25,7 @@ Authorizer can also keep its own data — users, sessions, clients, organization
 
 ## Step 1: Configure Authorizer
 
-Authorizer must sign tokens with an asymmetric key (`--jwt-type` RS256 or ES256). HMAC keys are never published in the JWKS, so SurrealDB cannot verify them.
+Authorizer must sign tokens with an asymmetric key: `--jwt-type=RS256` (or `ES256`) with `--jwt-private-key` and `--jwt-public-key`. HMAC keys (`HS256`) are never published in the JWKS, so SurrealDB cannot verify tokens signed with them.
 
 SurrealDB needs the namespace, database and access method in the token. Add them with a [custom access token script](../core/server-config):
 
@@ -43,7 +43,7 @@ SurrealDB needs the namespace, database and access method in the token. Add them
 
 Every access token already carries `iss` (your `--url`), `aud` and `client_id` (your `--client-id`), `sub` (the user ID), `exp` and `roles`.
 
-If you restrict `--allowed-origins` (the default is `*`), include your application's origin. Authorizer refuses sign-in requests from other origins with `403`.
+Add your application's origin to `--allowed-origins` (for example `--allowed-origins=https://app.example.com`). With the default, `*`, Authorizer accepts sign-in requests only from its own origin and refuses the rest with `403 Origin not allowed`.
 
 ## Step 2: Configure SurrealDB
 
@@ -54,7 +54,7 @@ surreal start --user root --pass secret --allow-net auth.example.com
 ```
 
 :::caution Private networks
-SurrealDB also checks the IP address the host resolves to. If Authorizer runs on a private network (for example as another container), allow that address too: `--allow-net auth.internal,10.0.0.12`. If the JWKS cannot be downloaded, every token is refused with 401. Run SurrealDB with `--log debug` to see why.
+SurrealDB also checks the IP address the host resolves to. If Authorizer runs on a private network (for example as another container), allow that address too: `--allow-net auth.internal,10.0.0.12`. If the JWKS cannot be downloaded, every token is refused with 401, and SurrealDB logs the reason, for example `Access to network target '10.0.0.12/32' is not allowed`.
 :::
 
 Then define a table and the access method:
@@ -139,6 +139,10 @@ curl -X POST https://your-surrealdb.example.com/sql \
 
 ## Notes
 
-- **Sign-out and revocation:** SurrealDB verifies tokens on its own and does not ask Authorizer whether a session is still active. Signing out stops new tokens being issued, but a token already in use stays valid until it expires (30 minutes by default). Keep access tokens short-lived and refresh them with the SDK.
-- **Key rotation:** Authorizer publishes both keys during a [manual key rotation](../core/oauth2-oidc#manual-key-rotation). Each key's `kid` is its thumbprint and does not change when it becomes the secondary key, so tokens signed before the swap keep working.
+- **Sign-out and revocation:** SurrealDB verifies tokens on its own and does not ask Authorizer whether a session is still active. Signing out stops new tokens being issued, but a token already in use stays valid until it expires. Access tokens last 30 minutes; refresh them with the SDK.
+- **Key rotation:** SurrealDB caches the JWKS for up to 12 hours and downloads it again for an unknown `kid` at most once every 5 minutes. During a [manual key rotation](../core/oauth2-oidc#manual-key-rotation) this means:
+  - after Authorizer starts signing with the new key, SurrealDB can refuse tokens signed with it for up to 5 minutes;
+  - a key you remove from Authorizer stays trusted by SurrealDB until its cache is replaced, up to 12 hours. Its tokens still expire after 30 minutes, so this matters only for a compromised key: restart SurrealDB to empty the cache.
+
+  Both periods are set with SurrealDB's `SURREAL_JWKS_CACHE_COOLDOWN_SECONDS` and `SURREAL_JWKS_CACHE_EXPIRATION_SECONDS`. Each key's `kid` is its thumbprint and does not change when it becomes the secondary key, so tokens signed before the swap keep working.
 - **Security checks:** SurrealDB rejects tokens with a tampered signature or claims, `alg: none`, and HMAC tokens forged against the published key.

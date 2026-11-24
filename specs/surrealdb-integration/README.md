@@ -18,5 +18,10 @@ c83107c8 (the 2.4.8 release commit): every SurrealQL block, the HTTP example, an
 isolated, role permissions applied, and tampered, `alg=none` and forged HS256
 tokens were rejected.
 
+Re-verified the same day: `--allow-net` with and without the resolved IP,
+`--allowed-origins` (with `*`, only Authorizer's own origin may sign in), and
+key rotation, where SurrealDB's JWKS cache refuses a new key's tokens for up
+to 5 minutes and keeps a removed key until the cache is replaced.
+
 Authorizer's own docs page for the same setup is
 `docs/integrations/surrealdb.md`.
