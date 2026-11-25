@@ -1,5 +1,7 @@
 # Authorization Change Evidence — Phase 1 Implementation Plan
 
+**Status:** Implemented in authorizerdev/authorizer#806, released in 2.4.2. Kept as the record of the plan; versions below are as of writing.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Add the audit plumbing that Phase 2 and 2b need — a synchronous audit write that returns its error, a recorded super-admin authentication mode, and an `AuditProvider` reachable from the SCIM package.

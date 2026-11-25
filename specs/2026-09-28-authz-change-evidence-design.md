@@ -1,7 +1,7 @@
 # Authorization Change Evidence — Design
 
 **Date:** 2026-09-28
-**Status:** Design approved; Phase 0 shipped (authorizerdev/authorizer#802). Phases 1-3 pending review of this spec.
+**Status:** Design approved. Phase 0 (authorizerdev/authorizer#802) and Phase 1 (authorizerdev/authorizer#806) shipped in 2.4.2. Phases 2-3 not started: `LogEventSync` exists but nothing calls it yet.
 **Scope:** Two defensible claims — every FGA tuple change, and every change to a user's
 roles or org membership (see Locked decisions 1)
 **Repo:** `authorizerdev/authorizer` (server)
