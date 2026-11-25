@@ -96,9 +96,9 @@ docker run -p 8080:8080 quay.io/authorizer/authorizer:latest \
 Authorizer supports a wide range of databases:
 
 - PostgreSQL, MySQL, MariaDB, SQLite, libSQL / Turso, SQL Server
-- MongoDB, ArangoDB, Couchbase
+- MongoDB, ArangoDB, Couchbase, SurrealDB
 - CassandraDB, ScyllaDB, DynamoDB
-- Yugabyte, PlanetScale, CockroachDB
+- Yugabyte, PlanetScale, CockroachDB, SereneDB
 
 See [Databases](./core/databases) for connection string formats.
 
