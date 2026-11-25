@@ -114,6 +114,19 @@ Authorizer v2 configures the database via CLI flags. The required flags are `--d
 
   > Note for CassandraDB: If using a cloud provider like [DataStax](https://www.datastax.com/products/datastax-astra), they don't allow creating `keyspace`. Please create a `keyspace` named `authorizer` from their GUI.
 
+  > Note for CassandraDB and ScyllaDB: filtering audit logs by `resource_type` or
+  > `resource_id` is served by secondary indexes, which the server creates on
+  > startup (since v2.4.2). On an existing deployment with a large `authorizer_audit_logs` table
+  > those indexes backfill in the background — Scylla builds them as materialized
+  > views — so those two filters can return **incomplete** results until the
+  > backfill completes. Check `nodetool viewbuildstatus` before treating a
+  > filtered audit query as authoritative, and expect elevated cluster I/O while
+  > it runs. Filtering by a `from_timestamp`/`to_timestamp` range cannot use an
+  > index at all (the range is on a non-key column), so it performs a scan with
+  > `ALLOW FILTERING`. So does any query that combines two or more filters,
+  > because one query can use only one index. This is fine for an occasional
+  > admin query and gets slower as the table grows.
+
 - [ScyllaDB](https://www.scylladb.com/)
 
   ```bash
@@ -143,6 +156,16 @@ Authorizer v2 configures the database via CLI flags. The required flags are `--d
   --couchbase-ram-quota=1000 \
   --couchbase-scope="_default"
   ```
+
+  > Note for Couchbase: the server creates its secondary indexes (GSIs) on
+  > startup. Couchbase builds an index synchronously, so when a new index is
+  > added against a collection that already holds a lot of data — an upgrade on a
+  > large `authorizer_audit_logs` collection, for example — the statement can
+  > outrun the client. That is handled: the attempt is retried, and because the
+  > index definition is registered server-side the retry sees it already exists
+  > and startup continues while the build finishes in the background. No action
+  > is needed, but index builds may show activity for a while after a version
+  > upgrade.
 
 > Note: For MongoDB and ArangoDB, use `--database-name` since the database name is not part of the connection URL.
 

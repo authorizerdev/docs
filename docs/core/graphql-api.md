@@ -1997,6 +1997,19 @@ It can take optional `params` input with pagination and filtering options.
 | `from_timestamp` | Filter entries at/after this Unix timestamp | false | null |
 | `to_timestamp`   | Filter entries at/before this Unix timestamp | false | null |
 
+Filters combine with AND. Every filter above is applied by every supported
+database backend.
+
+> **Before v2.4.2** ([#802](https://github.com/authorizerdev/authorizer/pull/802)),
+> CassandraDB/ScyllaDB and Couchbase applied only `actor_id` and `action`. The
+> other four filters were accepted and **silently ignored**, so a query narrowed
+> to one resource or one time window returned unfiltered rows, with no error to
+> indicate it. On ScyllaDB, combining two filters failed outright. If you are
+> upgrading from an earlier version on one of those backends, expect result
+> counts and `pagination.total` to drop: the filters now do what this table
+> always said they did.
+> See [Databases](./databases) for the index-backfill caveat on those backends.
+
 **Sample Query**
 
 ```graphql
