@@ -123,18 +123,41 @@ This endpoint supports following query parameters
 
 **Query String Params**
 
-| Key           | Description                                                                                         | Required |
-| ------------- | --------------------------------------------------------------------------------------------------- | -------- |
-| `redirectURL` | URL where user should be redirected after login                                                     | true     |
-| `state`       | Unique state identifier that is used to make sure request is not interrupted                        | true     |
-| `roles`       | Comma separated list of roles to login with. If not present default role(`user`) is used            | false    |
-| `scope`       | Space separated list of openID scopes. If not present default scopes `openid email profile` is used | false    |
+| Key            | Description                                                                                         | Required |
+| -------------- | --------------------------------------------------------------------------------------------------- | -------- |
+| `redirect_uri` | URL where user should be redirected after login. See accepted values below                          | true     |
+| `redirectURL`  | Deprecated alias of `redirect_uri`, still accepted                                                  | false    |
+| `state`        | Unique state identifier that is used to make sure request is not interrupted                        | true     |
+| `roles`        | Comma separated list of roles to login with. If not present default role(`user`) is used            | false    |
+| `scope`        | Space separated list of openID scopes. If not present default scopes `openid email profile` is used | false    |
 
-Sample URL: `/oauth_login/google?redirectURL=https://myapp.com&role=admin`
+Sample URLs:
+
+```
+# Outside /authorize: return to your app (its origin is in --allowed-origins)
+/oauth_login/google?redirect_uri=https://myapp.com/dashboard&state=abc123&roles=admin
+
+# From the login page during an /authorize request: return to /app, which resumes /authorize
+/oauth_login/google?state=st-123&redirect_uri=https%3A%2F%2Fauth.example.com%2Fapp%2F%3Fclient_id%3Dc1%26response_type%3Dcode%26state%3Dst-123%26...
+```
+
+More cases, with the result for each, are in [What `/oauth_login` accepts](./oauth2-oidc#social-login-inside-an-authorization-request).
+
+**Accepted `redirect_uri` values:**
+
+- Any URI allowed by `--allowed-origins`.
+- This server's own `/app`, `/app/` or `/app/signup` (same scheme and host:port as `--url`, exact path, no fragment), whatever `--allowed-origins` says. _Authorizer 2.4.6 and later._ The login page uses this to resume an `/authorize` request through `/authorize`, which then checks the client's registered redirect URIs. See [Social login inside an authorization request](./oauth2-oidc#social-login-inside-an-authorization-request).
+
+A client's registered redirect URI is **not** accepted here unless its origin is in `--allowed-origins`. To get a code to a registered client, go through `/authorize`.
 
 ## `/oauth_callback/:oauth_provider`
 
-`GET /oauth_callback/:oauth_provider` - Endpoint that is used by oauth providers as callback after success / unsuccessful login
+`GET /oauth_callback/:oauth_provider` - Endpoint that is used by oauth providers as callback after success / unsuccessful login. Register `<your-authorizer-url>/oauth_callback/<provider>` as the callback URL on the provider's console.
+
+On success it sets the session cookie and redirects to the `redirect_uri` given to `/oauth_login`:
+
+- For this server's own `/app` URL, it redirects to that URL unchanged and issues no authorization code. `/app` resumes the original `/authorize` request.
+- For any other URI, it appends `state` and `nonce`, plus `code` when the login belongs to an `/authorize` request. That last case is deprecated: it skips the consent screen and logs a warning.
 
 ## `logout`
 

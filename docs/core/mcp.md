@@ -341,7 +341,7 @@ authorizer mcp \
 With a SQLite/Postgres/MySQL/MariaDB `--database-type`, FGA reuses the main database
 automatically — no `--fga-store` flag needed (see
 [Enabling FGA](./authorization#1-enabling-fga)). Postgres- and MySQL-compatible
-variants beyond those (CockroachDB, YugabyteDB, libSQL, PlanetScale) are *not*
+variants beyond those (CockroachDB, YugabyteDB, SereneDB, libSQL, PlanetScale) are *not*
 auto-mapped and need an explicit `--fga-store`. Only pass `--fga-store` /
 `--fga-store-url` when the main database is NoSQL (MongoDB, DynamoDB, …), SQL Server, or
 you want FGA on a separate store; `--fga-store` takes one of `sqlite`,

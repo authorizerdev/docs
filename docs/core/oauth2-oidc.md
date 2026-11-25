@@ -17,7 +17,7 @@ This page is the one-stop reference for every endpoint, parameter, and integrati
 
 | Standard                              | Status        | Notes                                                              |
 | ------------------------------------- | ------------- | ------------------------------------------------------------------ |
-| OIDC Core 1.0                         | Implemented   | ID tokens, UserInfo, nonce, `auth_time`, `amr`, `acr`, `at_hash`, `c_hash` |
+| OIDC Core 1.0                         | Implemented   | ID tokens, UserInfo, nonce, `auth_time`, `amr`, `acr`, `at_hash`, `c_hash`, `azp` |
 | OIDC Discovery 1.0                    | Implemented   | All required + recommended fields                                  |
 | OIDC Hybrid Flow (§3.3)               | Implemented   | `code id_token`, `code token`, `code id_token token`, `id_token token` |
 | OIDC RP-Initiated Logout 1.0          | Implemented   | `post_logout_redirect_uri`, `state` echo, `id_token_hint`          |
@@ -31,6 +31,7 @@ This page is the one-stop reference for every endpoint, parameter, and integrati
 | RFC 7662 (Token Introspection)        | Implemented   | Non-disclosure for inactive tokens                                 |
 | RFC 8414 (Authorization Server Metadata) | Implemented | `/.well-known/oauth-authorization-server` — alias of the OIDC discovery document |
 | [RFC 8693](https://datatracker.ietf.org/doc/html/rfc8693) (Token Exchange)             | Implemented   | [Delegation-only profile](../enterprise/token-exchange) with nested `act` chain |
+| [RFC 9068](https://datatracker.ietf.org/doc/html/rfc9068) (JWT Access Tokens)          | Partial       | `client_id` claim on every access token; delegated tokens also carry `typ: at+jwt`. See [Token claims](#token-claims) |
 | RFC 8707 (Resource Indicators)        | Implemented   | Optional `resource` on `/authorize` + `/oauth/token` (authorization code flow); exactly one required on the token-exchange grant |
 
 **Not yet implemented** (tracked for future releases): RFC 9101 JAR / Request Object, OIDC Session Management iframe, front-channel logout, automated time-based key rotation.
@@ -422,7 +423,7 @@ Returns metadata so clients can auto-configure themselves.
 | `token_endpoint_auth_methods_supported`               | `["client_secret_basic", "client_secret_post", "none", "private_key_jwt"]` (`none` = public client with PKCE) |
 | `introspection_endpoint_auth_methods_supported`       | `["client_secret_basic", "client_secret_post"]`                                      |
 | `revocation_endpoint_auth_methods_supported`          | `["client_secret_basic", "client_secret_post"]`                                      |
-| `claims_supported`                                    | Includes `sub`, `iss`, `aud`, `exp`, `iat`, `auth_time`, `amr`, `acr`, `at_hash`, `c_hash`, `nonce`, `email`, `email_verified`, `given_name`, `family_name`, profile claims |
+| `claims_supported`                                    | Includes `sub`, `iss`, `aud`, `azp`, `exp`, `iat`, `auth_time`, `amr`, `acr`, `at_hash`, `c_hash`, `nonce`, `email`, `email_verified`, `given_name`, `family_name`, profile claims |
 | `backchannel_logout_supported`                        | `true` iff `--backchannel-logout-uri` is configured                                  |
 | `backchannel_logout_session_supported`                | Same as above                                                                        |
 
@@ -527,6 +528,143 @@ Error responses (e.g. `login_required` from `prompt=none`) are delivered via the
 
 For `form_post`, Authorizer serves the auto-submitting form with a dedicated `Content-Security-Policy` (nonce-based `script-src`, relaxed `form-action`) so the browser allows the form to POST to the RP's `redirect_uri`. If a reverse proxy in front of Authorizer injects its own CSP header, it can break `form_post` — see [Common Issues](#common-issues).
 
+#### Social login inside an authorization request
+
+_Authorizer 2.4.6 and later._
+
+When `/authorize` needs the user to sign in, it sends the browser to the login page at `/app`. If the user picks a social provider (Google, GitHub, …), that login **resumes the original authorization request** instead of finishing on its own:
+
+```
+client ──► /authorize ──► /app ──► /oauth_login/github ──► GitHub
+                                                              │
+client ◄── /authorize ◄── /app ◄── /oauth_callback/github ◄───┘
+  (code)   (checks redirect_uri,     (session cookie only —
+            consent, PKCE)            no code, nothing appended)
+```
+
+1. The login page calls `/oauth_login/<provider>` with `redirect_uri` set to **its own `/app` URL**, carrying the original `/authorize` parameters in the query string.
+2. The provider returns to `/oauth_callback/<provider>`, which signs the user in (sets the session cookie) and redirects to that `/app` URL **unchanged**. It does not issue an authorization code and does not append `state`, `nonce` or `code`.
+3. `/app` sees the session and replays the request to `/authorize`. `/authorize` then checks `redirect_uri` against the **client's registered redirect URIs**, shows the consent screen if the client requires it, binds PKCE, and redirects to the client with the code.
+
+This is the same path password, passkey and OTP login already take, and it is how Auth0 and other providers treat social connections: the provider always returns to the authorization server, and only `/authorize` redirects to the application. It means:
+
+- **A client's callback does not have to be in `--allowed-origins`.** A client registered with `https://app.example.org/callback` completes social login with `--allowed-origins` listing only your own console. Do not add client origins to `--allowed-origins` to make social login work: that list also drives CORS, the CSRF origin check and the email-link redirects, for every client.
+- **Self-registered and CIMD clients always get the consent screen**, including through social login.
+- **The client's `nonce` reaches the ID token**, because the callback appends nothing for `/app` to forward.
+
+**What `/oauth_login` accepts as `redirect_uri`:** this server's own `/app`, `/app/` or `/app/signup` (same scheme and host:port as `--url`, exact path, no fragment), or any URI allowed by `--allowed-origins`. Nothing else, and in particular not a client's registered callback.
+
+| `redirect_uri` sent to `/oauth_login` (server `--url=https://auth.example.com`, `--allowed-origins=https://console.example.com`) | Result |
+|---|---|
+| `https://auth.example.com/app/?client_id=…&response_type=code&…` | Accepted: resumes through `/authorize`. This is the URL the login page is on: `/app` 301-redirects to `/app/` |
+| `https://auth.example.com/app?client_id=…&response_type=code&…` | Accepted: same |
+| `https://auth.example.com/app/signup?client_id=…&…` | Accepted: same, from the signup screen |
+| `https://console.example.com/dashboard` | Accepted: allowed origin, direct redirect |
+| `https://app.example.org/callback` (a client's registered callback) | `400 invalid redirect uri`. Go through `/authorize` instead |
+| `https://auth.example.com/app#client_id=…` | `400`: fragment |
+| `https://auth.example.com/graphql`, `/app/settings` | `400`: only `/app`, `/app/` and `/app/signup` |
+| `http://auth.example.com/app?…` | `400`: scheme differs from `--url` |
+
+##### Example: the full round trip
+
+A client `c1` is registered with the callback `https://app.example.org/callback`, and the server runs with `--url=https://auth.example.com --allowed-origins=https://console.example.com`. The client's callback is not in `--allowed-origins`, and doesn't need to be. These are the requests the browser makes (line breaks added; values URL-encoded in practice):
+
+```http
+# 1. The client starts an authorization request. No session yet, so the user is sent to the login page.
+GET https://auth.example.com/authorize?client_id=c1&response_type=code&response_mode=query
+      &redirect_uri=https://app.example.org/callback&scope=openid profile email
+      &state=st-123&nonce=n-456&code_challenge=E9Mel…&code_challenge_method=S256
+→ 302 Location: /app?state=st-123&scope=openid profile email&redirect_uri=https://app.example.org/callback
+      &response_mode=query&response_type=code&client_id=c1&nonce=n-456&code_challenge=E9Mel…&code_challenge_method=S256&…
+
+GET https://auth.example.com/app?state=st-123&…
+→ 301 Location: /app/?state=st-123&…      # the login page renders at /app/
+
+# 2. The user clicks "Continue with GitHub". redirect_uri is the login page's own URL, not the client's callback.
+GET https://auth.example.com/oauth_login/github?state=st-123&scope=openid profile email
+      &redirect_uri=https://auth.example.com/app/?state=st-123&…&client_id=c1&nonce=n-456&…
+→ 307 Location: https://github.com/login/oauth/authorize?client_id=…&state=<opaque handle>
+
+# 3. GitHub returns. The callback signs the user in and goes back to the login page URL, byte for byte.
+GET https://auth.example.com/oauth_callback/github?code=<github code>&state=<opaque handle>
+→ 302 Location: https://auth.example.com/app/?state=st-123&…&client_id=c1&nonce=n-456&…
+      Set-Cookie: cookie_session=…
+
+# 4. /app has a session now, so it replays the original request to /authorize.
+GET https://auth.example.com/authorize?client_id=c1&response_type=code&…&state=st-123&nonce=n-456&…
+→ 302 Location: https://app.example.org/callback?code=<authorization code>&state=st-123
+      (or the consent screen first, for a self-registered or CIMD client)
+
+# 5. The client redeems the code as usual.
+POST https://auth.example.com/oauth/token
+     grant_type=authorization_code&code=<authorization code>&client_id=c1
+     &redirect_uri=https://app.example.org/callback&code_verifier=<verifier>
+→ 200 {"access_token": "…", "id_token": "…", …}   # id_token "nonce" is n-456
+```
+
+Note that steps 3 and 4 never put a code in a URL that `/authorize` didn't produce, and the client only ever sees step 4's redirect.
+
+##### Example: a customised login page
+
+The hosted login page does all of this already. If you ship your own build of the login page (served by Authorizer at `/app`), its social buttons need two things. Here they are in plain JavaScript:
+
+```js
+// The /authorize parameters this page was opened with. /authorize puts them in
+// the fragment when response_mode=fragment, so read both; the query wins.
+function authorizeParams() {
+  const params = new URLSearchParams(window.location.hash.slice(1));
+  new URLSearchParams(window.location.search).forEach((v, k) => params.set(k, v));
+  return params;
+}
+
+// 1. Social buttons: come back to this page, with the parameters in the QUERY
+//    string (a fragment is refused, because a server redirect can't carry it).
+function socialLoginURL(provider) {
+  const params = authorizeParams();
+  const back = `${window.location.origin}${window.location.pathname}?${params}`;
+  const query = new URLSearchParams({
+    redirect_uri: back, // never the client's callback
+    state: params.get('state') ?? '',
+    scope: params.get('scope') ?? 'openid profile email',
+  });
+  return `/oauth_login/${provider}?${query}`;
+}
+
+// 2. Once a session exists (after any login method), replay to /authorize.
+//    It checks the client's redirect_uri, runs consent and PKCE, and issues the code.
+function resumeAuthorize() {
+  const params = authorizeParams();
+  if (params.get('client_id') && params.get('response_type')) {
+    window.location.replace(`/authorize?${params}`);
+  }
+}
+
+document.querySelector('#github').onclick = () => {
+  window.location.href = socialLoginURL('github');
+};
+```
+
+##### Example: updating an older login page
+
+If the server logs `social login completed an /authorize request without resuming through /authorize`, the login page is still sending the client's callback. The change is one parameter:
+
+```diff
+- /oauth_login/github?state=st-123&redirect_uri=https://app.example.org/callback
++ /oauth_login/github?state=st-123&redirect_uri=https://auth.example.com/app/?client_id=c1&response_type=code&redirect_uri=https://app.example.org/callback&state=st-123&nonce=n-456&…
+```
+
+The login page also needs to replay the request to `/authorize` once the session exists (`resumeAuthorize()` above). Password login on such a page usually does this already.
+
+##### Compatibility
+
+| You use | What to do |
+|---|---|
+| The hosted login page (`/app`) | Nothing. From 2.4.6 the bundled login page sends its own `/app` URL, so social login resumes through `/authorize`. The page is built into the same image as the server, so the two always match |
+| Your own build of the login page, served by Authorizer at `/app` | Send `redirect_uri` = the page's own `/app` URL with the `/authorize` parameters in the **query string**, then replay to `/authorize` once the session exists ([example](#example-a-customised-login-page)). If it's built on `@authorizerdev/authorizer-react`, `AuthorizerSocialLogin` does this from 2.2.1 |
+| `/oauth_login` directly, outside `/authorize` (mobile apps, a "Sign in with GitHub" link on your own site) | Nothing. Validation against `--allowed-origins` is unchanged, and the callback still appends `state` (and `code` when one exists) to your `redirect_uri` |
+
+**Deprecated:** completing an `/authorize` request by sending `redirect_uri` = the client's callback straight to `/oauth_login`. This was the only option before 2.4.6. It still works when that callback's origin is in `--allowed-origins`, but it skips the consent screen, and the server logs a warning (`social login completed an /authorize request without resuming through /authorize`) each time it is used. A future release will refuse it, with a note in the changelog. If you see that warning, move the login UI to the `/app` URL as described above.
+
 ### Token Endpoint
 
 **Endpoint:** `POST /oauth/token`
@@ -601,7 +739,7 @@ curl -s -X POST $AUTHORIZER_URL/oauth/token \
 { "access_token": "eyJhbG...", "token_type": "Bearer", "expires_in": 1800, "scope": "read:reports" }
 ```
 
-No `id_token` and no `refresh_token` are issued — machines re-authenticate on expiry (RFC 6749 §4.4.3). See the [Client Registry guide](./client-registry) for the full flow.
+No `id_token` and no `refresh_token` are issued — machines re-authenticate on expiry (RFC 6749 §4.4.3). The token's `client_id` claim is the service account's `client_id`; its `aud` is the `resource` when one is sent, otherwise the instance's `--client-id`. See the [Client Registry guide](./client-registry) for the full flow.
 
 **Token Exchange grant** (RFC 8693 — delegation only):
 
@@ -624,6 +762,23 @@ The calling client must authenticate as a `service_account` (secret or `client_a
 ```
 
 Standard codes: `invalid_request`, `invalid_client`, `invalid_grant`, `unsupported_grant_type`, `unauthorized_client`, `invalid_scope`.
+
+#### Token claims
+
+Two claims name the client a token was issued to:
+
+| Claim | Token | Value | Spec |
+| ----- | ----- | ----- | ---- |
+| `client_id` | Access token | The client the token was issued to: the requesting client on the authorization code, refresh and implicit flows; the service account on `client_credentials`; the instance's `--client-id` for logins through Authorizer's own login page and GraphQL/REST/gRPC APIs | [RFC 9068 §2.2](https://datatracker.ietf.org/doc/html/rfc9068#section-2.2) |
+| `azp` | ID token | The client the ID token was issued to. Always equal to the ID token's `aud` | [OIDC Core §2](https://openid.net/specs/openid-connect-core-1_0.html#IDToken) |
+
+Read `client_id` rather than `aud` to find out which client requested an access token: when a `resource` indicator is sent (RFC 8707), `aud` is that resource, not the client.
+
+Neither claim can be changed by the [custom access token script](./server-config). `client_id` is reserved, so a script that sets it is ignored. `azp` is written into the ID token after the script runs. A script may still set `azp` in the **access token**; Authorizer does not put one there itself.
+
+:::note Added in v2.4.8
+Before v2.4.8 access tokens from logins and from `client_credentials` had no `client_id` claim (delegated [token-exchange](../enterprise/token-exchange) tokens already had one), and ID tokens had no `azp`. Both are additive: `aud` and every other claim are unchanged, so existing verifiers keep working.
+:::
 
 ### UserInfo Endpoint
 
@@ -725,7 +880,7 @@ Public signing keys for JWT verification. Supports RSA (`RS256/384/512`), ECDSA 
     {
       "kty": "RSA",
       "use": "sig",
-      "kid": "your-client-id",
+      "kid": "Hkyj-Z0Ft7MFEvVmFpFrQIZ8pbRDw0WShlpPURJ5xEc",
       "alg": "RS256",
       "n": "...",
       "e": "AQAB"
@@ -733,6 +888,14 @@ Public signing keys for JWT verification. Supports RSA (`RS256/384/512`), ECDSA 
   ]
 }
 ```
+
+Each key's `kid` is its [RFC 7638](https://www.rfc-editor.org/rfc/rfc7638) JWK thumbprint (SHA-256, base64url), and every RSA/ECDSA token Authorizer signs carries the same value in its `kid` header. Verifiers that select the key by `kid` — API gateways, SurrealDB's `DEFINE ACCESS ... WITH JWT URL`, most JWT libraries — therefore find it directly. HMAC tokens carry no `kid`, because their key is never published.
+
+Verify tokens against this endpoint rather than a copy of it: the `kid` is derived from the key, so it changes whenever the key does.
+
+:::caution Changed in v2.4.8
+Before v2.4.8 tokens had no `kid` header, and the JWKS used your client ID as the `kid` (`your-client-id`, plus `your-client-id-secondary` for a secondary key). Verifiers that fetch `/.well-known/jwks.json` need no change. If you **pinned a copy** of the JWKS in a gateway or service config, or **hard-coded the client ID as the `kid`**, switch to fetching this endpoint before upgrading — otherwise tokens issued after the upgrade are rejected by that verifier.
+:::
 
 #### Manual key rotation
 
@@ -743,7 +906,7 @@ Authorizer supports a zero-downtime manual key-rotation workflow via four option
 - `--jwt-secondary-private-key`
 - `--jwt-secondary-public-key`
 
-When a secondary key is configured, JWKS publishes **both** public keys with distinct `kid`s (the secondary gets a `-secondary` suffix). The signing path always uses the primary key; verification tries the primary first and falls back to the secondary.
+When a secondary key is configured, JWKS publishes **both** public keys, each under its own thumbprint `kid`. The signing path always uses the primary key; verification tries the primary first and falls back to the secondary. Because a key's `kid` comes from the key itself, it stays the same when the key moves from primary to secondary, so verifiers that select keys by `kid` keep accepting outstanding tokens through the swap in step 3.
 
 **Rotation workflow:**
 
@@ -900,7 +1063,8 @@ curl -s -X POST $AUTHORIZER_URL/oauth/token \
 
 - HTTP 200 with `Cache-Control: no-store` header
 - Response contains `access_token`, `id_token`, `refresh_token`, `token_type: "Bearer"`, `expires_in`, `scope`
-- ID token payload (decode via [jwt.io](https://jwt.io)) contains: `iss`, `aud`, `sub`, `exp`, `iat`, `auth_time`, `amr`, `acr="0"`, `at_hash`, and `nonce` if supplied
+- ID token payload (decode via [jwt.io](https://jwt.io)) contains: `iss`, `aud`, `azp` (equal to `aud`), `sub`, `exp`, `iat`, `auth_time`, `amr`, `acr="0"`, `at_hash`, and `nonce` if supplied
+- Access token payload contains `client_id` equal to `$CLIENT_ID`
 
 **Verify `at_hash` manually:**
 
@@ -1020,8 +1184,14 @@ HTTPServer(('127.0.0.1', 9999), H).serve_forever()
 1. Register the provider on its console (Google, GitHub, etc.), using `$AUTHORIZER_URL/oauth_callback/<provider>` as the callback
 2. Configure the provider in Authorizer: `--google-client-id`, `--google-client-secret`, etc.
 3. Restart Authorizer — the login page auto-shows the new button
-4. Test: visit `$AUTHORIZER_URL/oauth_login/google?redirectURL=http://localhost:3000/callback&state=$STATE`
+4. Test: visit `$AUTHORIZER_URL/oauth_login/google?redirect_uri=http://localhost:3000/callback&state=$STATE`
 5. Verify the resulting ID token has `amr: ["fed"]` (federated authentication)
+6. Test social login inside an authorization request (2.4.6+): open the authorization-code URL from [step 3](#3-authorization-code--pkce-end-to-end) in a browser, choose the provider on the login page, and check that:
+   - the `/oauth_login` request's `redirect_uri` is `$AUTHORIZER_URL/app?…`, not your callback (browser dev tools, Network tab);
+   - you land on your callback with `?code=…&state=…`, after the consent screen for a self-registered client;
+   - the ID token from `/oauth/token` carries the `nonce` you sent.
+
+   See [the full round trip](#example-the-full-round-trip) for the expected requests.
 
 ### 10. Automated conformance testing
 
@@ -1046,6 +1216,8 @@ For pre-production validation, run a full OIDC conformance suite:
 | Back-channel logout never fires                   | `--backchannel-logout-uri` not set, or receiver unreachable within 5 seconds                       |
 | Auth0 Enterprise OIDC connection can't discover   | Wrong Issuer URL — must be exactly `https://your-authorizer.example` (no trailing slash, no path)  |
 | `redirect_uri` rejected                           | Not in `--allowed-origins`. The debug-level log message names the exact URI that was rejected      |
+| Social login returns `{"error":"invalid redirect uri"}` for a client whose callback is on another origin, while password login works | Before 2.4.6, `/oauth_login` checked the client's callback against `--allowed-origins`. Upgrade to 2.4.6 or later, where social login returns to `/app` and `/authorize` checks the client's registered redirect URIs — see [Social login inside an authorization request](#social-login-inside-an-authorization-request). Don't add the client's origin to `--allowed-origins` as a workaround |
+| Server logs `social login completed an /authorize request without resuming through /authorize` | A login UI is sending the client's callback straight to `/oauth_login` — a deprecated path that skips consent. Point it at its own `/app` URL instead (see the same section) |
 | RP reports "unexpected ID Token nonce claim value" | The `nonce` sent to `/authorize` didn't round-trip into the ID token. A custom login UI must forward `nonce` (and the PKCE params) back to `/authorize` after authentication |
 | `form_post` blocked: "sending form data violates Content Security Policy" | A reverse proxy in front of Authorizer is injecting its own CSP header, overriding the `form_post` CSP Authorizer sets |
 

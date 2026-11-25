@@ -77,7 +77,7 @@ helm install \
 
 | Name | Description | Default |
 | ---- | ----------- | ------- |
-| `authorizer.database_type` | Database type: `postgres`, `mysql`, `sqlite`, `sqlserver`, `mongodb`, `arangodb`, `yugabyte`, `mariadb`, `cassandradb`, `scylladb`, `couchbase`, `dynamodb`, `planetscale` | - |
+| `authorizer.database_type` | Database type: `postgres`, `yugabyte`, `cockroachdb`, `serenedb`, `surrealdb`, `mysql`, `mariadb`, `planetscale`, `sqlite`, `libsql`, `sqlserver`, `mongodb`, `arangodb`, `cassandradb`, `scylladb`, `couchbase`, `dynamodb` | - |
 | `authorizer.database_url` | Database connection string. See [Databases](../core/databases) | - |
 | `authorizer.authorizer_url` | This deployment's own public base URL, with the scheme (`--url`). **Required as of 2.4.0** — the chart refuses to render without it, because the server exits at boot. This is *not* `allowed_origins`: `authorizer_url` is where Authorizer itself is reachable, `allowed_origins` lists the apps it may redirect to | - |
 | `authorizer.client_id` | Client identifier **(required in v2)** | - |

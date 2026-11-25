@@ -75,6 +75,7 @@ const sidebars: SidebarsConfig = {
         'integrations/hasura',
         'integrations/react-native',
         'integrations/gatsbyjs',
+        'integrations/surrealdb',
       ],
     },
     {

@@ -90,11 +90,32 @@ Notes:
 |------|--------|
 | `active` | Deactivate/reactivate — see [Deprovisioning semantics](#deprovisioning-semantics) |
 | `name.givenName`, `name.familyName` | Update the profile name |
-| `userName`, `emails` / `emails[type eq "..."].value` | Update the user's email (uniqueness-checked — `409` if another user already holds it) |
-| `phoneNumber`, `phoneNumbers` / `phoneNumbers[...].value` | Update the phone number (uniqueness-checked) |
+| `userName`, `emails` / `emails[type eq "..."].value` | Update the user's email (uniqueness-checked — `409` if another user already holds it). Refused for a user shared with another organization — see [Shared users](#shared-users) |
+| `phoneNumber`, `phoneNumbers` / `phoneNumbers[...].value` | Update the phone number (uniqueness-checked). Refused for a user shared with another organization — see [Shared users](#shared-users) |
 | `externalId` | Update the correlation id |
 
 Both the path-qualified shape (`{"op":"replace","path":"active","value":false}`) and the no-path attribute-map shape (`{"op":"replace","value":{"active":false,"name":{"givenName":"Jonathan"}}}`) are accepted, since Okta and Entra don't send the same one. `remove` ops and any path this server doesn't model (e.g. enterprise-extension attributes like `manager`/`department`) are silently skipped rather than rejected, so a connector that also syncs unsupported attributes doesn't fail the whole request. A patch that changes nothing returns the resource unchanged and fires no webhook.
+
+### Shared users {#shared-users}
+
+A user's email and phone number are global to the account. They are what the user signs in with and where password-reset and OTP messages go, in every organization. So when a user is a member of **any other organization** (active or deprovisioned), a SCIM `PATCH` that would change their email or phone is rejected:
+
+```json
+{
+  "schemas": ["urn:ietf:params:scim:api:messages:2.0:Error"],
+  "status": "400",
+  "scimType": "mutability",
+  "detail": "email and phone of a user shared with another organization cannot be changed"
+}
+```
+
+The whole request is rejected, so no other attribute in it is applied either. Sending the user's current email again, including with different letter case, is not a change and still succeeds, so routine IdP re-syncs keep working. Users who belong only to this organization are unaffected.
+
+To change a shared user's email or phone, have the user change it themselves, or change it through the [admin API](../core/graphql-api).
+
+:::caution Changed in v2.4.8
+Before v2.4.8 one organization's SCIM token could change a shared user's email or phone, and so redirect password resets for an account another organization also relies on ([GHSA-p7g3-2258-8wmp](https://github.com/authorizerdev/authorizer/security/advisories/GHSA-p7g3-2258-8wmp)). If an IdP connector now logs `400 mutability` for a user, that user is a member of more than one organization.
+:::
 
 ## Deprovisioning semantics
 
