@@ -8,7 +8,7 @@ title: SurrealDB
 [SurrealDB](https://surrealdb.com) can verify tokens issued by an external identity provider and use their claims in table permissions. This guide sets up Authorizer as that provider, so a client-side application can use SurrealDB as its only backend: users sign in with Authorizer, and SurrealDB only lets each user read and write their own records.
 
 :::info Requires Authorizer v2.4.8 or later
-SurrealDB selects the verification key by the token's `kid` header. Authorizer adds a `kid` to every RS256/ES256 token from v2.4.8. With an earlier version every request to SurrealDB fails with `Missing token header 'kid'`.
+SurrealDB selects the verification key by the token's `kid` header. Authorizer adds a `kid` to every RS256/ES256 token from v2.4.8. With an earlier version SurrealDB refuses every token with `401`; its debug log (`--log debug`) shows `Missing token header 'kid'`.
 :::
 
 ## Using SurrealDB as Authorizer's database too
@@ -122,8 +122,8 @@ const db = new Surreal();
 await db.connect('wss://your-surrealdb.example.com');
 await db.authenticate(data.access_token);
 
-// Only the signed-in user's own record is returned.
-const [me] = await db.query('SELECT * FROM user');
+// One result per statement. The first holds only the signed-in user's own record.
+const [users] = await db.query('SELECT * FROM user');
 ```
 
 `login()` returns a token only once sign-in is complete. If the user has set up multi-factor authentication, or Authorizer is offering to set it up, the response asks for that step first; the [hosted login page](../core/oauth2-oidc) handles it for you.
