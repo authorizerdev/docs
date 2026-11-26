@@ -40,7 +40,7 @@ const config: Config = {
         docsDir: 'docs',
         title: 'Authorizer Documentation',
         description:
-          'Authorizer is an open-source, self-hosted authentication and authorization server: OAuth2/OIDC, social login, MFA, passkeys, magic links, SAML/SCIM, OpenFGA fine-grained authorization, MCP server, and RFC 8693 agent delegation. Runs on 13+ SQL and NoSQL databases; configured entirely by CLI flags.',
+          'Authorizer is an open-source, self-hosted authentication and authorization server: OAuth2/OIDC, social login, MFA, passkeys, magic links, SAML/SCIM, OpenFGA fine-grained authorization, MCP server, and RFC 8693 agent delegation. Runs on 17 SQL, NoSQL and graph databases; configured entirely by CLI flags.',
         generateMarkdownFiles: true,
         excludeImports: true,
         removeDuplicateHeadings: true,
