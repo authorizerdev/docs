@@ -542,8 +542,12 @@ query string.
 30 minutes and usable once:
 
 ```text
-https://<authorizer-url>/verify_email?token=<verification-token>&redirect_uri=<redirect-url>?roles=user&state=<state>
+https://<authorizer-url>/verify_email?redirect_uri=<url-encoded-redirect-url>&roles=user&state=<state>&token=<verification-token>
 ```
+
+Since v2.4.9 every value is URL-encoded and `roles`, `state` and `scope` are
+separate parameters. Up to v2.4.8 they were appended, unencoded, to the
+`redirect_uri` itself.
 
 The `token` is a single-purpose verification token. It is not an access token.
 Don't try to use it as a credential.
@@ -560,7 +564,7 @@ does the following:
   (see below) `code`:
 
 ```text
-https://your-app.example.com/auth/callback?roles=user&state=<state>&nonce=<nonce>
+https://your-app.example.com/auth/callback?state=<state>&nonce=<nonce>
 ```
 
 **The redirect URL never contains `access_token`, `id_token` or
@@ -568,8 +572,7 @@ https://your-app.example.com/auth/callback?roles=user&state=<state>&nonce=<nonce
 from an email, it ends up in mail-client and browser history, proxy logs and
 `Referer` headers, so tokens were removed from it
 ([GHSA-44vr-f829-xfch](https://github.com/authorizerdev/authorizer/security/advisories/GHSA-44vr-f829-xfch)).
-The session cookie is how the login reaches your app. The `roles=` you see on
-the landing URL is part of the redirect URL and is not a credential.
+The session cookie is how the login reaches your app.
 
 **5. Your app gets tokens.** On the redirect page, call
 [`session`](#session) (`getSession` in authorizer-js) with credentials
@@ -609,19 +612,31 @@ login.
 **Authorization code flow (`/authorize` + PKCE).** If you start the
 magic-link login with the same `state` used at
 [`/authorize`](./endpoints#authorize), `/verify_email` adds a `code` to the
-redirect. **That code can't currently be exchanged at `/oauth/token`.** It
-returns `invalid_grant`. After the redirect, run `/authorize` again (for
-example `authRef.authorize({ response_type: 'code', ... })`). The browser now
-has a session cookie, so `/authorize` redirects straight back with a new code
-that `/oauth/token` accepts.
+redirect. Since v2.4.9 that code is exchanged at `/oauth/token` like any other
+authorization code: it is single-use and needs the PKCE `code_verifier`. A
+code is issued only when both of these hold:
+
+- The link is opened **in the same browser that started `/authorize`**.
+  `/authorize` sets a short-lived, HttpOnly binding cookie, so opening the
+  link on another device or in another browser still signs the user in (session
+  cookie) but adds no `code`.
+- The redirect target is **exactly** the `redirect_uri` that `/authorize`
+  recorded.
+
+When no code is issued, run `/authorize` again from your app (for example
+`authRef.authorize({ response_type: 'code', ... })`). The browser now has a
+session cookie, so `/authorize` redirects straight back with a code.
+
+Up to v2.4.8 the code added by `/verify_email` could not be exchanged
+(`/oauth/token` returned `invalid_grant`); use the same re-run of `/authorize`
+there.
 
 **Exact redirect URIs (`--redirect-uris`).** When `--redirect-uris` is set,
-`/verify_email` requires an exact match. The `redirect_uri` in the emailed link
-includes the `?roles=...` that `magic_link_login` adds, so it doesn't match a
-plain registered URI such as `https://your-app.example.com/auth/callback`.
-The request fails with `400 invalid redirect uri`. Don't use `--redirect-uris`
-with magic-link login until this is fixed. Use `--allowed-origins` to restrict
-redirects instead.
+`/verify_email` requires the `redirect_uri` to match a registered URI exactly.
+Since v2.4.9 the emailed link carries the `redirect_uri` unchanged, so
+magic-link login works with exact redirect URIs. Up to v2.4.8 the link
+appended `?roles=...` to the `redirect_uri`, the match failed with
+`400 invalid redirect uri`, and you had to use `--allowed-origins` instead.
 
 **MFA.** MFA is on by default, so expect this step on a user's first magic
 link. `/verify_email` withholds the session when any of these is true:
@@ -636,7 +651,7 @@ session cookie instead and redirects to the redirect URL with `mfa_required=1`,
 `code` parameters are not added. For example:
 
 ```text
-https://your-app.example.com/auth/callback?roles=user&mfa_gate=offer&mfa_methods=totp%2Cwebauthn%2Cemail_otp&mfa_required=1
+https://your-app.example.com/auth/callback?mfa_gate=offer&mfa_methods=totp%2Cwebauthn%2Cemail_otp&mfa_required=1
 ```
 
 `mfa_gate=verify` means the user must prove a factor they already enrolled.

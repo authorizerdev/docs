@@ -56,14 +56,15 @@ It works as follows:
 - Marks the email as verified.
 - Sets the session cookie.
 - Responds with `307` to `redirect_uri`, adding `state`, `nonce` and, for
-  `/authorize`-started flows, `code`.
+  `/authorize`-started flows opened in the same browser, `code` (redeemable at
+  `/oauth/token` with the PKCE verifier since v2.4.9).
 
 Tokens are never put in the redirect URL. Your app reads them with
 [`session`](./graphql-api#session) using the cookie. If MFA applies to the
 user, the redirect carries `mfa_required=1&mfa_methods=…&mfa_gate=…` instead
 and no session cookie is set. See
 [How the magic link flow works](./graphql-api#magic-link-flow) for the full
-flow and its current limitations.
+flow.
 
 ## `/userinfo`
 
