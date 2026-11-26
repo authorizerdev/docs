@@ -203,6 +203,7 @@ Defaults, each applied only when you don't pass the flag yourself:
 | Database | SQLite at `.authorizer/authorizer.db` |
 | `--host` | `127.0.0.1` (loopback only; pass `--host=0.0.0.0` inside Docker) |
 | `--url` | `http://localhost:<http-port>` |
+| `--allowed-origins` | The server's own URL plus `http://localhost:3000`, `http://localhost:5173` and `http://localhost:4200`, so a local frontend can log in |
 | `--mcp-enabled` | `true` — MCP server at `<url>/mcp` |
 | `--enable-client-id-metadata-document` | `true` |
 | Client ID, client secret, admin secret, encryption key, JWT keys | Generated once, stored in `.authorizer/dev-secrets.json`. Each is used only if you do not pass that flag (JWT keys only when no `--jwt-*` flag is passed) |
@@ -229,6 +230,7 @@ Scripts and coding agents can read every value needed to integrate without start
   "openid_configuration_url": "http://localhost:8080/.well-known/openid-configuration",
   "jwks_url": "http://localhost:8080/.well-known/jwks.json",
   "mcp_url": "http://localhost:8080/mcp",
+  "allowed_origins": ["http://localhost:8080", "http://localhost:3000", "http://localhost:5173", "http://localhost:4200"],
   "client_id": "…",
   "client_secret": "…",
   "admin_secret": "…",
