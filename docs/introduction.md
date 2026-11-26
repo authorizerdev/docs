@@ -70,17 +70,21 @@ Authorizer v2 focuses on simpler, more secure configuration and a cleaner operat
 Or with Docker:
 
 ```bash
-docker run -p 8080:8080 quay.io/authorizer/authorizer:latest \
+docker run -p 8080:8080 \
+  -v authorizer_data:/authorizer/data \
+  quay.io/authorizer/authorizer:latest \
   --database-type=sqlite \
-  --database-url=test.db \
+  --database-url=/authorizer/data/data.db \
   --url=http://localhost:8080 \
+  --client-id=123456 \
+  --client-secret=secret \
+  --admin-secret=admin \
   --jwt-type=HS256 \
   --jwt-secret=test \
-  --encryption-key=test-encryption-key \
-  --admin-secret=admin \
-  --client-id=123456 \
-  --client-secret=secret
+  --encryption-key=test-encryption-key
 ```
+
+Open `http://localhost:8080/app` (login) and `http://localhost:8080/dashboard` (admin secret `admin`). The `authorizer_data` volume keeps the SQLite database across restarts. `--url` is required. An app on another origin, such as a dev server on `http://localhost:3000`, also needs `--allowed-origins=http://localhost:8080,http://localhost:3000`. These values are placeholders for local use only.
 
 ### Where to start
 
