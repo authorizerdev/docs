@@ -1,6 +1,7 @@
 ---
 sidebar_position: 1
 title: Getting Started
+description: "Add Authorizer authentication to a Vue 3 app with the Authorizer Vue SDK: install, configure the plugin and render login components."
 ---
 
 # Getting Started

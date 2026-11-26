@@ -1,6 +1,7 @@
 ---
 sidebar_position: 5
 title: FGA Guide — Examples & Patterns
+description: "Hands-on OpenFGA cookbook for Authorizer: model documents, teams, hierarchies and conditions, write tuples and run checks via GraphQL, Go and JavaScript."
 ---
 
 # FGA Guide — Examples & Patterns

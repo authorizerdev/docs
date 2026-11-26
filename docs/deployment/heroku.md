@@ -1,6 +1,7 @@
 ---
 sidebar_position: 5
 title: Heroku
+description: "Deploy Authorizer with PostgreSQL on Heroku."
 ---
 
 # Deploy on Heroku

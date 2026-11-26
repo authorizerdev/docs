@@ -1,6 +1,7 @@
 ---
 sidebar_position: 3
 title: Per-Org OIDC SSO
+description: "Connect each organization's own OIDC identity provider (Okta, Entra ID, Google Workspace) to Authorizer with just-in-time user provisioning."
 ---
 
 # Per-Organization OIDC SSO (Broker)

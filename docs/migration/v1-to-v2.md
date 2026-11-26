@@ -1,6 +1,7 @@
 ---
 sidebar_position: 1
 title: Migration v1 to v2
+description: "Migrate from Authorizer v1 to v2: env vars to CLI flags, secret handling, breaking changes and a step-by-step upgrade checklist."
 ---
 
 # Migration Guide: Authorizer v1 to v2

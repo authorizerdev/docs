@@ -1,6 +1,7 @@
 ---
 sidebar_position: 1
 title: Getting Started
+description: "Add Authorizer authentication to a Svelte app with @authorizerdev/authorizer-svelte: install, configure the provider and render login."
 ---
 
 # Getting Started

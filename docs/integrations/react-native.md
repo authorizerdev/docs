@@ -1,6 +1,7 @@
 ---
 sidebar_position: 2
 title: React Native
+description: "Add Authorizer authentication to a React Native (Expo) mobile app, with a complete sample repository."
 ---
 
 # Using Authorizer with React Native Expo

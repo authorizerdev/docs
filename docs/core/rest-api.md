@@ -1,6 +1,7 @@
 ---
 sidebar_position: 6
 title: REST API
+description: "Authorizer's JSON-over-HTTP REST API under /v1/, generated from the gRPC service with grpc-gateway and mapped one-to-one to GraphQL operations."
 ---
 
 # REST API

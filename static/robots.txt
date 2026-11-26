@@ -1,0 +1,17 @@
+# docs.authorizer.dev — all crawlers, including AI/answer-engine crawlers, are welcome.
+User-agent: *
+Allow: /
+
+# Explicitly allow AI crawlers so the intent is unambiguous.
+User-agent: GPTBot
+User-agent: OAI-SearchBot
+User-agent: ChatGPT-User
+User-agent: ClaudeBot
+User-agent: Claude-SearchBot
+User-agent: Claude-User
+User-agent: PerplexityBot
+User-agent: Google-Extended
+User-agent: CCBot
+Allow: /
+
+Sitemap: https://docs.authorizer.dev/sitemap.xml

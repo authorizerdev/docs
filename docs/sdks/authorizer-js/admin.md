@@ -1,6 +1,7 @@
 ---
 sidebar_position: 3
 title: Protocols & Admin API
+description: "Admin and protocol APIs in @authorizerdev/authorizer-js: manage users, clients, organizations and FGA, and use OAuth/OIDC helpers from JavaScript."
 ---
 
 # Protocols & Admin API

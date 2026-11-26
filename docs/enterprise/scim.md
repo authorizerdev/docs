@@ -1,6 +1,7 @@
 ---
 sidebar_position: 6
 title: SCIM 2.0 Provisioning
+description: "Provision and deprovision users in Authorizer from Okta, Microsoft Entra ID or OneLogin with the per-organization SCIM 2.0 (RFC 7644) endpoint."
 ---
 
 # SCIM 2.0 Provisioning

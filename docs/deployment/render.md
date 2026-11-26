@@ -1,6 +1,7 @@
 ---
 sidebar_position: 7
 title: Render
+description: "Deploy Authorizer on Render with free SSL, a managed database and auto-deploys from Git."
 ---
 
 # Deploy on Render

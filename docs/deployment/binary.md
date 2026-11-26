@@ -1,6 +1,7 @@
 ---
 sidebar_position: 3
 title: Binary Deployment
+description: "Run the Authorizer v2 binary on any server: download or build it and configure everything with CLI flags."
 ---
 
 # Binary (v2)

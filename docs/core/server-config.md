@@ -1,6 +1,7 @@
 ---
 sidebar_position: 2
 title: Server Configuration
+description: "Every Authorizer v2 CLI flag: database, secrets, JWT keys, URLs, social providers, email, SMS, MFA, FGA and MCP. No .env files or environment variables."
 ---
 
 # Server Configuration (v2)

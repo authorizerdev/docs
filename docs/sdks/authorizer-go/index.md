@@ -1,6 +1,7 @@
 ---
 sidebar_position: 1
 title: Getting Started
+description: "Get started with authorizer-go, the official Go SDK for Authorizer: install, create a client and validate users from your Go backend."
 ---
 
 # Getting Started

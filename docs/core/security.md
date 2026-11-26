@@ -1,6 +1,7 @@
 ---
 sidebar_position: 9
 title: Security Hardening
+description: "Security hardening flags for Authorizer: cookie, CSRF, redirect URI, PKCE and token settings, breaking changes, and production deployment guidance."
 ---
 
 # Security Hardening

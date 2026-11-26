@@ -1,6 +1,7 @@
 ---
 sidebar_position: 3
 title: Fine-Grained Authorization
+description: "Check fine-grained permissions from Python with authorizer-py: check_permissions and list_permissions against Authorizer's embedded OpenFGA engine."
 ---
 
 # Fine-Grained Authorization (FGA)

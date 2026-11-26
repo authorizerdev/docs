@@ -1,6 +1,7 @@
 ---
 sidebar_position: 2
 title: Functions
+description: "Reference for authorizer-py sync and async client methods: authentication, sessions, profiles, token validation and permissions."
 ---
 
 # Functions

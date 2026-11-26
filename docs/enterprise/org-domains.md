@@ -1,6 +1,7 @@
 ---
 sidebar_position: 2
 title: Verified Domains & Home Realm Discovery
+description: "Verify organization email domains in Authorizer and route users to their company's SSO automatically with home realm discovery."
 ---
 
 # Verified Domains & Home Realm Discovery

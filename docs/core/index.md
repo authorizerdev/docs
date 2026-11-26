@@ -1,6 +1,7 @@
 ---
 sidebar_position: 1
 title: Overview
+description: "Overview of Authorizer core: the Go auth server, its built-in login UI and admin dashboard, and the GraphQL, REST, gRPC and MCP API surfaces."
 ---
 
 # Authorizer Core

@@ -1,6 +1,7 @@
 ---
 sidebar_position: 3
 title: Hooks
+description: "The useAuthorizer React hook: read the user, token and loading state and call login, logout and other Authorizer actions from any component."
 ---
 
 # Hooks

@@ -1,6 +1,7 @@
 ---
 sidebar_position: 5
 title: GraphQL API
+description: "Authorizer's GraphQL API: queries and mutations for signup, login, sessions, profiles, permissions and the underscore-prefixed admin operations."
 ---
 
 # GraphQL API

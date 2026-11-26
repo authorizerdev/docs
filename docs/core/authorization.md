@@ -1,6 +1,7 @@
 ---
 sidebar_position: 4
 title: Authorization (FGA)
+description: "Fine-grained authorization in Authorizer with an embedded OpenFGA (Zanzibar-style ReBAC) engine: models, tuples, check and list APIs, and agent-aware checks."
 ---
 
 # Authorization (Fine-Grained)

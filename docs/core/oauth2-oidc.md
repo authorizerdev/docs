@@ -1,6 +1,7 @@
 ---
 sidebar_position: 5
 title: OAuth 2.0, OIDC & SSO
+description: "Use Authorizer as a conformant OAuth 2.0 and OpenID Connect provider: authorization code with PKCE, client credentials, refresh tokens, discovery and SSO."
 ---
 
 # OAuth 2.0, OpenID Connect & SSO

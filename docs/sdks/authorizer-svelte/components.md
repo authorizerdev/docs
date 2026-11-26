@@ -1,6 +1,7 @@
 ---
 sidebar_position: 2
 title: Components
+description: "Svelte components from @authorizerdev/authorizer-svelte for login, signup, magic link, social login and password reset."
 ---
 
 # Components

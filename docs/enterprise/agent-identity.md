@@ -1,6 +1,7 @@
 ---
 sidebar_position: 8
 title: Agent Identity & Permissions
+description: "How Authorizer authorizes AI agents acting for users: the act claim, agent-and-user FGA checks, scope ceilings and audit attribution."
 ---
 
 # Agent Identity & Permissions

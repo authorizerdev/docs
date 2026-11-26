@@ -1,6 +1,7 @@
 ---
 sidebar_position: 7
 title: Token Exchange & Delegation
+description: "RFC 8693 token exchange in Authorizer: let an AI agent or service act for a user with a delegated token carrying the act claim and narrowed scopes."
 ---
 
 # Token Exchange & Delegation (RFC 8693)

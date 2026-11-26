@@ -1,6 +1,7 @@
 ---
 sidebar_position: 4
 title: Endpoints
+description: "Reference of Authorizer's HTTP endpoints: OIDC discovery, JWKS, authorize, token, revoke, userinfo, social login callbacks, logout, GraphQL, health and metrics."
 ---
 
 # Endpoints

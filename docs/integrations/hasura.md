@@ -1,6 +1,7 @@
 ---
 sidebar_position: 1
 title: Hasura
+description: "Secure a Hasura GraphQL API with Authorizer: configure JWT claims and roles so Hasura permissions use Authorizer-issued tokens."
 ---
 
 # Using Authorizer with Hasura

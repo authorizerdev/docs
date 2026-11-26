@@ -1,6 +1,7 @@
 ---
 sidebar_position: 4
 title: Helm Chart
+description: "Install Authorizer on Kubernetes with the official Helm chart: values, secrets, database and ingress."
 ---
 
 # Helm Chart

@@ -1,6 +1,7 @@
 ---
 sidebar_position: 2
 title: Example
+description: "Example Go (Gin) middleware that validates Authorizer access tokens from the Authorization header with the authorizer-go SDK."
 ---
 
 # How to use authorizer as API gateway

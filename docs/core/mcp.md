@@ -1,6 +1,7 @@
 ---
 sidebar_position: 7
 title: MCP Server
+description: "Authorizer's built-in MCP server: let Claude, Cursor or any MCP host authenticate with OAuth 2.1 and call profile and permission-check tools for a user."
 ---
 
 # MCP Server

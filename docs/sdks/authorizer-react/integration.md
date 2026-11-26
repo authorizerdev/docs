@@ -1,6 +1,7 @@
 ---
 sidebar_position: 4
 title: Integration Guide
+description: "Integrate Authorizer into a real React or Next.js app: protected routes, calling your backend with the access token and role-based UI."
 ---
 
 # Integration Guide

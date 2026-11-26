@@ -1,6 +1,7 @@
 ---
 sidebar_position: 6
 title: SSO — One-Stop Authentication for All Your Apps
+description: "Run Authorizer as the central single sign-on identity provider for all your apps: one login, shared sessions and OIDC clients per application."
 ---
 
 # SSO — One-Stop Authentication for All Your Apps

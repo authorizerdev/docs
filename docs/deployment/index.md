@@ -1,6 +1,7 @@
 ---
 sidebar_position: 1
 title: Deployment Overview
+description: "Deployment options for Authorizer v2: Docker, binary, Kubernetes, Helm and one-click platforms such as Railway, Render, Fly.io and Koyeb."
 ---
 
 # Deployments
