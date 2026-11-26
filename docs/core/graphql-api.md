@@ -509,6 +509,160 @@ mutation {
 }
 ```
 
+#### How the magic link flow works {#magic-link-flow}
+
+**1. Server configuration.** Start the server with all of these:
+`--enable-magic-link-login`, `--enable-email-verification`, and a working SMTP
+setup (`--smtp-host`, `--smtp-port`, `--smtp-sender-email`). If
+`--enable-email-verification` is off, `magic_link_login` still returns its
+usual success message but **no email is sent**.
+
+The response message is the same whether or not the account exists, so the
+mutation can't be used to find out which emails are registered. The exception
+is when signup is disabled: an unknown email then gets an error.
+
+**2. Choosing the redirect URL.** The redirect URL is chosen in this order:
+
+1. The `redirect_uri` you pass to `magic_link_login`.
+2. Otherwise `<--url>/app`, the built-in login UI.
+
+There is no `APP_URL` / `--app-url` setting in v2.
+
+A `redirect_uri` you pass must pass the `--allowed-origins` check
+([server config](./server-config)). With the default `--allowed-origins=*`,
+only URLs on the server's own `--url` origin are accepted. To send users to an
+app on a different origin, add that origin to `--allowed-origins`. A rejected
+`redirect_uri` returns `invalid redirect URI`.
+
+The server then adds `roles` (and `state` and `scope` when you pass them) to
+the redirect URL as query parameters. Pass a `redirect_uri` without its own
+query string.
+
+**3. The emailed link.** The email contains a link to the server, valid for
+30 minutes and usable once:
+
+```text
+https://<authorizer-url>/verify_email?redirect_uri=<url-encoded-redirect-url>&roles=user&state=<state>&token=<verification-token>
+```
+
+Since v2.4.9 every value is URL-encoded and `roles`, `state` and `scope` are
+separate parameters. Up to v2.4.8 they were appended, unencoded, to the
+`redirect_uri` itself.
+
+The `token` is a single-purpose verification token. It is not an access token.
+Don't try to use it as a credential.
+
+**4. The user clicks the link.** [`GET /verify_email`](./endpoints#verify_email)
+does the following:
+
+- Checks the `redirect_uri` again and checks the token (signature, expiry,
+  purpose, and that the request hasn't been used).
+- Marks the email as verified and logs the user in. If MFA applies, it stops
+  here and sends the user to the MFA step instead (see **MFA** below).
+- Sets the Authorizer **session cookie** in the browser.
+- Responds with `307` to the redirect URL, adding only `state`, `nonce` and
+  (see below) `code`:
+
+```text
+https://your-app.example.com/auth/callback?state=<state>&nonce=<nonce>
+```
+
+**The redirect URL never contains `access_token`, `id_token` or
+`refresh_token`.** Tokens used to be added to this URL. Because the URL starts
+from an email, it ends up in mail-client and browser history, proxy logs and
+`Referer` headers, so tokens were removed from it
+([GHSA-44vr-f829-xfch](https://github.com/authorizerdev/authorizer/security/advisories/GHSA-44vr-f829-xfch)).
+The session cookie is how the login reaches your app.
+
+**5. Your app gets tokens.** On the redirect page, call
+[`session`](#session) (`getSession` in authorizer-js) with credentials
+included. The browser sends the session cookie and the response contains
+`access_token`, `id_token`, `user` and so on. Each call to `session` rotates
+the session cookie, so always let the browser store the new `Set-Cookie`
+(`credentials: 'include'` does this).
+
+```js
+import { Authorizer } from '@authorizerdev/authorizer-js'
+
+const authRef = new Authorizer({
+  authorizerURL: 'https://auth.example.com',
+  redirectURL: 'https://your-app.example.com/auth/callback',
+  clientID: 'YOUR_CLIENT_ID',
+})
+
+// Login page: request the email.
+await authRef.magicLinkLogin({
+  email: 'foo@bar.com',
+  redirect_uri: 'https://your-app.example.com/auth/callback',
+})
+
+// /auth/callback page (where /verify_email redirects to):
+const { data, errors } = await authRef.getSession()
+if (data?.access_token) {
+  // logged in: data.user, data.access_token, data.id_token
+}
+```
+
+The session cookie belongs to the Authorizer domain. If your app runs on a
+different site, `getSession` is a cross-site request that carries a cookie. It
+depends on `--app-cookie-same-site` (default `none`) and on the browser
+allowing third-party cookies, the same as any other cookie-based Authorizer
+login.
+
+**Authorization code flow (`/authorize` + PKCE).** If you start the
+magic-link login with the same `state` used at
+[`/authorize`](./endpoints#authorize), `/verify_email` adds a `code` to the
+redirect. Since v2.4.9 that code is exchanged at `/oauth/token` like any other
+authorization code: it is single-use and needs the PKCE `code_verifier`. A
+code is issued only when both of these hold:
+
+- The link is opened **in the same browser that started `/authorize`**.
+  `/authorize` sets a short-lived, HttpOnly binding cookie, so opening the
+  link on another device or in another browser still signs the user in (session
+  cookie) but adds no `code`.
+- The redirect target is **exactly** the `redirect_uri` that `/authorize`
+  recorded.
+
+When no code is issued, run `/authorize` again from your app (for example
+`authRef.authorize({ response_type: 'code', ... })`). The browser now has a
+session cookie, so `/authorize` redirects straight back with a code.
+
+Up to v2.4.8 the code added by `/verify_email` could not be exchanged
+(`/oauth/token` returned `invalid_grant`); use the same re-run of `/authorize`
+there.
+
+**Exact redirect URIs (`--redirect-uris`).** When `--redirect-uris` is set,
+`/verify_email` requires the `redirect_uri` to match a registered URI exactly.
+Since v2.4.9 the emailed link carries the `redirect_uri` unchanged, so
+magic-link login works with exact redirect URIs. Up to v2.4.8 the link
+appended `?roles=...` to the `redirect_uri`, the match failed with
+`400 invalid redirect uri`, and you had to use `--allowed-origins` instead.
+
+**MFA.** MFA is on by default, so expect this step on a user's first magic
+link. `/verify_email` withholds the session when any of these is true:
+
+- The user has enrolled a second factor.
+- `--enforce-mfa` is set.
+- MFA applies to the user and they have not skipped setup yet.
+
+In that case it sets no session cookie. It sets a short-lived (3-minute) MFA
+session cookie instead and redirects to the redirect URL with `mfa_required=1`,
+`mfa_methods=<comma-separated list>` and `mfa_gate`. The `state`, `nonce` and
+`code` parameters are not added. For example:
+
+```text
+https://your-app.example.com/auth/callback?mfa_gate=offer&mfa_methods=totp%2Cwebauthn%2Cemail_otp&mfa_required=1
+```
+
+`mfa_gate=verify` means the user must prove a factor they already enrolled.
+`mfa_gate=offer` means they are offered enrollment and may skip it. Your page
+completes the step with the MFA mutations, such as [`verify_otp`](#verify_otp),
+or [`skip_mfa_setup`](#skip_mfa_setup) for an `offer`. Those calls identify
+the user from the MFA session cookie and return the tokens, after which
+`getSession` works as above. The built-in `/app` UI handles these parameters.
+If you don't want the MFA step, start the server with `--disable-mfa`. If the
+user's MFA is locked, the redirect carries an `error` parameter instead.
+
 ### `logout`
 
 Mutation to logout user. This is authorized request and accepts `token` as HTTP cookie or Authorization header with `Bearer token`.
