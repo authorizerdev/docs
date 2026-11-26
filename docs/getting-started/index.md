@@ -1,6 +1,7 @@
 ---
 sidebar_position: 1
 title: Getting Started
+description: "Start Authorizer v2 in minutes from source, Docker, binary, Kubernetes or one-click deploys, with the required CLI flags and a local dev setup."
 ---
 
 # Getting Started

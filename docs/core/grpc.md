@@ -1,6 +1,7 @@
 ---
 sidebar_position: 8
 title: gRPC API
+description: "Call Authorizer over native gRPC: the authorizer.v1 protobuf services, authentication metadata, reflection and generated Go and Python stubs."
 ---
 
 # gRPC API

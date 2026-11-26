@@ -1,6 +1,7 @@
 ---
 sidebar_position: 7
 title: Email Verification Contract
+description: "When Authorizer treats an email address as verified across signup, magic link and social or enterprise logins, and what to configure to prevent account takeover."
 ---
 
 # Email verification contract

@@ -1,6 +1,7 @@
 ---
 sidebar_position: 6
 title: Client Registry
+description: "The Authorizer client registry: interactive, service-account and dynamically registered OAuth clients, their scopes, grant types and how they authenticate."
 ---
 
 # Client Registry

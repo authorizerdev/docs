@@ -1,6 +1,7 @@
 ---
 sidebar_position: 4
 title: Per-Org SAML 2.0 SSO
+description: "Configure per-organization SAML 2.0 SSO in Authorizer with Okta, Microsoft Entra ID or ADFS, with Authorizer as the service provider."
 ---
 
 # Per-Organization SAML 2.0 SSO (Service Provider)

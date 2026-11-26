@@ -1,6 +1,7 @@
 ---
 sidebar_position: 3
 title: Databases
+description: "Connect Authorizer to PostgreSQL, MySQL, SQLite, MongoDB, DynamoDB, Cassandra, Couchbase, ArangoDB, SurrealDB and more with --database-type and --database-url."
 ---
 
 # Databases

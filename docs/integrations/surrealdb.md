@@ -1,6 +1,7 @@
 ---
 sidebar_position: 4
 title: SurrealDB
+description: "Use Authorizer as SurrealDB's external identity provider so table permissions use token claims and the client talks to SurrealDB directly."
 ---
 
 # Using Authorizer with SurrealDB

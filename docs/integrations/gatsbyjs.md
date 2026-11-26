@@ -1,6 +1,7 @@
 ---
 sidebar_position: 3
 title: Gatsby.js
+description: "Add authentication to a Gatsby.js site with Authorizer and the React SDK, including deploying an Authorizer instance."
 ---
 
 # Using Authorizer with Gatsby

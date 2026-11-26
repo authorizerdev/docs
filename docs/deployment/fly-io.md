@@ -1,6 +1,7 @@
 ---
 sidebar_position: 8
 title: Fly.io
+description: "Deploy Authorizer on Fly.io with a database, custom domain and free SSL using the flyctl CLI."
 ---
 
 # Deploy on Fly.io

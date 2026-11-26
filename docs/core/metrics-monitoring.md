@@ -1,6 +1,7 @@
 ---
 sidebar_position: 7
 title: Metrics & Monitoring
+description: "Monitor Authorizer with Prometheus metrics for logins, API latency, security events and infrastructure health, plus example dashboards and alerts."
 ---
 
 # Metrics & Monitoring

@@ -1,6 +1,7 @@
 ---
 sidebar_position: 9
 title: Koyeb
+description: "Deploy Authorizer on Koyeb's serverless platform with autoscaling and a global edge network."
 ---
 
 # Deploy on Koyeb

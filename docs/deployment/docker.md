@@ -1,6 +1,7 @@
 ---
 sidebar_position: 2
 title: Docker
+description: "Run Authorizer with Docker using v2 CLI flags, with examples for SQLite, PostgreSQL and persistent volumes."
 ---
 
 # Docker

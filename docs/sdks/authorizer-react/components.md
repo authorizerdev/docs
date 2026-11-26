@@ -1,6 +1,7 @@
 ---
 sidebar_position: 2
 title: Components
+description: "React components from @authorizerdev/authorizer-react: AuthorizerProvider, login, signup, magic link, social login and password reset forms."
 ---
 
 # Components

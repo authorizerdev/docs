@@ -1,6 +1,7 @@
 ---
 sidebar_position: 5
 title: SAML 2.0 Identity Provider
+description: "Use Authorizer as a SAML 2.0 identity provider for apps like Zendesk, Salesforce and Notion, issuing signed assertions per organization."
 ---
 
 # SAML 2.0 Identity Provider (IdP)

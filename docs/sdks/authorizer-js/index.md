@@ -1,6 +1,7 @@
 ---
 sidebar_position: 1
 title: Getting Started
+description: "Get started with @authorizerdev/authorizer-js, the universal JavaScript SDK for Authorizer in the browser and Node.js (ESM, CommonJS and UMD builds)."
 ---
 
 # Getting Started

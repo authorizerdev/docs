@@ -1,6 +1,7 @@
 ---
 sidebar_position: 10
 title: EasyPanel
+description: "Deploy Authorizer on your own server with EasyPanel."
 ---
 
 # Deploy on EasyPanel

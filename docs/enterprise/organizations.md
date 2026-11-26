@@ -1,6 +1,7 @@
 ---
 sidebar_position: 1
 title: Organizations
+description: "Model tenants in one Authorizer instance with organizations: members, roles, SSO connections, verified domains and org-scoped admins."
 ---
 
 # Organizations

@@ -1,6 +1,7 @@
 ---
 sidebar_position: 1
 title: Getting Started
+description: "Get started with authorizer-py, the official Python SDK for Authorizer with sync and async clients, type hints and FGA helpers."
 ---
 
 # Getting Started

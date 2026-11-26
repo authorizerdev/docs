@@ -1,6 +1,7 @@
 ---
 sidebar_position: 6
 title: Railway
+description: "Deploy Authorizer on Railway in one click with a managed database."
 ---
 
 # Deploy on Railway

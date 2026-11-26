@@ -1,6 +1,7 @@
 ---
 sidebar_position: 8
 title: Rate Limiting
+description: "Authorizer's built-in per-IP rate limiting for authentication endpoints: defaults, CLI flags and Redis-backed limits for multi-replica deployments."
 ---
 
 # Rate Limiting

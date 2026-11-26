@@ -1,6 +1,7 @@
 ---
 sidebar_position: 9
 title: Workload Identity
+description: "Authenticate service accounts to Authorizer without stored secrets using Kubernetes, cloud OIDC or SPIFFE JWTs (RFC 7523 client assertions)."
 ---
 
 # Workload Identity (Secretless Client Authentication)

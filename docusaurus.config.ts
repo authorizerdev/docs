@@ -3,10 +3,9 @@ import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
 const SITE_URL = 'https://docs.authorizer.dev';
-/** Same artwork as authorizer.dev — Open Graph / X / LinkedIn link previews */
-const OG_IMAGE_URL = `${SITE_URL}/img/authorizer-og.png`;
-const OG_IMAGE_WIDTH = '1734';
-const OG_IMAGE_HEIGHT = '907';
+/** Dimensions of themeConfig.image (img/authorizer-og.png), which Docusaurus emits per page as og:image */
+const OG_IMAGE_WIDTH = '1536';
+const OG_IMAGE_HEIGHT = '1024';
 
 const config: Config = {
   title: 'Authorizer',
@@ -23,22 +22,43 @@ const config: Config = {
   organizationName: 'authorizerdev',
   projectName: 'authorizer',
 
-  onBrokenLinks: 'warn',
-  onBrokenAnchors: 'warn',
+  onBrokenLinks: 'throw',
+  onBrokenAnchors: 'throw',
 
   markdown: {
     mermaid: true,
   },
   themes: ['@docusaurus/theme-mermaid'],
 
-  headTags: [
-    {
-      tagName: 'meta',
-      attributes: {
-        name: 'description',
-        content: 'Authorizer is an open-source authentication and authorization solution. Self-host with your own database, support for OAuth2, OpenID Connect, social logins, magic links, and more.',
+  plugins: [
+    [
+      'docusaurus-plugin-llms',
+      {
+        // llms.txt (index) + llms-full.txt (all pages) + a .md copy of every
+        // page, per llmstxt.org. Only the current (2.x) docs are included.
+        docsDir: 'docs',
+        title: 'Authorizer Documentation',
+        description:
+          'Authorizer is an open-source, self-hosted authentication and authorization server: OAuth2/OIDC, social login, MFA, passkeys, magic links, SAML/SCIM, OpenFGA fine-grained authorization, MCP server, and RFC 8693 agent delegation. Runs on 17 SQL, NoSQL and graph databases; configured entirely by CLI flags.',
+        generateMarkdownFiles: true,
+        excludeImports: true,
+        removeDuplicateHeadings: true,
+        includeOrder: [
+          'introduction.md',
+          'getting-started/**',
+          'core/**',
+          'enterprise/**',
+          'sdks/**',
+          'deployment/**',
+          'integrations/**',
+          'migration/**',
+        ],
+        includeUnmatchedLast: true,
       },
-    },
+    ],
+  ],
+
+  headTags: [
     {
       tagName: 'meta',
       attributes: {
@@ -49,36 +69,8 @@ const config: Config = {
     {
       tagName: 'meta',
       attributes: {
-        property: 'og:title',
-        content: 'Authorizer - Open Source Authentication & Authorization',
-      },
-    },
-    {
-      tagName: 'meta',
-      attributes: {
-        property: 'og:description',
-        content: 'Your Data Your Control. An open-source authentication and authorization solution for your business. Easy to integrate and quick to implement with available SDKs.',
-      },
-    },
-    {
-      tagName: 'meta',
-      attributes: {
         property: 'og:type',
         content: 'website',
-      },
-    },
-    {
-      tagName: 'meta',
-      attributes: {
-        property: 'og:url',
-        content: SITE_URL,
-      },
-    },
-    {
-      tagName: 'meta',
-      attributes: {
-        property: 'og:image',
-        content: OG_IMAGE_URL,
       },
     },
     {
@@ -120,41 +112,6 @@ const config: Config = {
     {
       tagName: 'meta',
       attributes: {
-        property: 'og:locale',
-        content: 'en_US',
-      },
-    },
-    {
-      tagName: 'meta',
-      attributes: {
-        name: 'twitter:card',
-        content: 'summary_large_image',
-      },
-    },
-    {
-      tagName: 'meta',
-      attributes: {
-        name: 'twitter:title',
-        content: 'Authorizer - Open Source Authentication & Authorization',
-      },
-    },
-    {
-      tagName: 'meta',
-      attributes: {
-        name: 'twitter:description',
-        content: 'Your Data Your Control. An open-source authentication and authorization solution with OAuth2, OpenID Connect, and GraphQL API.',
-      },
-    },
-    {
-      tagName: 'meta',
-      attributes: {
-        name: 'twitter:image',
-        content: OG_IMAGE_URL,
-      },
-    },
-    {
-      tagName: 'meta',
-      attributes: {
         name: 'twitter:image:alt',
         content:
           'Authorizer — open-source authentication and authorization',
@@ -165,13 +122,6 @@ const config: Config = {
       attributes: {
         name: 'twitter:site:domain',
         content: 'docs.authorizer.dev',
-      },
-    },
-    {
-      tagName: 'meta',
-      attributes: {
-        name: 'twitter:url',
-        content: SITE_URL,
       },
     },
     {
@@ -222,7 +172,8 @@ const config: Config = {
           routeBasePath: '/',
           sidebarPath: './sidebars.ts',
           editUrl:
-            'https://github.com/authorizerdev/authorizer-docs/tree/main/',
+            'https://github.com/authorizerdev/docs/tree/main/',
+          showLastUpdateTime: true,
           lastVersion: 'current',
           versions: {
             current: {
@@ -232,6 +183,9 @@ const config: Config = {
             '1.x': {
               label: '1.x',
               banner: 'unmaintained',
+              // 1.x is unmaintained; keep it reachable for existing links but
+              // out of search indexes so it stops competing with 2.x pages.
+              noIndex: true,
             },
           },
         },

@@ -1,6 +1,7 @@
 ---
 sidebar_position: 6
 title: Email Configuration
+description: "Configure SMTP or SendGrid in Authorizer to send verification emails, magic links and password reset emails."
 ---
 
 # Email

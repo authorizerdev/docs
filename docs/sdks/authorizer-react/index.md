@@ -1,6 +1,7 @@
 ---
 sidebar_position: 1
 title: Getting Started
+description: "Add authentication to a React app with @authorizerdev/authorizer-react: install, configure AuthorizerProvider and render a working login in minutes."
 ---
 
 # Getting Started

@@ -1,6 +1,7 @@
 ---
 sidebar_position: 100
 title: Contributing
+description: "How to contribute to Authorizer: set up the Go server and web apps locally, run tests, follow project conventions and open a pull request."
 ---
 
 # Contributing

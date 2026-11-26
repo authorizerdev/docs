@@ -1,6 +1,7 @@
 ---
 sidebar_position: 2
 title: Functions
+description: "Reference for authorizer-go AuthorizerClient methods: authentication, sessions, profiles, token validation and permission checks."
 ---
 
 # Functions

@@ -1,6 +1,7 @@
 ---
 sidebar_position: 3
 title: Kubernetes
+description: "Deploy Authorizer v2 on Kubernetes with manifests that pass configuration as CLI flags in the container args."
 ---
 
 # Kubernetes (v2)

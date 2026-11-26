@@ -1,6 +1,7 @@
 ---
 sidebar_position: 1
 title: Getting Started
+description: "Status of the Authorizer Flutter SDK. It is not released yet; until it ships, call Authorizer's REST and GraphQL APIs directly from Dart."
 ---
 
 # Getting Started

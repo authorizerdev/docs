@@ -1,6 +1,7 @@
 ---
 sidebar_position: 4
 title: Protocols & Admin API
+description: "Admin and protocol APIs in authorizer-py: manage users, clients, organizations and FGA, and use OAuth/OIDC helpers from Python."
 ---
 
 # Protocols & Admin API

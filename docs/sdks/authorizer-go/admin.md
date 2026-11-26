@@ -1,6 +1,7 @@
 ---
 sidebar_position: 3
 title: Protocols & Admin API
+description: "Admin and protocol APIs in authorizer-go: manage users, clients, organizations and FGA, and use OAuth/OIDC helpers from Go services."
 ---
 
 # Protocols & Admin API

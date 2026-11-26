@@ -1,6 +1,7 @@
 ---
 sidebar_position: 2
 title: Functions
+description: "Reference for @authorizerdev/authorizer-js functions: signup, login, magic link, OTP, profile, sessions, token validation and permission checks."
 ---
 
 # Functions
