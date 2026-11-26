@@ -270,7 +270,8 @@ if err != nil {
 }
 
 res, err := client.ValidateJWTToken(&authorizer.ValidateJWTTokenRequest{
-    Token: accessToken,
+    TokenType: authorizer.TokenTypeAccessToken,
+    Token:     accessToken,
 })
 if err != nil {
     panic(err)
@@ -317,7 +318,7 @@ All request structs are serializable to JSON via `json.Marshal()`. Fields shown 
 | `ResendVerifyEmailRequest` | `Email`                                                                                                                    |
 | `ForgotPasswordRequest`    | `Email`, `PhoneNumber`, `State`, `RedirectURI`                                                                          |
 | `ResetPasswordRequest`     | `Password`, `ConfirmPassword`, `Token`, `OTP`, `PhoneNumber`                                                          |
-| `ValidateJWTTokenRequest`  | `Token`, (no explicit type field; server infers from token structure)                                                    |
+| `ValidateJWTTokenRequest`  | `TokenType` (required: `TokenTypeAccessToken`, `TokenTypeIDToken` or `TokenTypeRefreshToken`; must match the token's own `token_type` claim), `Token`, `Roles` |
 | `ValidateSessionRequest`   | `Cookie`, `Roles`                                                                                                         |
 | `UpdateProfileRequest`     | `Email`, `OldPassword`, `NewPassword`, `ConfirmNewPassword`, `GivenName`, `FamilyName`, `Roles`, `AppData`, …      |
 | `GetTokenRequest`          | `Code`, `GrantType`, `RefreshToken`, `CodeVerifier`, `ClientSecret`, `Scope`, `ClientAssertion`, `ClientAssertionType`, `SubjectToken`, `SubjectTokenType`, `ActorToken`, `ActorTokenType`, `Resource` |
