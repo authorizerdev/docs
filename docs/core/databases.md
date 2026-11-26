@@ -15,6 +15,8 @@ Authorizer v2 configures the database via CLI flags. The required flags are `--d
   --database-type=postgres --database-url="postgres://username:password@localhost:5432/postgres"
   ```
 
+  To keep Authorizer's tables in their own schema, see [Using a Postgres schema](#postgres-schema).
+
 - [Yugabyte](https://www.yugabyte.com/)
 
   ```bash
@@ -168,6 +170,47 @@ Authorizer v2 configures the database via CLI flags. The required flags are `--d
   > upgrade.
 
 > Note: For MongoDB and ArangoDB, use `--database-name` since the database name is not part of the connection URL.
+
+## Using a Postgres schema {#postgres-schema}
+
+By default Authorizer creates its tables in the database's default schema,
+usually `public`. To keep them in a dedicated schema, for example when
+Authorizer shares a database with your application, add `search_path` to the
+connection URL. There is no separate flag for this.
+
+```bash
+--database-type=postgres \
+--database-url="postgres://username:password@localhost:5432/mydb?sslmode=disable&search_path=authz"
+```
+
+Create the schema before you start Authorizer. Authorizer does not create it:
+with a `search_path` that names a schema that doesn't exist, startup fails
+with `no schema has been selected to create in (SQLSTATE 3F000)`.
+
+```sql
+CREATE SCHEMA authz;
+-- If Authorizer connects as a role that does not own the schema:
+GRANT USAGE, CREATE ON SCHEMA authz TO authorizer_role;
+```
+
+When the schema exists, Authorizer creates every table there on first start
+and uses only that schema from then on. This covers the `authorizer_*` tables
+and also the [fine-grained authorization](./authorization) (OpenFGA) tables
+(`store`, `tuple`, `authorization_model`, `assertion`, `changelog`,
+`goose_db_version`), which share the main database by default. Tables of the
+same name in `public` are not read or changed.
+
+Notes:
+
+- Name a single schema, such as `search_path=authz`. A list like
+  `authz,public` is not tested: new tables would go in the first schema, but a
+  table that already exists in a later schema could be found and used.
+- The `search_path` must stay the same on every start. If you change it,
+  Authorizer creates a new, empty set of tables in the new schema. It does not
+  move existing data.
+- This was tested with `--database-type=postgres`. CockroachDB, Yugabyte and
+  SereneDB also speak the PostgreSQL protocol, but `search_path` has not been
+  tested with them.
 
 ## Tables / Collections
 

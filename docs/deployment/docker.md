@@ -27,10 +27,11 @@ docker run -p 8080:8080 quay.io/authorizer/authorizer:latest \
 ### Persisting data across restarts
 
 The command above writes `test.db` inside the container, so **every restart
-starts from an empty database**. Mount a named volume and put SQLite on it:
+starts from an empty database**. Mount a named volume at `/authorizer/data`
+and put SQLite on it:
 
 ```bash
-docker run -p 8080:8080 -u root \
+docker run -p 8080:8080 \
   -v authorizer_data:/authorizer/data \
   quay.io/authorizer/authorizer \
   --database-type=sqlite \
@@ -44,10 +45,41 @@ docker run -p 8080:8080 -u root \
   --encryption-key=test-encryption-key
 ```
 
-`-u root` is needed because the image runs as uid 1000 (`authorizer`), and a
-named volume mounted at a path the image does not already own is created
-root-owned — without it the process cannot create the database file. Drop it
-once you `chown` the volume, or use a managed database instead.
+The image runs as uid 1000 (`authorizer`). From **v2.4.9**, the image creates
+`/authorizer/data` owned by that user. A named volume mounted there takes on
+that ownership, so the command above works without extra flags. This only
+applies at exactly `/authorizer/data`. A volume mounted at any other path is
+still created owned by root.
+
+**Images older than v2.4.9** don't have that directory, so the volume is
+created owned by root and the process can't create the database file. Add
+`-u root`:
+
+```bash
+docker run -p 8080:8080 -u root \
+  -v authorizer_data:/authorizer/data \
+  quay.io/authorizer/authorizer:<older-version> \
+  --database-type=sqlite \
+  --database-url=/authorizer/data/data.db \
+  ...
+```
+
+You can also `chown` the volume to uid 1000 once, or use a managed database
+instead.
+
+**Docker Compose.** The server repository's
+[`docker-compose.yaml`](https://github.com/authorizerdev/authorizer/blob/main/docker-compose.yaml)
+is a quick way to run Authorizer locally. It builds the image from source and
+configures everything with CLI flags. It stores SQLite at
+`/authorizer/data/authorizer.db` on the `authorizer_data` named volume, and
+publishes ports `8080` (HTTP) and `9091` (gRPC). Every secret in it is a
+placeholder, so it is for local development and evaluation only:
+
+```bash
+git clone https://github.com/authorizerdev/authorizer.git
+cd authorizer
+docker compose up --build
+```
 
 
 Then open `http://localhost:8080/app` for the built-in login UI.
