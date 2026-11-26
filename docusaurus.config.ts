@@ -4,8 +4,8 @@ import type * as Preset from '@docusaurus/preset-classic';
 
 const SITE_URL = 'https://docs.authorizer.dev';
 /** Dimensions of themeConfig.image (img/authorizer-og.png), which Docusaurus emits per page as og:image */
-const OG_IMAGE_WIDTH = '1734';
-const OG_IMAGE_HEIGHT = '907';
+const OG_IMAGE_WIDTH = '1536';
+const OG_IMAGE_HEIGHT = '1024';
 
 const config: Config = {
   title: 'Authorizer',
