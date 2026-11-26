@@ -194,6 +194,8 @@ After starting the server, open:
 ./authorizer dev
 ```
 
+Run it from the directory that contains `web/` (the repository root, or the folder you extracted a release archive into): the login UI, dashboard and email templates are loaded from there. `--dev-dir` must be a new or empty directory, or one `authorizer dev` created before; any other directory is refused, because it is made private and git-ignored.
+
 Defaults, each applied only when you don't pass the flag yourself:
 
 | Setting | Default in `dev` |
@@ -203,7 +205,7 @@ Defaults, each applied only when you don't pass the flag yourself:
 | `--url` | `http://localhost:<http-port>` |
 | `--mcp-enabled` | `true` — MCP server at `<url>/mcp` |
 | `--enable-client-id-metadata-document` | `true` |
-| Client ID/secret, admin secret, encryption key, JWT keys | Generated once, stored in `.authorizer/dev-secrets.json` |
+| Client ID, client secret, admin secret, encryption key, JWT keys | Generated once, stored in `.authorizer/dev-secrets.json`. Each is used only if you do not pass that flag (JWT keys only when no `--jwt-*` flag is passed) |
 
 Every other server flag works as usual and overrides the default, for example `./authorizer dev --database-type=postgres --database-url=...`.
 
