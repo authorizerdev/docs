@@ -129,7 +129,6 @@ docker run -p 8080:8080 quay.io/authorizer/authorizer:latest \
 Create a `docker-compose.yml`:
 
 ```yaml
-version: "3.8"
 services:
   authorizer:
     image: quay.io/authorizer/authorizer:latest
@@ -137,7 +136,7 @@ services:
       - "8080:8080"
     command:
       - "--database-type=sqlite"
-      - "--database-url=/data/test.db"
+      - "--database-url=/authorizer/data/data.db"
       - "--url=http://localhost:8080"
       - "--jwt-type=HS256"
       - "--jwt-secret=test"
@@ -146,7 +145,10 @@ services:
       - "--client-id=123456"
       - "--client-secret=secret"
     volumes:
-      - authorizer_data:/data
+      # Must be /authorizer/data: on v2.4.9+ images that directory is owned by
+      # the non-root user, so the volume is writable without `user: root`.
+      # On older images add `user: root` (see "Persisting data" above).
+      - authorizer_data:/authorizer/data
 
 volumes:
   authorizer_data:
