@@ -186,9 +186,66 @@ After starting the server, open:
 
 ---
 
+## Local development with `authorizer dev`
+
+`authorizer dev` runs a local instance with **no required flags**. On first run it generates a client ID and secret, an admin secret, an encryption key and an RS256 signing key pair, and saves them in `.authorizer/` (mode `0600`, with a `.gitignore` that ignores the whole directory). Later runs reuse them, so credentials stay stable across restarts.
+
+```bash
+./authorizer dev
+```
+
+Defaults, each applied only when you don't pass the flag yourself:
+
+| Setting | Default in `dev` |
+| ------- | ---------------- |
+| Database | SQLite at `.authorizer/authorizer.db` |
+| `--host` | `127.0.0.1` (loopback only; pass `--host=0.0.0.0` inside Docker) |
+| `--url` | `http://localhost:<http-port>` |
+| `--mcp-enabled` | `true` — MCP server at `<url>/mcp` |
+| `--enable-client-id-metadata-document` | `true` |
+| Client ID/secret, admin secret, encryption key, JWT keys | Generated once, stored in `.authorizer/dev-secrets.json` |
+
+Every other server flag works as usual and overrides the default, for example `./authorizer dev --database-type=postgres --database-url=...`.
+
+### Connection details as JSON
+
+Scripts and coding agents can read every value needed to integrate without starting the server:
+
+```bash
+./authorizer dev --print-config
+```
+
+```json
+{
+  "url": "http://localhost:8080",
+  "login_url": "http://localhost:8080/app",
+  "dashboard_url": "http://localhost:8080/dashboard",
+  "graphql_url": "http://localhost:8080/graphql",
+  "rest_base_url": "http://localhost:8080/v1",
+  "openapi_url": "http://localhost:8080/openapi.json",
+  "grpc_address": "127.0.0.1:9091",
+  "openid_configuration_url": "http://localhost:8080/.well-known/openid-configuration",
+  "jwks_url": "http://localhost:8080/.well-known/jwks.json",
+  "mcp_url": "http://localhost:8080/mcp",
+  "client_id": "…",
+  "client_secret": "…",
+  "admin_secret": "…",
+  "admin_secret_header": "X-Authorizer-Admin-Secret",
+  "database_type": "sqlite",
+  "database_url": ".authorizer/authorizer.db",
+  "state_dir": "/path/to/.authorizer"
+}
+```
+
+The same document is written to `.authorizer/dev.json` each time the server starts. Wait for `GET <url>/readyz` to return `200` before calling the API. Use `--dev-dir` to keep the state somewhere else.
+
+:::warning
+`authorizer dev` is for local development only. Its secrets are stored in a plain local file. For any shared or production deployment, pass real secrets with the flags below.
+:::
+
 ## Minimal configuration for local development
 
-For a quick local dev setup:
+To set every flag yourself instead:
 
 ```bash
 ./authorizer \
