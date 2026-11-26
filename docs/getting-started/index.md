@@ -184,6 +184,8 @@ After starting the server, open:
 - `http://localhost:8080/app` -- built-in login UI
 - `http://localhost:8080/graphql` -- GraphQL endpoint (playground if enabled)
 
+Since 2.4.0, signup and login offer MFA setup by default: the response says `Proceed to mfa setup` and carries no access token until the user enrols a factor or declines it (`skip_mfa_setup`). For scripted local testing, pass `--disable-mfa` to get tokens directly. Don't disable MFA in production.
+
 ---
 
 ## Minimal configuration for local development
@@ -203,8 +205,12 @@ For a quick local dev setup:
   --jwt-type=HS256 \
   --jwt-secret=test \
   --encryption-key=test-encryption-key \
-  --allowed-origins=http://localhost:3000
+  --allowed-origins=http://localhost:8080,http://localhost:3000
 ```
+
+List the server's own URL in `--allowed-origins` alongside your app's origin. With an explicit list, state-changing requests (including the built-in login page at `/app`) are accepted only from listed origins. The default `*` accepts them only from the server's own origin, so an app on another port cannot log in until you list it.
+
+This example signs tokens with `HS256`, so `/.well-known/jwks.json` is empty (`{"keys":[]}`). If anything validates tokens through JWKS (your API, an MCP server, Hasura), use `RS256` or `ES256` with `--jwt-private-key` and `--jwt-public-key` instead.
 
 See [Server Configuration](../core/server-config) for all flags and hardening options.
 
@@ -214,12 +220,12 @@ See [Server Configuration](../core/server-config) for all flags and hardening op
 
 When talking to a v2 server, use:
 
-- **`@authorizerdev/authorizer-js` v3** (`^3.3.0` or compatible v3)
-- **`@authorizerdev/authorizer-react` v2** (`^2.0.0` or compatible v2)
+- **`@authorizerdev/authorizer-js` v4** (`^4.0.0`) for server 2.4.0 and later. Its only breaking change from v3 is that the admin `deleteUser` takes a user id instead of an email.
+- **`@authorizerdev/authorizer-react` v2** (`^2.2.1`), which depends on `authorizer-js` v4.
 
 ```bash
-npm install @authorizerdev/authorizer-js@^3.3.0 \
-            @authorizerdev/authorizer-react@^2.0.0
+npm install @authorizerdev/authorizer-js@^4.0.0 \
+            @authorizerdev/authorizer-react@^2.2.1
 ```
 
 If you used types directly from `authorizer-js`, rename them for v2:
@@ -228,7 +234,7 @@ If you used types directly from `authorizer-js`, rename them for v2:
 // Old (v1)
 import { SignupInput, LoginInput } from '@authorizerdev/authorizer-js'
 
-// New (v2 server + v3 SDK)
+// New (v2 server + v3/v4 SDK)
 import { SignUpRequest, LoginRequest } from '@authorizerdev/authorizer-js'
 ```
 
