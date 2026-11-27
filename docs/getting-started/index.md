@@ -130,17 +130,16 @@ See [Docker deployment](../deployment/docker) for Docker Compose examples.
 
 ---
 
-## Option C: Download Binary
+## Option C: Binary
 
-Download from the [release page](https://github.com/authorizerdev/authorizer/releases):
+Releases publish the Docker image (Option B), not prebuilt binaries. To run a binary, build it from source (Go and Node.js required) and run it from the repository root, where the login UI, dashboard and email templates live under `web/`:
 
 ```bash
-# Download and extract
-tar -zxf AUTHORIZER_VERSION -c authorizer
-cd authorizer
+git clone https://github.com/authorizerdev/authorizer.git && cd authorizer
+go build -o build/authorizer . && make build-app build-dashboard
 
 # Run with required flags
-./authorizer \
+./build/authorizer \
   --database-type=sqlite \
   --database-url=test.db \
   --url=http://localhost:8080 \
@@ -151,8 +150,6 @@ cd authorizer
   --client-id=123456 \
   --client-secret=secret
 ```
-
-> For Mac users, grant permission: `xattr -d com.apple.quarantine build/authorizer`
 
 See [Binary deployment](../deployment/binary) for systemd service setup.
 
