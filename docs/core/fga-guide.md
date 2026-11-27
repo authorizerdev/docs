@@ -710,9 +710,11 @@ mutation {
 **Rules that keep conditions trustworthy:**
 
 - `current_time` is always the server's clock (RFC 3339, UTC). Callers can't set it on a check, and it can't be stored on a tuple; both are rejected. A caller-supplied time would revive an expired grant, and a stored one would never expire.
+- Store **every** condition parameter except `current_time` on the tuple; a write that leaves one out is rejected. `list_permissions`, `required_relations` and the SAML and org-role lookups can only supply `current_time`, so an unbound parameter would make those fail.
+- A model that declares `current_time` with a type other than `timestamp` is rejected.
 - Parameters stored on a tuple take precedence over request context, so a check can't override `grant_time` or `grant_duration`.
-- `check_permissions` accepts an optional `context` for other request-time parameters **from a super-admin only**. It is not accepted from a delegated (agent) token. Any other caller sending `context` gets a permission error.
-- Contextual tuples can't carry a condition.
+- `check_permissions` accepts an optional `context` **from a super-admin only**. It is not accepted from a delegated (agent) token, and any other caller sending it gets a permission error. Because stored parameters win, it can't change the outcome of a stored condition.
+- Contextual tuples can't carry a condition. Don't combine conditional and plain grants on one relation (`[user, user with cond]`) if untrusted callers can send contextual tuples: a plain contextual tuple satisfies the relation even after the conditional grant expires.
 
 ---
 
