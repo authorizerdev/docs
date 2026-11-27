@@ -89,11 +89,9 @@ A single `owner` tuple therefore grants view, edit, and delete.
 
 The DSL also supports **hierarchies** (`viewer from parent`), **group usersets**
 (`[user, team#member]`), **public access** (`[user:*]`), and **exclusions**
-(`viewer but not blocked`). OpenFGA's parameterized **conditions** (ABAC/CEL,
-`[user with someCondition]`) are **not usable through Authorizer's API**: tuples
-cannot carry a condition and checks cannot supply condition context — use
-[contextual tuples](#4-checking-access--client-api) or scheduled tuple deletion
-instead.
+(`viewer but not blocked`), and parameterized **conditions** (ABAC/CEL,
+`[user with someCondition]`), for example a grant that expires. The server supplies
+`current_time` on every check. See [Conditions](./fga-guide#conditions-cel--with).
 
 ### From the dashboard
 
@@ -674,15 +672,8 @@ with it.
 **Scenario.** A contractor gets access that must expire automatically — no cron
 job to revoke it.
 
-OpenFGA models expiry with [parameterized conditions](https://openfga.dev/docs/modeling/conditions)
-(`[user with non_expired_grant]`), but those are **not usable through
-Authorizer's API** — `_fga_write_tuples` cannot attach a condition to a tuple
-and `check_permissions` cannot supply condition context, so a condition-gated
-grant would never evaluate to allowed. Use one of these instead:
-
-- **Scheduled revocation.** Grant a plain tuple and have your application (a
-  job queue, cron, or workflow engine) call `_fga_delete_tuples` at the expiry
-  time. Deletion is immediate and complete — the next check is denied.
+Model the expiry with a [condition](./fga-guide#conditions-cel--with). The grant
+stops working on its own; the server's clock decides.
 
 ```dsl
 model
@@ -692,19 +683,26 @@ type user
 
 type document
   relations
-    define viewer: [user]
+    define viewer: [user with non_expired_grant]
     define can_view: viewer
+
+condition non_expired_grant(current_time: timestamp, grant_time: timestamp, grant_duration: duration) {
+  current_time < grant_time + grant_duration
+}
 ```
 
 ```text
-user:ctr-9a2…  viewer  document:sow-2026        # written at grant time
-# at expiry: _fga_delete_tuples removes the same tuple → access gone
+user:ctr-9a2…  viewer  document:sow-2026  with non_expired_grant {grant_time: "2026-11-27T10:00:00Z", grant_duration: "720h"}
+# after 30 days every check is denied; delete the tuple whenever you want to clean up
 ```
 
-- **Contextual tuples.** Don't persist the grant at all: your backend decides
-  per-request whether the contract window is still open and, if so, passes the
-  `viewer` tuple as a [contextual tuple](#4-checking-access--client-api) on the
-  check. No tuple exists to clean up; expiry is enforced by your own clock.
+Alternatives, if you'd rather not use conditions:
+
+- **Scheduled revocation.** Grant a plain tuple and have your application call
+  `_fga_delete_tuples` at the expiry time.
+- **Contextual tuples.** Don't persist the grant: your trusted backend passes the
+  `viewer` tuple as a [contextual tuple](#4-checking-access--client-api) while the
+  window is open.
 
 ---
 

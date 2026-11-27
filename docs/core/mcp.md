@@ -321,6 +321,8 @@ example, `check_permissions` accepts:
 }
 ```
 
+The schema also lists `contextual_tuples` (per check) and `context`. They are rarely useful through MCP: a delegated (agent) token may not send either, and `context` is accepted only from a super-admin. Conditions stored on tuples, such as [time-limited grants](./fga-guide#conditions-cel--with), are still evaluated, using the server's clock.
+
 ## Local stdio server (deprecated)
 
 Kept working for existing setups, with a deprecation notice on every run. Prefer

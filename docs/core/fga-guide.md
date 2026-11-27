@@ -427,6 +427,11 @@ Each entry in `check_permissions.checks` accepts `contextual_tuples`: tuples eva
 request time (current device, IP-derived region, an in-progress "what if I shared this?"
 preview) without writing to the store.
 
+Contextual tuples are asserted by the caller, so a caller can always grant itself the
+relation it is checking. Pass them only from your trusted backend. A delegated (agent)
+token may not send them: the request is rejected, so an agent can't talk its way past a
+"check before acting" guardrail.
+
 Model — viewing requires *both* a grant and a trusted device (intersection):
 
 ```dsl
@@ -550,7 +555,7 @@ against Authorizer's embedded engine — except where explicitly marked unsuppor
 | [Exclusion](#exclusion-but-not) | `a but not b` | Subjects matching `a` and **not** `b` |
 | [Computed userset](#computed-userset) | `define can_view: viewer` | Whoever holds the referenced relation on the same object |
 | [Tuple-to-userset](#tuple-to-userset-x-from-y) | `viewer from parent` | Whoever holds `viewer` on the object's `parent` |
-| [Conditions](#conditions-cel--with--not-supported) | `[user with cond]` | **Not supported** — see below |
+| [Conditions](#conditions-cel--with) | `[user with cond]` | Subjects whose tuple condition holds (e.g. an unexpired grant) |
 
 ### Direct assignment & type restrictions
 
@@ -664,23 +669,54 @@ user:2c8e…  viewer  folder:f1
 check(user:2c8e…, viewer, document:1) → allowed
 ```
 
-### Conditions (CEL / `with`) — NOT supported
+### Conditions (CEL / `with`)
 
-OpenFGA upstream also defines **parameterized conditions** (ABAC): CEL expressions
-attached to the model, referenced as `[user with condition_name]`, with condition
-context stored on tuples and request context passed on checks.
+A **condition** is a CEL expression declared in the model. A type restriction `[user with condition_name]` makes a tuple grant access only while its condition holds. The classic use is a grant that expires:
 
-**Authorizer's API does not expose them.** A model containing `condition` blocks is
-accepted by `_fga_write_model` (the DSL parses), but:
+```dsl
+model
+  schema 1.1
 
-- `FgaTupleInput` has no condition field — a tuple targeting a `[user with cond]`
-  restriction cannot be written, because the required condition cannot be attached.
-- `check_permissions` has no `context` parameter — request-time condition context
-  (e.g. `current_time`) cannot be supplied, so a conditioned grant could never evaluate.
+type user
 
-Until these are exposed, do **not** use `condition` / `with` in your model. For
-request-time facts use [contextual tuples](#contextual-tuples--request-time-facts); for
-time-bound access, schedule a `_fga_delete_tuples` call from your application instead.
+type document
+  relations
+    define viewer: [user with non_expired_grant]
+    define can_view: viewer
+
+condition non_expired_grant(current_time: timestamp, grant_time: timestamp, grant_duration: duration) {
+  current_time < grant_time + grant_duration
+}
+```
+
+**Write a conditional tuple** by attaching the condition name and its stored parameters (`_fga_write_tuples` only):
+
+```graphql
+mutation {
+  _fga_write_tuples(params: { tuples: [{
+    user: "user:2c8e…", relation: "viewer", object: "document:sow-2026",
+    condition: {
+      name: "non_expired_grant",
+      context: { grant_time: "2026-11-27T10:00:00Z", grant_duration: "720h" }
+    }
+  }] }) { message }
+}
+```
+
+`_fga_read_tuples` returns the stored `condition { name context }`; a plain tuple returns `condition: null`. Revoke by deleting the tuple by `user`, `relation` and `object` (a condition on a delete is rejected).
+
+**Checks need no changes.** `check_permissions`, `list_permissions` and every internal check evaluate conditions automatically.
+
+**Rules that keep conditions trustworthy:**
+
+- `current_time` is always the server's clock (RFC 3339, UTC). Callers can't set it on a check, and it can't be stored on a tuple; both are rejected. A caller-supplied time would revive an expired grant, and a stored one would never expire.
+- Store **every** condition parameter except `current_time` on the tuple; a write that leaves one out is rejected. `list_permissions`, `required_relations` and the SAML and org-role lookups can only supply `current_time`, so an unbound parameter would make those fail.
+- A model that declares `current_time` with a type other than `timestamp` is rejected.
+- Parameters stored on a tuple take precedence over request context, so a check can't override `grant_time` or `grant_duration`.
+- `check_permissions` accepts an optional `context` **from a super-admin only**. It is not accepted from a delegated (agent) token, and any other caller sending it gets a permission error. Because stored parameters win, it can't change the outcome of a stored condition.
+- Contextual tuples can't carry a condition. Don't combine conditional and plain grants on one relation (`[user, user with cond]`) if untrusted callers can send contextual tuples: a plain contextual tuple satisfies the relation even after the conditional grant expires.
+
+---
 
 ---
 

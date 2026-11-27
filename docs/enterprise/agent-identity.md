@@ -92,6 +92,44 @@ Agents are independent subjects, so a user can delegate to as many as they like 
 
 Revoking one agent's tuple does not touch the user or any other agent.
 
+### Time-limited and task-scoped grants
+
+Agent access usually shouldn't be permanent. Use a [condition](../core/fga-guide#conditions-cel--with) so a grant expires by itself, and a `task` type so a whole task's access is granted and revoked in one place. This template is also in the dashboard's model examples as **AI agents (time-limited & task-scoped)**:
+
+```dsl
+model
+  schema 1.1
+
+type user
+
+type agent
+
+type task
+  relations
+    define assignee: [agent]
+
+type tool
+  relations
+    define can_call: [user, agent with non_expired_grant, task#assignee with non_expired_grant]
+
+condition non_expired_grant(current_time: timestamp, grant_time: timestamp, grant_duration: duration) {
+  current_time < grant_time + grant_duration
+}
+```
+
+```text
+# Direct: the calendar agent may call tool:search for 10 minutes
+agent:calendar-bot  can_call  tool:search  with non_expired_grant {grant_time: "2026-11-27T10:00:00Z", grant_duration: "10m"}
+
+# Task-scoped: every agent assigned to task:t-42 may call tool:deploy for 10 minutes
+agent:deploy-bot    assignee  task:t-42
+task:t-42#assignee  can_call  tool:deploy  with non_expired_grant {grant_time: "2026-11-27T10:00:00Z", grant_duration: "10m"}
+```
+
+Delete `task:t-42#assignee can_call tool:deploy` to end the task for every agent at once. The users who delegate need their own `can_call` grants too: a delegated check passes only when the agent **and** the user are allowed.
+
+The server's clock decides expiry. An agent can't extend its own window: a delegated token may not send condition `context` or contextual tuples to `check_permissions`, and requests that try are rejected.
+
 ### Agent-to-agent (multi-hop)
 
 Only the **immediate** actor participates in the decision. In a chain `app → agent → sub-agent`, the check is `perms(sub-agent) ∩ perms(user)` — prior actors nested deeper in `act` are recorded for audit but never grant or deny. They were asserted upstream, not verified here, so treating them as authority would let a middle hop vouch for itself.
