@@ -28,7 +28,21 @@ const config: Config = {
   markdown: {
     mermaid: true,
   },
-  themes: ['@docusaurus/theme-mermaid'],
+  themes: [
+    '@docusaurus/theme-mermaid',
+    [
+      // Offline full-text search built at compile time (no external service).
+      '@easyops-cn/docusaurus-search-local',
+      {
+        hashed: true,
+        docsRouteBasePath: '/',
+        indexBlog: false,
+        // Search the maintained 2.x docs only.
+        ignoreFiles: [/^1\.x\//],
+        highlightSearchTermsOnTargetPage: true,
+      },
+    ],
+  ],
 
   plugins: [
     [

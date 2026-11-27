@@ -15,23 +15,17 @@ If you are migrating from v1, compare with the original [Binary](../deployment/b
 
 ## 1. Download or build the v2 binary
 
-You can either:
-
-- Download a v2 release archive from the GitHub releases page, or
-- Build from source:
+Releases publish the [Docker image](./docker), not prebuilt binaries, so build from source (Go and Node.js required):
 
 ```bash
 git clone https://github.com/authorizerdev/authorizer.git
 cd authorizer
 
 go build -o build/authorizer .
+make build-app build-dashboard   # login UI and admin dashboard
 ```
 
-After extraction or build, you should have:
-
-```bash
-./authorizer
-```
+Run the binary from the repository root (or copy `build/authorizer` together with the `web/` directory): the login UI, dashboard and email templates are loaded from `web/` relative to the working directory.
 
 ---
 
