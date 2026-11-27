@@ -683,7 +683,7 @@ type user
 
 type document
   relations
-    define viewer: [user, user with non_expired_grant]
+    define viewer: [user with non_expired_grant]
     define can_view: viewer
 
 condition non_expired_grant(current_time: timestamp, grant_time: timestamp, grant_duration: duration) {
