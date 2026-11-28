@@ -1,7 +1,7 @@
 # CIBA: human approval for agent actions
 
-**Status**: design, revision 2 (after principal-engineer, security and CTO
-reviews; see §15). Phase 4 of the agent-readiness plan. Ships as **beta**.
+**Status**: design, revision 3 (after principal-engineer, security and CTO
+reviews, and a reuse pass against the current code; see §15). Phase 4 of the agent-readiness plan. Ships as **beta**.
 Builds on RFC 8693 delegation (`AGENTIC_DELEGATION_DESIGN.md`), the consent
 screen (`2026-08-11-cimd-and-consent.md`) and FGA conditions (authorizer#945,
 released in 2.4.10).
@@ -32,6 +32,30 @@ of band, the user approves or denies, and the agent collects the result at the
 token endpoint. When the user *is* at the agent's screen, the same approval
 page is reachable through MCP URL-mode elicitation (§11).
 
+### 1.1 Who needs this, and what already exists
+
+Step-up for a human is already supported **when the agent can open the user's
+browser**, which is the case for desktop agents such as Claude Code, Cursor or
+a local CLI (they already open a browser for MCP OAuth with a loopback
+redirect):
+
+- `/authorize` with `prompt=login`, or `max_age` (including `max_age=0`),
+  forces a real re-authentication, with MFA when enrolled: it revokes the
+  current session so the login UI asks again (`authorize.go`, `forceReauth`).
+- Tokens carry `auth_time`, preserved across refresh, so a resource server can
+  require a recent sign-in.
+- The agent then uses the fresh user token for RFC 8693 token exchange, as
+  today.
+
+That path needs no new server code; 4a only documents it (§11). Its limits are
+that the user sees a sign-in, not the action, and that `acr` is fixed to `"0"`
+(no `acr_values`), so "with MFA" cannot be required or checked yet.
+
+CIBA is for agents that **cannot reach the user's browser**: server-side and
+background agents (scheduled jobs, queue workers, chat and email bots, cloud
+agents running without the user present). Nothing in Authorizer covers that
+case today.
+
 ## 2. Scope
 
 **In (phase 4a, beta)**
@@ -48,7 +72,8 @@ page is reachable through MCP URL-mode elicitation (§11).
 - Channels: email and the `user.approval_requested` webhook; both deliver a
   link to the approval page.
 - CIBA grant at `/oauth/token` issuing a delegated, action-bound token.
-- Discovery, audit, metrics, a general per-client rate limiter (§8).
+- Discovery, audit, metrics, and per-client and per-user limits on the
+  existing `IncrementCache` counter (§8).
 - Adoption kit: JS and Python helpers, an MCP reference example (an MCP tool
   gated by approval, with URL elicitation), dashboard visibility, docs.
 
@@ -208,24 +233,39 @@ A failed channel is logged and counted, never reported to the agent.
 
 ### 4.3 The approval page — `GET`/`POST /oauth/bc-approve`
 
-Server-rendered from the consent template, with its `frame-ancestors 'none'`
-CSP and `Cache-Control: no-store`.
+Server-rendered, reusing the consent screen's building blocks rather than new
+ones:
+
+- a new `ciba_approve.tmpl` built from the shared `au_shell.tmpl` partials
+  (`au_styles`, `au_brand`) that `consent.tmpl` uses, and `consentError` /
+  `consent_error.tmpl` for failures;
+- the same `Cache-Control: no-store` headers and a CSP with
+  `frame-ancestors 'none'` and `form-action 'self'` (the POST renders a result
+  page; it never redirects off-site, so the consent page's widened
+  `form-action` is not needed).
 
 **Authentication**
 
-- Only an **Authorizer-origin cookie session** can approve. Bearer tokens are
-  not accepted on this page at all, so no OAuth client — first-party, dynamic,
-  or the agent's own web UI holding the user's token — can approve on the
-  user's behalf.
+- Only the **session cookie** is read (`cookie.GetSession`, then decrypt to
+  `token.SessionData`, as `/authorize` does). The page never calls
+  `GetUserIDFromSessionOrAccessToken`, so bearer tokens are not accepted and no
+  OAuth client — first-party, dynamic, or the agent's own web UI holding the
+  user's token — can approve on the user's behalf.
 - The session must belong to the request's user; a mismatch shows the generic
   "request not found" page.
-- **Step-up**: the session must have authenticated within
-  `--ciba-step-up-max-age`; otherwise the user re-authenticates first, with
-  MFA when they are enrolled. Approving from an emailed link therefore always
-  means a recent, real sign-in.
-- No session: the user signs in through the login UI and returns to the page.
-  The approval id is kept server-side across the login (a short-lived,
-  HttpOnly reference), not placed in the login UI's URL.
+- **Step-up** reuses `/authorize`'s `max_age` logic: the session's
+  `SessionData.EffectiveAuthTime()` must be within `--ciba-step-up-max-age`,
+  and its login method must not be magic link or email OTP alone (the approval
+  link itself arrived by email, so a mailbox-only sign-in proves nothing new;
+  §13, decision 5). Otherwise the page revokes the session exactly as
+  `forceReauth` does (memory-store entry and cookie; extracted into a shared
+  helper, not copied) and sends the user through the login UI.
+- The detour is the existing login UI with `redirect_uri` back to the approval
+  page: `/app?redirect_uri=<url>/oauth/bc-approve?id=<approval id>`, validated
+  by `app.go`'s existing allow-list check (no `client_id`). The server's own
+  URL must be in `--allowed-origins`, which is already required for `/app` to
+  work. The approval id appears in that URL, as it does in the emailed link;
+  it is a lookup handle, not a credential (§4.2).
 
 **What the user sees, in this order**
 
@@ -237,11 +277,16 @@ CSP and `Cache-Control: no-store`.
 4. Remaining time, and **Approve**, **Deny**, and **Deny and block this
    agent**.
 
-**CSRF**: the `POST` carries a per-render nonce bound to the session (stored
-server-side, single-use), and its `Origin` must equal the server's own origin.
-It is exempted from the generic CSRF middleware for that reason, like
-`/authorize/consent` — but the token is the per-render nonce, never the
-approval id, which travels in emails and webhooks.
+**CSRF** reuses the consent screen's pattern: each render stores a pending
+record under a fresh random id with `SetState` and puts that id in the form;
+the `POST` consumes it with `GetAndRemoveState` (single-use, as
+`ConsentHandler` does) and checks that it was rendered for the same session and
+approval. The `POST`'s `Origin` must also equal the server's own origin. The
+path is exempted from the generic CSRF middleware for that reason, like
+`/authorize/consent`. The form token is the per-render id, never the approval
+id, which travels in emails and webhooks. (`SetState` expires in 10 minutes on
+Redis and the database store; the in-memory store keeps unconsumed entries, as
+it already does for consent.)
 
 ### 4.4 Collecting the result — CIBA grant at `/oauth/token`
 
@@ -259,7 +304,8 @@ approval id, which travels in emails and webhooks.
 
 ## 5. What an approval issues
 
-**A delegated access token bound to the approved action**:
+**A delegated access token bound to the approved action**, minted with the
+existing `CreateDelegatedAccessToken`:
 
 - `sub` = the user; `act.sub` = the agent's `client_id`.
 - `aud` = the requested `resource` (never Authorizer itself).
@@ -270,13 +316,21 @@ approval id, which travels in emails and webhooks.
   binding message>, "approved_at": <time>}`, so a resource server can tie the
   token to one approved request and check the action it is about to perform.
 - 5-minute lifetime, no refresh token.
+- No `sid`. `DelegationTokenConfig.SessionID` may be empty, and such a token
+  "can never authenticate HERE" (`delegation_token.go`): this is the existing
+  rule that keeps CIBA tokens off Authorizer's own API, alongside the
+  `resource` and `authorizer:` refusals in §4.1.
 
-**A minimal ID token**: `iss`, `sub`, `aud` = the agent, `iat`, `exp`,
-`auth_time` = the approving sign-in time, and `acr` as the existing issuer sets
-it (`"0"` today; an MFA-aware `acr` is future work). Profile claims only for
-approved scopes (`email` → `email`, `email_verified`; `profile` → name claims).
-Today's `CreateIDToken` copies the whole profile regardless of scope, so 4a
-adds a minimal builder for CIBA.
+`DelegationTokenConfig` has no field for extra claims today; 4a adds two
+optional fields (`AuthorizationDetails`, and the `ciba` claim) that are empty
+for every existing caller.
+
+**An ID token** from the existing `CreateIDToken`, with `aud` = the agent and
+`auth_time` = the approving sign-in time. `CreateIDToken` copies every field of
+the user it is given into claims, regardless of scope, so the CIBA path passes
+it a copy of the user with only the fields the approved scopes allow (`email` →
+email and `email_verified`; `profile` → name fields). No new builder. `acr` is
+what the existing issuer sets (`"0"` today).
 
 **Why delegated and action-bound**: the agent asked to do one thing as the
 user. A plain user token would hand it the user's full authority; a scope-only
@@ -288,8 +342,9 @@ against the operation; the docs and SDK helpers do this by default.
 two-key rule — the scope must be in both the agent's ceiling and the user's own
 token (`delegatedscope.go`). CIBA has no user token, so one approval could
 unlock, say, `authorizer:account:delete`. Refusing `authorizer:` scopes and an
-Authorizer `resource` removes that, and with it any change to the token-exchange
-liveness check (`delegationSessionIsLive`).
+Authorizer `resource` removes that. Because CIBA tokens have no `sid`, the
+existing liveness check (`delegationSessionIsLive`) already rejects them at
+Authorizer's API and needs no change.
 
 **Revocation**: the token is stateless, bound by its 5-minute lifetime; a denied
 or expired request can never be redeemed; "deny and block" stops new requests
@@ -311,7 +366,6 @@ raw hints or handles.
 | --- | --- | --- |
 | `ciba:req:<h(auth_req_id)>` | JSON: client, user (or none), scopes, resource, binding message, authorization details, approval id, `expires_at` | request TTL + 10 min grace |
 | `ciba:approval:<h(approval id)>` | `h(auth_req_id)` | request TTL |
-| `ciba:nonce:<h(nonce)>` | approval id + session | 10 min |
 | `ciba:decision:<h(auth_req_id)>` | `approved` / `denied` + approving sign-in time | request TTL + grace |
 | `ciba:redeemed:<h(auth_req_id)>` | `1` | request TTL + grace |
 | `ciba:poll:<h(auth_req_id)>` | `1` | current interval − 1 s |
@@ -328,8 +382,8 @@ raw hints or handles.
   interval (the in-memory store treats an entry as live through its expiry
   second); a hit means too fast → `slow_down`, and `IncrementCache` on the
   slowdowns key adds 5 s.
-- **Nonce**: single use via `SetCacheNX` on a "used" marker, and bound to the
-  session that loaded the page.
+- **Approval form token**: the consent screen's pattern, `SetState` on render
+  and `GetAndRemoveState` on submit (§4.3), so it lives outside the table above.
 
 These use `SetCacheNX`, `IncrementCache` and `SetCache`/`GetCache`, which exist
 in the Redis, database and in-memory backends; no new memory-store primitive is
@@ -353,7 +407,8 @@ needed in 4a.
    `authorizer:` scopes, minimal ID token.
 7. **Fatigue and spam**: per-(client, user) and per-user caps, a block after a
    deny, one-click "deny and block", alerts on high deny rates (§10).
-8. **CSRF and clickjacking**: per-render nonce plus `Origin` check;
+8. **CSRF and clickjacking**: the consent screen's single-use per-render form
+   token plus an `Origin` check;
    `frame-ancestors 'none'`; the approval id is not a credential.
 9. **Handles**: `auth_req_id` (256 bits) and approval id (128 bits) are
    independent, single-use, expiring, and stored hashed.
@@ -365,10 +420,12 @@ needed in 4a.
 ## 8. Rate limits
 
 - Per-IP limits apply as for every endpoint.
-- **A general per-client limiter** lands in 4a and is what phase 6 extends. It
-  uses fixed windows keyed by client and window start, so a counter's TTL never
-  slides (`IncrementCache` resets the TTL on each call). CIBA uses it for N
-  requests per client per minute; over the limit is `access_denied` (403).
+- Per client: N requests per minute, counted with `IncrementCache` the way the
+  login lockout already counts attempts (`service/login.go`). Keys include the
+  window start (`ciba:rate:<client>:<minute>`), so the counter's TTL — which
+  `IncrementCache` resets on each call — cannot slide the window. Over the
+  limit is `access_denied` (403). A general per-client limiter remains phase 6
+  (§13, decision 6).
 - Per (client, user): `--ciba-max-requests-per-user` per request-TTL window.
 - Per user across all clients: `--ciba-max-requests-per-user-total`.
 - After a deny, the (client, user) pair is blocked for 1 hour; "deny and block"
@@ -410,7 +467,7 @@ stored per client in 4a (that would be a schema change); ping in 4b adds both.
 | Dashboard | §10 |
 | SDKs | JS and Python: a `requireApproval(...)` helper that starts a request and polls with backoff, and a resource-server helper that verifies `act`, `authorization_details` and `ciba.msg`. Go on demand |
 | MCP | Reference example (`authorizerdev/examples/with-ciba`): an MCP tool gated by approval; when the MCP host supports URL-mode elicitation, the tool surfaces the approval link to the user directly |
-| Docs | A CIBA guide: setup, Redis and SMTP requirements, resource-server verification |
+| Docs | A CIBA guide (setup, Redis and SMTP requirements, resource-server verification), and a step-up guide for agents that can open the user's browser (§1.1: `prompt=login` / `max_age`, `auth_time`, then token exchange) |
 
 ## 12. Tests
 
@@ -449,6 +506,13 @@ Recommended by the reviews; confirm before implementation.
 4. **Channels**: email whenever SMTP is configured; the webhook whenever an
    endpoint is registered for `user.approval_requested` (registering it is the
    opt-in). In-app approval arrives in 4b.
+5. **Step-up strength**: a session signed in by magic link or email OTP alone
+   does not satisfy step-up, because the approval link also arrived by email.
+   Password, passkey, social login or any MFA does. (Alternative: accept any
+   recent sign-in, and rely on the user's own email security.)
+6. **Rate limiting**: CIBA's limits use the existing `IncrementCache` counter
+   (reuse) rather than building the general per-client limiter in 4a, which the
+   CTO review suggested; the general limiter stays in phase 6.
 
 ## 14. Rollout
 
@@ -458,7 +522,45 @@ Recommended by the reviews; confirm before implementation.
 - The pending-request and polling core is written so the device authorization
   grant (RFC 8628) can reuse it.
 
+### 14.1 What is reused, extended, and new
+
+| Need | Reused as-is | Extended | New |
+| --- | --- | --- | --- |
+| Client authentication | `clientauth.ResolveClient` + `RequireServiceAccountKind` | — | per-client `grant_types` check |
+| User lookup, tenant check | `GetUserByID`, `GetOrgMembership`, `storage.IsNotFound` | — | — |
+| Pending state, single use, polling | `SetCache`/`GetCache`, `SetCacheNX`, `IncrementCache` | — | — |
+| Approval page | `au_shell.tmpl` partials, `consentError`, no-store headers, `SetState`/`GetAndRemoveState` form token, `/app` login detour and its `redirect_uri` check, `SessionData.EffectiveAuthTime()` | `forceReauth` session revocation moved into a shared helper | `ciba_approve.tmpl`, `/oauth/bc-approve` handler |
+| Token | `CreateDelegatedAccessToken` (no `sid`), `CreateIDToken` (scope-redacted user) | two optional `DelegationTokenConfig` fields | — |
+| Notifications | `email.Provider.SendEmail`, `asyncutil.Go`, webhook delivery | webhook payload variant (as SCIM) | `ciba_approval` template, `user.approval_requested` event |
+| Limits | `IncrementCache` (login-lockout pattern) | — | — |
+| Discovery, audit, metrics | `openid_config.go` conditional fields, `audit.Event`, `metrics.RecordSecurityEvent` | — | event constants |
+| Admin API | client registry `grant_types` column | `grant_types` on admin client APIs | — |
+| Endpoints | — | CIBA branch in `/oauth/token` | `/oauth/bc-authorize` |
+
+No storage schema changes; no new memory-store primitive.
+
 ## 15. Review log
+
+Revision 3 (reuse pass against the current code, nothing assumed):
+
+- Added §1.1: desktop agents that can open the user's browser are already
+  covered by `prompt=login` / `max_age` + `auth_time` + token exchange; CIBA is
+  only for agents that cannot reach the user's browser.
+- Approval page rebuilt from existing pieces: session-cookie-only
+  authentication, `max_age`-style step-up via `EffectiveAuthTime()`, the
+  existing `forceReauth` revocation (shared helper), the `/app` login detour
+  with its existing `redirect_uri` check, and the consent screen's
+  `SetState`/`GetAndRemoveState` form token in place of a new nonce store. The
+  approval id is no longer claimed to be hidden across login (it is in the
+  emailed link anyway, and is not a credential).
+- Tokens from existing minters: `CreateDelegatedAccessToken` with no `sid`
+  (existing rule: cannot authenticate at Authorizer), two optional config
+  fields; `CreateIDToken` given a scope-redacted user instead of a new builder.
+- Rate limits on `IncrementCache` (login-lockout pattern) instead of a new
+  general limiter in 4a.
+- New decision 5: a magic-link or email-OTP-only session does not satisfy
+  step-up for an emailed approval link.
+- Reuse table (§14.1).
 
 Revision 2 incorporates:
 
