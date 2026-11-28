@@ -1,7 +1,7 @@
 # CIBA: human approval for agent actions
 
-**Status**: design, revision 3 (after principal-engineer, security and CTO
-reviews, and a reuse pass against the current code; see §15). Phase 4 of the agent-readiness plan. Ships as **beta**.
+**Status**: design, revision 4 (after principal-engineer, security and CTO
+reviews, a reuse pass, and a line-by-line check of every code claim; see §15). Phase 4 of the agent-readiness plan. Ships as **beta**.
 Builds on RFC 8693 delegation (`AGENTIC_DELEGATION_DESIGN.md`), the consent
 screen (`2026-08-11-cimd-and-consent.md`) and FGA conditions (authorizer#945,
 released in 2.4.10).
@@ -42,14 +42,19 @@ redirect):
 - `/authorize` with `prompt=login`, or `max_age` (including `max_age=0`),
   forces a real re-authentication, with MFA when enrolled: it revokes the
   current session so the login UI asks again (`authorize.go`, `forceReauth`).
-- Tokens carry `auth_time`, preserved across refresh, so a resource server can
-  require a recent sign-in.
+- The ID token carries `auth_time` (and so does the refresh token, unchanged
+  across refresh), so the agent, as the OIDC client, checks that the sign-in
+  is recent (OIDC Core §3.1.2.1).
 - The agent then uses the fresh user token for RFC 8693 token exchange, as
   today.
 
-That path needs no new server code; 4a only documents it (§11). Its limits are
-that the user sees a sign-in, not the action, and that `acr` is fixed to `"0"`
-(no `acr_values`), so "with MFA" cannot be required or checked yet.
+That path needs no new server code; 4a only documents it (§11). Its limits:
+
+- the user sees a sign-in, not the action;
+- access tokens and delegated tokens do not carry `auth_time`, so the evidence
+  reaches the agent but not the resource server, which has to trust the agent;
+- `acr` is fixed to `"0"` (no `acr_values`), so "with MFA" cannot be required
+  or checked.
 
 CIBA is for agents that **cannot reach the user's browser**: server-side and
 background agents (scheduled jobs, queue workers, chat and email bots, cloud
@@ -115,6 +120,11 @@ Startup checks with `--enable-ciba`:
   since 4a has no in-app channel and requests could never be approved. (A
   webhook registered later is detected at request time; until one exists the
   server logs a warning on each request.)
+- Warn when `--allowed-origins` is an explicit list without the server's own
+  origin: the sign-in detour back to the approval page would be refused
+  (§4.3).
+- Warn when magic link is the only enabled sign-in method: under decision 5
+  no session could satisfy step-up, so no request could be approved.
 - Warn when the active FGA model has no `type agent`: delegated checks made
   through Authorizer then authorize as the user alone (`fga_agent.go`).
 - Multiple replicas need a shared memory store (Redis or the database store);
@@ -174,9 +184,13 @@ Validation, in order:
    ignored in 4a; other unrecognized parameters are ignored (CIBA §7.2).
 4. `login_hint` must be a canonical lowercase UUID (an Authorizer user id),
    else `invalid_request`.
-5. `id_token_hint` must be an ID token this server signed whose `aud` contains
-   the requesting client (CIBA §14), else `invalid_request`. Expired tokens are
-   accepted up to 30 days after `exp` (CIBA §14: "some reasonable period").
+5. `id_token_hint` must be an unexpired ID token this server signed
+   (`TokenProvider.ParseJWTToken`, which verifies the signature against the
+   primary and secondary keys and rejects an expired `exp`), with
+   `token_type` `id_token` (the check `parseIDTokenHintSubject` already makes)
+   and an `aud` that contains the requesting client (CIBA §14); else
+   `invalid_request`. Accepting expired hints would need a second parser that
+   skips `exp` (§13, decision 7).
 6. `binding_message` is required (CIBA makes it optional): missing is
    `invalid_request`; more than 64 characters, or any control (`Cc`) or format
    (`Cf`: bidi overrides, zero-width) character, is `invalid_binding_message`.
@@ -246,26 +260,40 @@ ones:
 
 **Authentication**
 
-- Only the **session cookie** is read (`cookie.GetSession`, then decrypt to
-  `token.SessionData`, as `/authorize` does). The page never calls
-  `GetUserIDFromSessionOrAccessToken`, so bearer tokens are not accepted and no
-  OAuth client — first-party, dynamic, or the agent's own web UI holding the
-  user's token — can approve on the user's behalf.
+- Only the **session cookie** is read: `cookie.GetSession`, then
+  `TokenProvider.ValidateBrowserSession`, as `/authorize` does. That call checks
+  the session is still live in the memory store, its nonce and its expiry, and
+  returns `token.SessionData` (`Subject`, `AuthTime`, `LoginMethod`).
+  Decrypting the cookie alone is not enough: a cookie from a session that was
+  logged out or revoked still decrypts.
+- The page never calls `GetUserIDFromSessionOrAccessToken` (which the consent
+  POST uses, and which accepts bearer tokens), so no OAuth client — first-party,
+  dynamic, or the agent's own web UI holding the user's token — can approve on
+  the user's behalf.
 - The session must belong to the request's user; a mismatch shows the generic
   "request not found" page.
 - **Step-up** reuses `/authorize`'s `max_age` logic: the session's
   `SessionData.EffectiveAuthTime()` must be within `--ciba-step-up-max-age`,
-  and its login method must not be magic link or email OTP alone (the approval
-  link itself arrived by email, so a mailbox-only sign-in proves nothing new;
-  §13, decision 5). Otherwise the page revokes the session exactly as
-  `forceReauth` does (memory-store entry and cookie; extracted into a shared
-  helper, not copied) and sends the user through the login UI.
-- The detour is the existing login UI with `redirect_uri` back to the approval
-  page: `/app?redirect_uri=<url>/oauth/bc-approve?id=<approval id>`, validated
-  by `app.go`'s existing allow-list check (no `client_id`). The server's own
-  URL must be in `--allowed-origins`, which is already required for `/app` to
-  work. The approval id appears in that URL, as it does in the emailed link;
-  it is a lookup handle, not a credential (§4.2).
+  and its `LoginMethod` must not be `magic_link_login` (the approval link
+  itself arrived by email, so a mailbox-only sign-in proves nothing new; §13,
+  decision 5). `SessionData` does not record whether an MFA challenge ran, so
+  the rule is on the login method alone. Otherwise the page revokes the
+  session exactly as `forceReauth` does (memory-store entry and cookie;
+  extracted into a shared helper, not copied) and sends the user to sign in.
+- **The sign-in detour** copies the SAML IdP continuation, which solves the
+  same problem today. The server redirects to
+  `/app?redirect_uri=<url>/oauth/bc-approve?id=<approval id>`, as
+  `bounceSAMLIDPToLogin` does. After sign-in the login UI navigates only to
+  `/authorize` or to URLs of one exact shape (`isSamlIdpContinueURL` in
+  `web/app/src/Root.tsx`), never to an arbitrary `redirect_uri`. So 4a adds an
+  `isCibaApproveURL` check beside it: same origin, path exactly
+  `/oauth/bc-approve`, an `id` parameter.
+- `app.go` validates that `redirect_uri` against `--allowed-origins` (no
+  `client_id`). The default `*` admits the server's own origin. An explicit
+  list must include it, the same requirement the SAML IdP continuation has;
+  startup warns when it does not (§3).
+- The approval id appears in that URL, as it does in the emailed link. It is a
+  lookup handle, not a credential (§4.2).
 
 **What the user sees, in this order**
 
@@ -280,13 +308,21 @@ ones:
 **CSRF** reuses the consent screen's pattern: each render stores a pending
 record under a fresh random id with `SetState` and puts that id in the form;
 the `POST` consumes it with `GetAndRemoveState` (single-use, as
-`ConsentHandler` does) and checks that it was rendered for the same session and
-approval. The `POST`'s `Origin` must also equal the server's own origin. The
-path is exempted from the generic CSRF middleware for that reason, like
-`/authorize/consent`. The form token is the per-render id, never the approval
-id, which travels in emails and webhooks. (`SetState` expires in 10 minutes on
-Redis and the database store; the in-memory store keeps unconsumed entries, as
-it already does for consent.)
+`ConsentHandler` does). The path is exempted from the generic CSRF middleware
+on the same reasoning as `/authorize/consent` (`csrf.go`): the id exists only
+inside a page this server rendered. `SetState` entries expire after 10 minutes
+on all three memory stores.
+
+Two checks are new, because the consent POST does not make them (it binds the
+pending record to a user id, resolved by a call that also accepts bearer
+tokens, and checks no `Origin`):
+
+- the pending record holds the session nonce and approval id it was rendered
+  for, and the `POST` must present the same session;
+- the `POST`'s `Origin` must equal the server's own origin.
+
+The form token is the per-render id, never the approval id, which travels in
+emails and webhooks.
 
 ### 4.4 Collecting the result — CIBA grant at `/oauth/token`
 
@@ -329,8 +365,10 @@ for every existing caller.
 `auth_time` = the approving sign-in time. `CreateIDToken` copies every field of
 the user it is given into claims, regardless of scope, so the CIBA path passes
 it a copy of the user with only the fields the approved scopes allow (`email` →
-email and `email_verified`; `profile` → name fields). No new builder. `acr` is
-what the existing issuer sets (`"0"` today).
+email and `email_verified`; `profile` → name fields). No new builder. It still
+emits the role claims, as every ID token does. `LoginMethod` is the approving
+session's, so `amr` (`loginMethodToAMR`) says how the user signed in to
+approve. `acr` is what the existing issuer sets (`"0"` today).
 
 **Why delegated and action-bound**: the agent asked to do one thing as the
 user. A plain user token would hand it the user's full authority; a scope-only
@@ -478,8 +516,11 @@ stored per client in 4a (that would be a schema change); ping in 4b adds both.
   client; unknown, revoked, out-of-org, capped and blocked users
   indistinguishable from real ones (status, body); `id_token_hint` with a
   foreign `aud`; `resource` equal to Authorizer refused; `authorizer:` scopes
-  refused; bearer token on the approval page refused; another user's session
-  refused; stale session requires step-up; missing, forged or reused form token and
+  refused; bearer token on the approval page refused; a logged-out (revoked) session
+  cookie refused; another user's session refused; stale session and
+  magic-link session require step-up; the login UI returns to the approval page
+  after sign-in and to no other `/oauth/*` URL; expired `id_token_hint`
+  refused; missing, forged or reused form token and
   cross-origin POST refused; delegated token cannot approve; approve/deny race;
   approve after expiry; dynamic and CIMD clients refused; existing clients
   unaffected.
@@ -506,13 +547,21 @@ Recommended by the reviews; confirm before implementation.
 4. **Channels**: email whenever SMTP is configured; the webhook whenever an
    endpoint is registered for `user.approval_requested` (registering it is the
    opt-in). In-app approval arrives in 4b.
-5. **Step-up strength**: a session signed in by magic link or email OTP alone
+5. **Step-up strength**: a session whose login method is `magic_link_login`
    does not satisfy step-up, because the approval link also arrived by email.
-   Password, passkey, social login or any MFA does. (Alternative: accept any
-   recent sign-in, and rely on the user's own email security.)
+   Password, mobile OTP (SMS), passkey, social and SSO sessions do. The rule
+   cannot see MFA (it is not recorded in the session), so a magic-link login
+   that also passed MFA is still refused; recording MFA in `SessionData` would
+   be an additive field, left out of 4a. (Alternative: accept any recent
+   sign-in, and rely on the user's own email security.)
 6. **Rate limiting**: CIBA's limits use the existing `IncrementCache` counter
    (reuse) rather than building the general per-client limiter in 4a, which the
    CTO review suggested; the general limiter stays in phase 6.
+7. **`id_token_hint` must be unexpired.** `ParseJWTToken` rejects an expired
+   `exp`, and reusing it keeps one verification path. CIBA §14 allows a grace
+   period, which needs a second parser that verifies the signature but skips
+   `exp`. Background agents should send `login_hint` (the user id), which
+   never expires.
 
 ## 14. Rollout
 
@@ -529,17 +578,51 @@ Recommended by the reviews; confirm before implementation.
 | Client authentication | `clientauth.ResolveClient` + `RequireServiceAccountKind` | — | per-client `grant_types` check |
 | User lookup, tenant check | `GetUserByID`, `GetOrgMembership`, `storage.IsNotFound` | — | — |
 | Pending state, single use, polling | `SetCache`/`GetCache`, `SetCacheNX`, `IncrementCache` | — | — |
-| Approval page | `au_shell.tmpl` partials, `consentError`, no-store headers, `SetState`/`GetAndRemoveState` form token, `/app` login detour and its `redirect_uri` check, `SessionData.EffectiveAuthTime()` | `forceReauth` session revocation moved into a shared helper | `ciba_approve.tmpl`, `/oauth/bc-approve` handler |
-| Token | `CreateDelegatedAccessToken` (no `sid`), `CreateIDToken` (scope-redacted user) | two optional `DelegationTokenConfig` fields | — |
+| Hints | `ParseJWTToken`, the `token_type` check of `parseIDTokenHintSubject` | — | `aud` check |
+| Approval page | `au_shell.tmpl` partials, `consentError`, no-store headers, `ValidateBrowserSession`, `SessionData.EffectiveAuthTime()`, `SetState`/`GetAndRemoveState` form token, the `csrf.go` exemption pattern, the SAML IdP `/app?redirect_uri=` bounce and `app.go`'s `redirect_uri` check | `forceReauth` session revocation moved into a shared helper; `isCibaApproveURL` beside `isSamlIdpContinueURL` in the login UI | `ciba_approve.tmpl`, `/oauth/bc-approve` handler, session binding and `Origin` check on the POST |
+| Token | `CreateDelegatedAccessToken` (no `sid`), `CreateIDToken` (scope-redacted user; `amr` from the approving session) | two optional `DelegationTokenConfig` fields | — |
 | Notifications | `email.Provider.SendEmail`, `asyncutil.Go`, webhook delivery | webhook payload variant (as SCIM) | `ciba_approval` template, `user.approval_requested` event |
 | Limits | `IncrementCache` (login-lockout pattern) | — | — |
 | Discovery, audit, metrics | `openid_config.go` conditional fields, `audit.Event`, `metrics.RecordSecurityEvent` | — | event constants |
 | Admin API | client registry `grant_types` column | `grant_types` on admin client APIs | — |
 | Endpoints | — | CIBA branch in `/oauth/token` | `/oauth/bc-authorize` |
 
-No storage schema changes; no new memory-store primitive.
+No storage schema changes; no new memory-store primitive. One login-UI change
+(`web/app`), with its own test.
 
 ## 15. Review log
+
+Revision 4 (every code claim checked line by line; seven were wrong):
+
+- **Session check**: decrypting the cookie (as the `max_age` branch does) would
+  accept a logged-out session. The page uses `ValidateBrowserSession`, which
+  checks the memory store.
+- **Sign-in detour**: the login UI does not return to an arbitrary
+  `redirect_uri`; it resumes only `/authorize` or the exact SAML IdP shape. The
+  design copies the SAML continuation and adds `isCibaApproveURL` (a
+  `web/app` change). The own origin is not "already required" in
+  `--allowed-origins`; a startup warning covers it.
+- **CSRF**: the consent POST resolves the user with a call that accepts bearer
+  tokens and has no `Origin` check, so session binding and the `Origin` check
+  are new, not reused. All three memory stores expire `SetState` after 10
+  minutes (rev 3 said the in-memory store did not).
+- **`auth_time`** is on ID and refresh tokens, not access or delegated tokens;
+  §1.1 now says the agent checks it and the resource server cannot.
+- **`id_token_hint`**: `ParseJWTToken` rejects expired tokens, so the 30-day
+  grace would need a new parser; 4a takes unexpired hints only (decision 7).
+- **Step-up**: there is no email-OTP login method, and `SessionData` does not
+  record MFA; decision 5 is restated on `magic_link_login` alone, with a
+  startup warning for magic-link-only deployments.
+- Verified and unchanged: `RequireServiceAccountKind` rejects before the
+  secret and excludes dynamic (`ClientKindDynamic`) and metadata-document
+  clients; `grant_types` is written only by `register_client.go` and absent
+  from admin APIs; delegated tokens without `sid` fail
+  `delegationSessionIsLive`; `CreateIDToken` copies every user field and takes
+  `aud` from `cfg.ClientID`; `SetCacheNX`/`IncrementCache` exist in all three
+  stores; the in-memory store treats an entry as live through its expiry
+  second; the login lockout uses `IncrementCache`; `GetOrgMembership`,
+  `Client.OrgID`, `RegisterScimGroupEvent`, webhook logs storing the request
+  body, `authorizer:account:delete`.
 
 Revision 3 (reuse pass against the current code, nothing assumed):
 
