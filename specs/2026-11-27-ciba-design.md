@@ -479,7 +479,7 @@ stored per client in 4a (that would be a schema change); ping in 4b adds both.
   indistinguishable from real ones (status, body); `id_token_hint` with a
   foreign `aud`; `resource` equal to Authorizer refused; `authorizer:` scopes
   refused; bearer token on the approval page refused; another user's session
-  refused; stale session requires step-up; missing, forged or reused nonce and
+  refused; stale session requires step-up; missing, forged or reused form token and
   cross-origin POST refused; delegated token cannot approve; approve/deny race;
   approve after expiry; dynamic and CIMD clients refused; existing clients
   unaffected.
